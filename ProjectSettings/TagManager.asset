@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Sand
+  - Barrel
+  - Metal
+  - Enemy
+  - Shield
+  - Melee
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Ground
+  - Player
+  - Shell
+  - Weapon
+  - Projectile
+  - PowerUp
+  - Dead
+  - Character
+  - MeleeTrigger
+  - Barrel
+  - Platform
+  - Rope
+  - EnemyProjectile
+  - PlayerProjectileIgnore
+  - FootColliders
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Sky
+    uniqueID: 58354089
+    locked: 0
+  - name: Background
+    uniqueID: 2553711575
+    locked: 0
+  - name: Midground
+    uniqueID: 3174107619
+    locked: 0
+  - name: Stepground
+    uniqueID: 1591206589
+    locked: 0
+  - name: Stones
+    uniqueID: 3953293047
+    locked: 0
+  - name: Ground
+    uniqueID: 1880398335
+    locked: 0
+  - name: Sand
+    uniqueID: 702577249
+    locked: 0
+  - name: Barrel
+    uniqueID: 3281881315
+    locked: 0
+  - name: Shadow
+    uniqueID: 3445892835
+    locked: 0
+  - name: CharacterHandLeft
+    uniqueID: 2515849133
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Character
+    uniqueID: 2917350305
+    locked: 0
+  - name: Blood
+    uniqueID: 4186034333
+    locked: 0
+  - name: Shell
+    uniqueID: 4227889065
+    locked: 0
+  - name: Dust
+    uniqueID: 62429411
+    locked: 0
+  - name: Dirt
+    uniqueID: 894788017
+    locked: 0
+  - name: MuzzleFlash
+    uniqueID: 1159644209
+    locked: 0
+  - name: Sparks
+    uniqueID: 781629445
+    locked: 0
+  - name: Weapon
+    uniqueID: 3297746917
+    locked: 0
+  - name: WeaponHandle
+    uniqueID: 3730366941
+    locked: 0
+  - name: CharacterHandRight
+    uniqueID: 1972025851
+    locked: 0
+  - name: PowerUp
+    uniqueID: 4174960025
+    locked: 0
+  - name: Platform
+    uniqueID: 215301305
+    locked: 0
+  - name: Hit
+    uniqueID: 1921974259
+    locked: 0
+  - name: ForegroundFog
+    uniqueID: 2998350155
+    locked: 0

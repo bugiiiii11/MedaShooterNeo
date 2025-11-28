@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Shield_Atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 90
+      m_CrunchedCompression: 1
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: 78b32490aaace574f9db99aed0a19885, type: 3}
+    - {fileID: 2800000, guid: 7d7966a8784760e4c9efc7a3eb7ff8db, type: 3}
+    - {fileID: 2800000, guid: ee0f2fb5bcad2ac46a1102d671ee91b6, type: 3}
+    - {fileID: 2800000, guid: c5d9f31f8fc543d44a81d6e9e6fdf7a7, type: 3}
+    - {fileID: 2800000, guid: 35efc87f573ad7b4e8b5273ac0acc983, type: 3}
+    - {fileID: 2800000, guid: da8288c75f7a96248817943e75fc4a8f, type: 3}
+    - {fileID: 2800000, guid: 6ff24bdba22c7f64d808e56ef0cb5c21, type: 3}
+    - {fileID: 2800000, guid: 858a4cb0b01e30741af0f998b0c93358, type: 3}
+    - {fileID: 2800000, guid: 4f97acab37463e443a5cfd8820d46b66, type: 3}
+    - {fileID: 2800000, guid: a0b5e827adfb025439dad342b29780ac, type: 3}
+    - {fileID: 2800000, guid: cb465613de1a4ed4c93234a4f7506cba, type: 3}
+    - {fileID: 2800000, guid: d7212a7422a8fb649b1cf822e91f5668, type: 3}
+    - {fileID: 2800000, guid: a5a964fb99039034583011ddaeab95c2, type: 3}
+    - {fileID: 2800000, guid: c2555e49a39e3d54f8f153f4bac295b1, type: 3}
+    - {fileID: 2800000, guid: f78c8a195bc83454888b53bae19064d6, type: 3}
+    - {fileID: 2800000, guid: 90188338bfa3ec749b6f322b9a8b9b4a, type: 3}
+    - {fileID: 2800000, guid: 44eb84b44f4daa848b999d55834596e7, type: 3}
+    - {fileID: 2800000, guid: 44c928f60be459b449790b48ba7de8a5, type: 3}
+    - {fileID: 2800000, guid: 5306fcbe5312c5349aa2145113ae23bc, type: 3}
+    - {fileID: 2800000, guid: 15a8ce209fa23cb449be0e205da5638f, type: 3}
+    - {fileID: 2800000, guid: 3f4e70243d2c4dc42bc4b1a4df3ec943, type: 3}
+    - {fileID: 2800000, guid: 68fc744a35ee6aa4c9bceca990131fdb, type: 3}
+    - {fileID: 2800000, guid: 8b13ecd3d5b971440a9c41c1516a960b, type: 3}
+    - {fileID: 2800000, guid: 75671d2c5033cae4a9a8380db7c3264c, type: 3}
+    - {fileID: 2800000, guid: 9f1aee9075cfcdb42a0391b82b0e7df1, type: 3}
+    - {fileID: 2800000, guid: e781d91e2a7822749a3b6e1afb0d0c0b, type: 3}
+    - {fileID: 2800000, guid: eefdd3b41eddb9148bda3df14927755e, type: 3}
+    - {fileID: 2800000, guid: ad5b91a6cbe5ed742ad982dc4e322254, type: 3}
+    - {fileID: 2800000, guid: f3a9691aa3f468a4aadb2d29776f6161, type: 3}
+    - {fileID: 2800000, guid: 3239cc92caf800140b53e4f1b93e1cde, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 15a8ce209fa23cb449be0e205da5638f, type: 3}
+  - {fileID: 21300000, guid: 78b32490aaace574f9db99aed0a19885, type: 3}
+  - {fileID: 21300000, guid: 9f1aee9075cfcdb42a0391b82b0e7df1, type: 3}
+  - {fileID: 21300000, guid: 858a4cb0b01e30741af0f998b0c93358, type: 3}
+  - {fileID: 21300000, guid: 3239cc92caf800140b53e4f1b93e1cde, type: 3}
+  - {fileID: 21300000, guid: cb465613de1a4ed4c93234a4f7506cba, type: 3}
+  - {fileID: 21300000, guid: 8b13ecd3d5b971440a9c41c1516a960b, type: 3}
+  - {fileID: 21300000, guid: 3f4e70243d2c4dc42bc4b1a4df3ec943, type: 3}
+  - {fileID: 21300000, guid: d7212a7422a8fb649b1cf822e91f5668, type: 3}
+  - {fileID: 21300000, guid: eefdd3b41eddb9148bda3df14927755e, type: 3}
+  - {fileID: 21300000, guid: 44eb84b44f4daa848b999d55834596e7, type: 3}
+  - {fileID: 21300000, guid: ee0f2fb5bcad2ac46a1102d671ee91b6, type: 3}
+  - {fileID: 21300000, guid: ad5b91a6cbe5ed742ad982dc4e322254, type: 3}
+  - {fileID: 21300000, guid: 44c928f60be459b449790b48ba7de8a5, type: 3}
+  - {fileID: 21300000, guid: a0b5e827adfb025439dad342b29780ac, type: 3}
+  - {fileID: 21300000, guid: da8288c75f7a96248817943e75fc4a8f, type: 3}
+  - {fileID: 21300000, guid: 90188338bfa3ec749b6f322b9a8b9b4a, type: 3}
+  - {fileID: 21300000, guid: 7d7966a8784760e4c9efc7a3eb7ff8db, type: 3}
+  - {fileID: 21300000, guid: f78c8a195bc83454888b53bae19064d6, type: 3}
+  - {fileID: 21300000, guid: c2555e49a39e3d54f8f153f4bac295b1, type: 3}
+  - {fileID: 21300000, guid: f3a9691aa3f468a4aadb2d29776f6161, type: 3}
+  - {fileID: 21300000, guid: 68fc744a35ee6aa4c9bceca990131fdb, type: 3}
+  - {fileID: 21300000, guid: 4f97acab37463e443a5cfd8820d46b66, type: 3}
+  - {fileID: 21300000, guid: 6ff24bdba22c7f64d808e56ef0cb5c21, type: 3}
+  - {fileID: 21300000, guid: a5a964fb99039034583011ddaeab95c2, type: 3}
+  - {fileID: 21300000, guid: 75671d2c5033cae4a9a8380db7c3264c, type: 3}
+  - {fileID: 21300000, guid: e781d91e2a7822749a3b6e1afb0d0c0b, type: 3}
+  - {fileID: 21300000, guid: 5306fcbe5312c5349aa2145113ae23bc, type: 3}
+  - {fileID: 21300000, guid: c5d9f31f8fc543d44a81d6e9e6fdf7a7, type: 3}
+  - {fileID: 21300000, guid: 35efc87f573ad7b4e8b5273ac0acc983, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - basicshield10
+  - basicshield29
+  - basicshield05
+  - basicshield22
+  - basicshield00
+  - basicshield19
+  - basicshield07
+  - basicshield09
+  - basicshield18
+  - basicshield03
+  - basicshield13
+  - basicshield27
+  - basicshield02
+  - basicshield12
+  - basicshield20
+  - basicshield24
+  - basicshield14
+  - basicshield28
+  - basicshield15
+  - basicshield16
+  - basicshield01
+  - basicshield08
+  - basicshield21
+  - basicshield23
+  - basicshield17
+  - basicshield06
+  - basicshield04
+  - basicshield11
+  - basicshield26
+  - basicshield25
+  m_RenderDataMap: {}
+  m_Tag: Shield_Atlas
+  m_IsVariant: 0

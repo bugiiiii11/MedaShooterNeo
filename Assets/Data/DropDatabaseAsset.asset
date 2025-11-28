@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7cfd4a0eba2d449bda97a258620c91, type: 3}
+  m_Name: DropDatabaseAsset
+  m_EditorClassIdentifier: 
+  Drops:
+  - Title: Coin
+    Description: Add a coin to your profile.
+    Probability: 0.5
+    AssetPrefab: {fileID: 752997302770303503, guid: 95dc4fee0d9bd8244b6811fe58c53527,
+      type: 3}
+  - Title: (empty)
+    Description: 
+    Probability: 0.5
+    AssetPrefab: {fileID: 0}

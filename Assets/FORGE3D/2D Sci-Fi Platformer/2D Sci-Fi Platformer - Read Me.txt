@@ -1,0 +1,28 @@
+FORGE3D - 2D Sci-Fi Platformer v1.0
+
+   Thank you for purchasing 2D Sci-Fi Platformer!
+
+   This pack is in active development phase with new features, fixes, and improvements planned in the upcoming updates. Sounds effects are implemented for the sake of public Web GL demo, and not included in this package.
+
+INSTALLATION AND PROJECT SETTINGS
+
+   This pack comes as a complete project which should already update your project settings automatically on asset store import. The project settings files has also been added inside project folder in ProjectSettings_2017.3.1f1.zip for your convenience.
+
+   It is recommended making a clean project upon asset import to avoid any problems with overwriting your existing project settings files.
+
+   This asset comes with no script documentation yet, which is something we will be adding later as we progress with the new features over the course of the upcoming updates. But nevertheless, you are very welcome to contact us if you need help or have a question!
+
+
+ARTWORK
+
+   You will find all art assets are presented in PSD files with smart objects and structured layers for your convenience in /Assets/FORGE3D/2D Sci-Fi Platformer/PSD Source/ folder.
+
+   Use free extractors https://www.7-zip.org/download.html for Windows, or http://www.kekaosx.com/ on Mac to unpack the archive.
+
+
+GET IN TOUCH
+
+   * Have a question or need help? - http://forge3d.com/contact/
+
+   * For all your feedback and comments please visit this forum thread - http://forum.forge3d.com/t/2d-sci-fi-platformer/163
+

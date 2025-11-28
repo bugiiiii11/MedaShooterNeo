@@ -1,0 +1,305 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f34fa39cd7d2b8d43925cde4a59b0e36, type: 3}
+  m_Name: DefaultEnemyWaveProfile
+  m_EditorClassIdentifier: 
+  Waves:
+  - Index: 0
+    IsBoss: 0
+    WaveDifficulty: 0
+    IsSilent: 0
+    MaxEnemyCount: 4
+    EnemyQuantity: 7
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 2.9057689, y: 7.276962}
+    Enemies:
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
+        type: 3}
+      DamageRange: {x: 40, y: 50}
+      HitPointsRange: {x: 120, y: 130}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 10
+      ProbabilityInWave: 1
+  - Index: 0
+    IsBoss: 0
+    WaveDifficulty: 1
+    IsSilent: 1
+    MaxEnemyCount: 4
+    EnemyQuantity: 6
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.86142325, y: 2.0901005}
+    Enemies:
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
+        type: 3}
+      DamageRange: {x: 40, y: 50}
+      HitPointsRange: {x: 110, y: 140}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 10
+      ProbabilityInWave: 1
+  - Index: 0
+    IsBoss: 0
+    WaveDifficulty: 2
+    IsSilent: 1
+    MaxEnemyCount: 4
+    EnemyQuantity: 12
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 20}
+    SpawnCooldownRange: {x: 0.25668013, y: 3.347303}
+    Enemies:
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
+        type: 3}
+      DamageRange: {x: 60, y: 75}
+      HitPointsRange: {x: 140, y: 180}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 10
+      ProbabilityInWave: 0.7
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
+        type: 3}
+      DamageRange: {x: 35, y: 50}
+      HitPointsRange: {x: 180, y: 200}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 20
+      ProbabilityInWave: 0.3
+  - Index: 1
+    IsBoss: 0
+    WaveDifficulty: 3
+    IsSilent: 0
+    MaxEnemyCount: 5
+    EnemyQuantity: 9
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.13053188, y: 3.0595353}
+    Enemies:
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
+        type: 3}
+      DamageRange: {x: 50, y: 75}
+      HitPointsRange: {x: 200, y: 230}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 20
+      ProbabilityInWave: 0.8
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
+        type: 3}
+      DamageRange: {x: 100, y: 120}
+      HitPointsRange: {x: 180, y: 200}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 12
+      ProbabilityInWave: 0.2
+  - Index: 2
+    IsBoss: 0
+    WaveDifficulty: 4
+    IsSilent: 0
+    MaxEnemyCount: 4
+    EnemyQuantity: 10
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.30810702, y: 3.7599492}
+    Enemies:
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
+        type: 3}
+      DamageRange: {x: 70, y: 90}
+      HitPointsRange: {x: 300, y: 320}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 22
+      ProbabilityInWave: 0.4
+    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+        type: 3}
+      DamageRange: {x: 30, y: 40}
+      HitPointsRange: {x: 500, y: 550}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 25
+      ProbabilityInWave: 0.6
+  - Index: 3
+    IsBoss: 0
+    WaveDifficulty: 5
+    IsSilent: 0
+    MaxEnemyCount: 4
+    EnemyQuantity: 15
+    SpawnMines: 1
+    MineSpawnCooldownRange: {x: 3.5164855, y: 10.659342}
+    SpawnCooldownRange: {x: 0.4868914, y: 3.3988214}
+    Enemies:
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
+        type: 3}
+      DamageRange: {x: 120, y: 140}
+      HitPointsRange: {x: 340, y: 380}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 20
+      ProbabilityInWave: 0.8
+    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+        type: 3}
+      DamageRange: {x: 30, y: 45}
+      HitPointsRange: {x: 520, y: 580}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 30
+      ProbabilityInWave: 0.2
+  - Index: 3
+    IsBoss: 1
+    WaveDifficulty: 6
+    IsSilent: 1
+    MaxEnemyCount: 1
+    EnemyQuantity: 2
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 2.4618323, y: 2.8089886}
+    Enemies:
+    - Prefab: {fileID: 2463733095745215394, guid: 08393e48cab677942814a981cc2c9f32,
+        type: 3}
+      DamageRange: {x: 0, y: 0}
+      HitPointsRange: {x: 0, y: 0}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 1000
+      ProbabilityInWave: 1
+  - Index: 3
+    IsBoss: 0
+    WaveDifficulty: 7
+    IsSilent: 1
+    MaxEnemyCount: 12
+    EnemyQuantity: 30
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.46270013, y: 1.0292723}
+    Enemies:
+    - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
+        type: 3}
+      DamageRange: {x: 50, y: 80}
+      HitPointsRange: {x: 100, y: 150}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 10
+      ProbabilityInWave: 1
+  - Index: 4
+    IsBoss: 0
+    WaveDifficulty: 8
+    IsSilent: 0
+    MaxEnemyCount: 4
+    EnemyQuantity: 15
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.39748156, y: 2.1948674}
+    Enemies:
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
+        type: 3}
+      DamageRange: {x: 90, y: 120}
+      HitPointsRange: {x: 500, y: 600}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 30
+      ProbabilityInWave: 0.25
+    - Prefab: {fileID: 8966015197849417581, guid: 4d2e48122fd4bd14d8bb983d9f5e4b3e,
+        type: 3}
+      DamageRange: {x: 200, y: 230}
+      HitPointsRange: {x: 700, y: 800}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 40
+      ProbabilityInWave: 0.5
+    - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
+        type: 3}
+      DamageRange: {x: 45, y: 90}
+      HitPointsRange: {x: 200, y: 350}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 5
+      ProbabilityInWave: 0.4
+  - Index: 5
+    IsBoss: 0
+    WaveDifficulty: 9
+    IsSilent: 0
+    MaxEnemyCount: 6
+    EnemyQuantity: 12
+    SpawnMines: 0
+    MineSpawnCooldownRange: {x: 0, y: 0}
+    SpawnCooldownRange: {x: 0.8103602, y: 4.656889}
+    Enemies:
+    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+        type: 3}
+      DamageRange: {x: 80, y: 100}
+      HitPointsRange: {x: 1000, y: 1200}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 40
+      ProbabilityInWave: 0.2
+    - Prefab: {fileID: 8966015197849417581, guid: 4d2e48122fd4bd14d8bb983d9f5e4b3e,
+        type: 3}
+      DamageRange: {x: 150, y: 160}
+      HitPointsRange: {x: 950, y: 1050}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 50
+      ProbabilityInWave: 0.5
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
+        type: 3}
+      DamageRange: {x: 60, y: 75}
+      HitPointsRange: {x: 1400, y: 1550}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 30
+      ProbabilityInWave: 0.2
+    - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
+        type: 3}
+      DamageRange: {x: 10, y: 20}
+      HitPointsRange: {x: 300, y: 500}
+      AdditionalAttackData:
+        AdditionalData:
+          CriticalChance: 0
+          CricitalChanceBonusDamage: {x: 0, y: 0}
+      RewardPoints: 15
+      ProbabilityInWave: 0.1

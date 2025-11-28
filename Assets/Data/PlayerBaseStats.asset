@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 635f142f6e68c454a9d8e86d1c1648bc, type: 3}
+  m_Name: PlayerBaseStats
+  m_EditorClassIdentifier: 
+  Health:
+    currentCryptoKey: 2015757293
+    hiddenValue: 2015757085
+    inited: 1
+    fakeValue: 240
+    fakeValueActive: 1
+  Shield:
+    currentCryptoKey: 1788819648
+    hiddenValue: 1788819504
+    inited: 1
+    fakeValue: 240
+    fakeValueActive: 1
+  FireRatePerc:
+    migratedVersion: 
+    currentCryptoKey: 1197967633
+    hiddenValue: 2028945783
+    hiddenValueOldByte4:
+      b1: 0
+      b2: 0
+      b3: 0
+      b4: 0
+    inited: 1
+    fakeValue: 0.65
+    fakeValueActive: 1
+  CritChancePerc:
+    migratedVersion: 
+    currentCryptoKey: 1308978049
+    hiddenValue: 1941743243
+    hiddenValueOldByte4:
+      b1: 0
+      b2: 0
+      b3: 0
+      b4: 0
+    inited: 1
+    fakeValue: 0.08
+    fakeValueActive: 1
+  MovementSpeed:
+    migratedVersion: 
+    currentCryptoKey: 1368827972
+    hiddenValue: 295421303
+    hiddenValueOldByte4:
+      b1: 0
+      b2: 0
+      b3: 0
+      b4: 0
+    inited: 1
+    fakeValue: 3.3
+    fakeValueActive: 1
+  Damage: {x: 24, y: 32}
+  CritDamage: {x: 18, y: 24}

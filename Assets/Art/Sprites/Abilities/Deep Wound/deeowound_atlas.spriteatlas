@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: deeowound_atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 90
+      m_CrunchedCompression: 1
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: b69ec2348a8e2fc479a6ef178a07c39c, type: 3}
+    - {fileID: 2800000, guid: 6dce086be214c7b428685214de95735e, type: 3}
+    - {fileID: 2800000, guid: 57814b2cf207eac43802534367ce7d52, type: 3}
+    - {fileID: 2800000, guid: cb33b8fc16273bc45a2b70e821cb8388, type: 3}
+    - {fileID: 2800000, guid: 9b420cc218952c44b97e123111483945, type: 3}
+    - {fileID: 2800000, guid: e44d8afd4dcb38f41851e0efecccbcd3, type: 3}
+    - {fileID: 2800000, guid: de47e3c155667ee4f81e2c7653054c9a, type: 3}
+    - {fileID: 2800000, guid: 3e35d74a2ffb4954fb0164bce399061f, type: 3}
+    - {fileID: 2800000, guid: a9db7f26be64c50479a3ae8a73080b11, type: 3}
+    - {fileID: 2800000, guid: 269cceab633bd65498b2a180d3120026, type: 3}
+    - {fileID: 2800000, guid: c5b764e85fc6cf945b6b82ca37214396, type: 3}
+    - {fileID: 2800000, guid: a53d2347933f37a45b5260a1f054c1fb, type: 3}
+    - {fileID: 2800000, guid: bf86c71307bc2d54ba8767b61a2c9a79, type: 3}
+    - {fileID: 2800000, guid: 1c437845568d6db49ac2c44542133621, type: 3}
+    - {fileID: 2800000, guid: bd8b4e35d2b943744b2c4ebecf7a1d78, type: 3}
+    - {fileID: 2800000, guid: 90f608a3beef2ac4bb84c364671eae33, type: 3}
+    - {fileID: 2800000, guid: 8ea20c8962fba7243a6d96edd28eed0b, type: 3}
+    - {fileID: 2800000, guid: 8cd8886f6486c3247b2abdb3f982f8bd, type: 3}
+    - {fileID: 2800000, guid: 9594c2f8bc26df141b316c6b8904b1b6, type: 3}
+    - {fileID: 2800000, guid: dfb8b8d5b6a35804cb630e6b800ad3f5, type: 3}
+    - {fileID: 2800000, guid: 1daf0553fa56740429da9bb06ed382e4, type: 3}
+    - {fileID: 2800000, guid: 1c809767fe3a1b54cb0acf3de38508e2, type: 3}
+    - {fileID: 2800000, guid: a3e552b735bd25642b50df7d67211272, type: 3}
+    - {fileID: 2800000, guid: 9ff08242498c97f4f99d4552f8a00651, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: de47e3c155667ee4f81e2c7653054c9a, type: 3}
+  - {fileID: 21300000, guid: 9ff08242498c97f4f99d4552f8a00651, type: 3}
+  - {fileID: 21300000, guid: 9b420cc218952c44b97e123111483945, type: 3}
+  - {fileID: 21300000, guid: bf86c71307bc2d54ba8767b61a2c9a79, type: 3}
+  - {fileID: 21300000, guid: 1daf0553fa56740429da9bb06ed382e4, type: 3}
+  - {fileID: 21300000, guid: 90f608a3beef2ac4bb84c364671eae33, type: 3}
+  - {fileID: 21300000, guid: b69ec2348a8e2fc479a6ef178a07c39c, type: 3}
+  - {fileID: 21300000, guid: bd8b4e35d2b943744b2c4ebecf7a1d78, type: 3}
+  - {fileID: 21300000, guid: 1c437845568d6db49ac2c44542133621, type: 3}
+  - {fileID: 21300000, guid: dfb8b8d5b6a35804cb630e6b800ad3f5, type: 3}
+  - {fileID: 21300000, guid: a9db7f26be64c50479a3ae8a73080b11, type: 3}
+  - {fileID: 21300000, guid: a53d2347933f37a45b5260a1f054c1fb, type: 3}
+  - {fileID: 21300000, guid: 1c809767fe3a1b54cb0acf3de38508e2, type: 3}
+  - {fileID: 21300000, guid: a3e552b735bd25642b50df7d67211272, type: 3}
+  - {fileID: 21300000, guid: c5b764e85fc6cf945b6b82ca37214396, type: 3}
+  - {fileID: 21300000, guid: 9594c2f8bc26df141b316c6b8904b1b6, type: 3}
+  - {fileID: 21300000, guid: 8ea20c8962fba7243a6d96edd28eed0b, type: 3}
+  - {fileID: 21300000, guid: 3e35d74a2ffb4954fb0164bce399061f, type: 3}
+  - {fileID: 21300000, guid: 6dce086be214c7b428685214de95735e, type: 3}
+  - {fileID: 21300000, guid: 269cceab633bd65498b2a180d3120026, type: 3}
+  - {fileID: 21300000, guid: 57814b2cf207eac43802534367ce7d52, type: 3}
+  - {fileID: 21300000, guid: cb33b8fc16273bc45a2b70e821cb8388, type: 3}
+  - {fileID: 21300000, guid: e44d8afd4dcb38f41851e0efecccbcd3, type: 3}
+  - {fileID: 21300000, guid: 8cd8886f6486c3247b2abdb3f982f8bd, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - effect_wound06
+  - effect_wound23
+  - effect_wound04
+  - effect_wound12
+  - effect_wound20
+  - effect_wound15
+  - effect_wound00
+  - effect_wound14
+  - effect_wound13
+  - effect_wound19
+  - effect_wound08
+  - effect_wound11
+  - effect_wound21
+  - effect_wound22
+  - effect_wound10
+  - effect_wound18
+  - effect_wound16
+  - effect_wound07
+  - effect_wound01
+  - effect_wound09
+  - effect_wound02
+  - effect_wound03
+  - effect_wound05
+  - effect_wound17
+  m_RenderDataMap: {}
+  m_Tag: deeowound_atlas
+  m_IsVariant: 0

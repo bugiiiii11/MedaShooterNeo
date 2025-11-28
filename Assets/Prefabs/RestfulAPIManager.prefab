@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4678520217510416152
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4678520217510416134}
+  - component: {fileID: 4678520217510416153}
+  m_Layer: 0
+  m_Name: RestfulAPIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4678520217510416134
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4678520217510416152}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 366.9192, y: 217.40356, z: 1.9570327}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4678520217510416153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4678520217510416152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e2973ffa19f1bf4880f3ede6616e3bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPersistant: 1
+  CurrentEnvironment: 0
+  Endpoints:
+  - Endpoint: 57201
+    Url: https://@ENV.cryptomeda.tech/api/v1/minigames/medashooter/score/
+  - Endpoint: 48903
+    Url: https://@ENV.cryptomeda.tech/api/v1/minigames/medashooter/blacklist/
+  - Endpoint: 95032
+    Url: https://@ENV.cryptomeda.tech/api/v1/minigames/medashooter/timestamp/
+  - Endpoint: 41508
+    Url: https://@ENV.cryptomeda.tech/api/v1/users/get_items/
+  - Endpoint: 60477
+    Url: https://@ENV.cryptomeda.tech/api/v1/stake/get_data/
+  - Endpoint: 15300
+    Url: https://@ENV.cryptomeda.tech/api/v1/weapon_item/user_weapons/
+  - Endpoint: 95464
+    Url: https://@ENV.cryptomeda.tech/api/v1/user/active_boost_cards
+  XCrfTokenProd: 4pHsSRrbblstmRttIpN6NOMdcFCqRV7quqPMylgdPBRcx9x4kYHMuxvajkKJUO1p
+  XCrfTokenStage: bLQ1W2SK3yPemALbodvG645RnaAhd1OgUYnN52MD1hhpJdEjUySIMsjf6P7r99oD

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526d78b09dd6edf44be43b93a0bc4646, type: 3}
+  m_Name: PowerupDatabaseAsset
+  m_EditorClassIdentifier: 
+  Powerups:
+  - Title: Hp Refill
+    Description: Heal 10% of your Max HP.
+    AssetPrefab: {fileID: 7159453860013849535, guid: b44a7f1418d8c1f4680b6771e901d04b,
+      type: 3}
+    ProbabilityRange: 0.335
+  - Title: Shield Refill
+    Description: Add a shield.
+    AssetPrefab: {fileID: 7057754428971726462, guid: 648473d5889fb854d88256908bb25266,
+      type: 3}
+    ProbabilityRange: 0.241
+  - Title: Assault Rifle
+    Description: Add Assault Rifle for 10 seconds.
+    AssetPrefab: {fileID: 7159453860013849535, guid: 887aaca7123a0ea44adcbac873625184,
+      type: 3}
+    ProbabilityRange: 0.215
+  - Title: Tesla Gun
+    Description: Add Laser Rifle for 7 seconds.
+    AssetPrefab: {fileID: 4321118734782145685, guid: b65d6b8cf1d0a314293d89c5fc520e21,
+      type: 3}
+    ProbabilityRange: 0.104
+  - Title: Shotgun
+    Description: Add a Shotgun rifle for 12 seconds.
+    AssetPrefab: {fileID: 6903683168178268352, guid: f73cbc1f4a9458446bbed9ee9d28e229,
+      type: 3}
+    ProbabilityRange: 0.209
+  - Title: Sniper
+    Description: Add a Sniper rifle for 7 seconds.
+    AssetPrefab: {fileID: 7213480794512902754, guid: 4d0345ac39de19147875aab79d15bec9,
+      type: 3}
+    ProbabilityRange: 0.104
+  - Title: Ryoshi Katana
+    Description: 
+    AssetPrefab: {fileID: 3607423245533316153, guid: 570b138a04258cd429e1023a23d80f41,
+      type: 3}
+    ProbabilityRange: 0.109
+  - Title: Blessed Blade
+    Description: 
+    AssetPrefab: {fileID: 6963413321144473739, guid: aaf02b437ce23834ea86029a75a6beef,
+      type: 3}
+    ProbabilityRange: 0.105
+  - Title: Tactician's Claymore
+    Description: 
+    AssetPrefab: {fileID: 121643203975245644, guid: cddf697617d879f43bf3d3d782d78c90,
+      type: 3}
+    ProbabilityRange: 0.1
+  - Title: Gladiator's Greatsword
+    Description: 
+    AssetPrefab: {fileID: 5614694439507934661, guid: d3e62543b28bc8642aa53327bc7145c6,
+      type: 3}
+    ProbabilityRange: 0.102

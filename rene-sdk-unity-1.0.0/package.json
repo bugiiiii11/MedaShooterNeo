@@ -1,0 +1,22 @@
+{
+  "name": "com.reneverse.services",
+  "displayName": "ReneVerse SDK",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "ReneVerse is a Web3-enabled marketing solutions provider for projects, offering immersive in-game ads and industry-first dynamic in-game product placements. Its flagship offering Borderless Ads uses ReneVerse's proprietary game asset interoperability engine to enable advertisers to craft and deliver branded experiences in the playable environments of games with unparalleled creative freedom, all while being faster and easier to bring to market.",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
+  "type": "tool",
+  "documentationUrl": "https://docs.reneverse.io",
+  "changelogUrl": "https://docs.reneverse.io",
+  "licenseUrl": "https://docs.reneverse.io",
+  "keywords": [
+    "web3",
+    "advertising",
+    "in-game",
+    "product placement"
+  ],
+  "category": "Advertising",
+  "icon": "icon.png"
+}

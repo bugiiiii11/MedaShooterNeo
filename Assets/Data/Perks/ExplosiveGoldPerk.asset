@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c773c7c23800a2b4a9edf653460251d7, type: 3}
+  m_Name: ExplosiveGoldPerk
+  m_EditorClassIdentifier: 
+  Id: 3
+  IsPassive: 0
+  Duration:
+    migratedVersion: 
+    currentCryptoKey: 1387097813
+    hiddenValue: 326032853
+    hiddenValueOldByte4:
+      b1: 0
+      b2: 0
+      b3: 0
+      b4: 0
+    inited: 1
+    fakeValue: 15
+    fakeValueActive: 1

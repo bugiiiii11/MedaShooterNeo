@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DW_Shot_Atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 1024
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 80
+      m_CrunchedCompression: 1
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: ccace340b90c79e4e873b797503e8b99, type: 3}
+    - {fileID: 2800000, guid: 738502a609e65814391b9319e8803afd, type: 3}
+    - {fileID: 2800000, guid: b60de0f2d487f2445b4dd448c7d49902, type: 3}
+    - {fileID: 2800000, guid: 0ad9de3498985eb4bb6de97e2ce843b2, type: 3}
+    - {fileID: 2800000, guid: aae292b6e6be6d64eb6361baeae09fd9, type: 3}
+    - {fileID: 2800000, guid: b16853ce37b02de4780e26750d3b9206, type: 3}
+    - {fileID: 2800000, guid: b4c64d48aa60f8846b797a53520c3737, type: 3}
+    - {fileID: 2800000, guid: 7590ca6b462bb32469c04424d0a85005, type: 3}
+    - {fileID: 2800000, guid: 4a5272c481dd6e14a8843a6111be608f, type: 3}
+    - {fileID: 2800000, guid: 7395af2c4a39b1247b30c4e1e8fcccb1, type: 3}
+    - {fileID: 2800000, guid: 67d867df5a4cbfa40a4f1c7e23a62cad, type: 3}
+    - {fileID: 2800000, guid: 5cd1589ec5c46344097d4c2411510f52, type: 3}
+    - {fileID: 2800000, guid: c659c2fea76165648b4a09f1cf23b36c, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: ccace340b90c79e4e873b797503e8b99, type: 3}
+  - {fileID: 21300000, guid: b60de0f2d487f2445b4dd448c7d49902, type: 3}
+  - {fileID: 21300000, guid: 0ad9de3498985eb4bb6de97e2ce843b2, type: 3}
+  - {fileID: 21300000, guid: 4a5272c481dd6e14a8843a6111be608f, type: 3}
+  - {fileID: 21300000, guid: 738502a609e65814391b9319e8803afd, type: 3}
+  - {fileID: 21300000, guid: aae292b6e6be6d64eb6361baeae09fd9, type: 3}
+  - {fileID: 21300000, guid: b4c64d48aa60f8846b797a53520c3737, type: 3}
+  - {fileID: 21300000, guid: 7590ca6b462bb32469c04424d0a85005, type: 3}
+  - {fileID: 21300000, guid: 7395af2c4a39b1247b30c4e1e8fcccb1, type: 3}
+  - {fileID: 21300000, guid: 5cd1589ec5c46344097d4c2411510f52, type: 3}
+  - {fileID: 21300000, guid: b16853ce37b02de4780e26750d3b9206, type: 3}
+  - {fileID: 21300000, guid: c659c2fea76165648b4a09f1cf23b36c, type: 3}
+  - {fileID: 21300000, guid: 67d867df5a4cbfa40a4f1c7e23a62cad, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Shot_wound00
+  - Shot_wound02
+  - Shot_wound03
+  - Shot_wound08
+  - Shot_wound01
+  - Shot_wound04
+  - Shot_wound06
+  - Shot_wound07
+  - Shot_wound09
+  - Shot_wound11
+  - Shot_wound05
+  - Shot_wound12
+  - Shot_wound10
+  m_RenderDataMap: {}
+  m_Tag: DW_Shot_Atlas
+  m_IsVariant: 0

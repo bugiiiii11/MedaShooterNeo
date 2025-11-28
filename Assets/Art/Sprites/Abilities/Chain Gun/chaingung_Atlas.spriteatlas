@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: chaingung_Atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 90
+      m_CrunchedCompression: 1
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: 6f81be66ebbb6c844a24712f31ed8644, type: 3}
+    - {fileID: 2800000, guid: f67de059dbfce6a4db8f67239f30ff8d, type: 3}
+    - {fileID: 2800000, guid: 70f86581fbc0b8646b230b33a4ba9921, type: 3}
+    - {fileID: 2800000, guid: 867cf434200c9fb458618a8509b0bee4, type: 3}
+    - {fileID: 2800000, guid: 82fda2c068ed59f46b3bf82790436f14, type: 3}
+    - {fileID: 2800000, guid: 5a59328fee8e8ae459d224e265c402b0, type: 3}
+    - {fileID: 2800000, guid: 4f1ad7de53019d34382a2cd715daa3ab, type: 3}
+    - {fileID: 2800000, guid: ec36a4fd4dd7d58498377a4eccda224c, type: 3}
+    - {fileID: 2800000, guid: bf33609dbc04b2e4cb5b3d16ccd16fd2, type: 3}
+    - {fileID: 2800000, guid: 450c6d2a4b84220488ae116be36d8081, type: 3}
+    - {fileID: 2800000, guid: d3ab6357cc8da9248b81ec6e06cbb5ff, type: 3}
+    - {fileID: 2800000, guid: 3b32fdb6d81a8c04894abbc9e7f66651, type: 3}
+    - {fileID: 2800000, guid: d430ceee14663d840ae33ba0749a7e82, type: 3}
+    - {fileID: 2800000, guid: f83c3d31a04672345a9a2697b3ce0a51, type: 3}
+    - {fileID: 2800000, guid: b85742a5c674baa4191c13578ff92ba7, type: 3}
+    - {fileID: 2800000, guid: 1c11b043d63f9b441a382621529e24b2, type: 3}
+    - {fileID: 2800000, guid: e55a0bd967dcf2745b179925c8e3d0d0, type: 3}
+    - {fileID: 2800000, guid: ab505b688770468479fe0b0431d25b45, type: 3}
+    - {fileID: 2800000, guid: 62614ee26e6edf1448745140ef40f9ef, type: 3}
+    - {fileID: 2800000, guid: 12e4be056eb23e346b2d11c31138124e, type: 3}
+    - {fileID: 2800000, guid: 15346b4ae0b2b684fb8bfdf570cd2b68, type: 3}
+    - {fileID: 2800000, guid: dae168e297b1f4544b275ceab5915e75, type: 3}
+    - {fileID: 2800000, guid: 889a268678fa1e04895e048db0850788, type: 3}
+    - {fileID: 2800000, guid: a51ec20010795c94397e91287bf9be14, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: a51ec20010795c94397e91287bf9be14, type: 3}
+  - {fileID: 21300000, guid: 82fda2c068ed59f46b3bf82790436f14, type: 3}
+  - {fileID: 21300000, guid: f83c3d31a04672345a9a2697b3ce0a51, type: 3}
+  - {fileID: 21300000, guid: 70f86581fbc0b8646b230b33a4ba9921, type: 3}
+  - {fileID: 21300000, guid: dae168e297b1f4544b275ceab5915e75, type: 3}
+  - {fileID: 21300000, guid: 62614ee26e6edf1448745140ef40f9ef, type: 3}
+  - {fileID: 21300000, guid: 1c11b043d63f9b441a382621529e24b2, type: 3}
+  - {fileID: 21300000, guid: 867cf434200c9fb458618a8509b0bee4, type: 3}
+  - {fileID: 21300000, guid: 12e4be056eb23e346b2d11c31138124e, type: 3}
+  - {fileID: 21300000, guid: b85742a5c674baa4191c13578ff92ba7, type: 3}
+  - {fileID: 21300000, guid: 6f81be66ebbb6c844a24712f31ed8644, type: 3}
+  - {fileID: 21300000, guid: 889a268678fa1e04895e048db0850788, type: 3}
+  - {fileID: 21300000, guid: 3b32fdb6d81a8c04894abbc9e7f66651, type: 3}
+  - {fileID: 21300000, guid: d3ab6357cc8da9248b81ec6e06cbb5ff, type: 3}
+  - {fileID: 21300000, guid: ab505b688770468479fe0b0431d25b45, type: 3}
+  - {fileID: 21300000, guid: f67de059dbfce6a4db8f67239f30ff8d, type: 3}
+  - {fileID: 21300000, guid: e55a0bd967dcf2745b179925c8e3d0d0, type: 3}
+  - {fileID: 21300000, guid: 450c6d2a4b84220488ae116be36d8081, type: 3}
+  - {fileID: 21300000, guid: 15346b4ae0b2b684fb8bfdf570cd2b68, type: 3}
+  - {fileID: 21300000, guid: bf33609dbc04b2e4cb5b3d16ccd16fd2, type: 3}
+  - {fileID: 21300000, guid: ec36a4fd4dd7d58498377a4eccda224c, type: 3}
+  - {fileID: 21300000, guid: 4f1ad7de53019d34382a2cd715daa3ab, type: 3}
+  - {fileID: 21300000, guid: d430ceee14663d840ae33ba0749a7e82, type: 3}
+  - {fileID: 21300000, guid: 5a59328fee8e8ae459d224e265c402b0, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - chaingun_update00
+  - chaingun_update19
+  - chaingun_update10
+  - chaingun_update21
+  - chaingun_update02
+  - chaingun_update05
+  - chaingun_update08
+  - chaingun_update20
+  - chaingun_update04
+  - chaingun_update09
+  - chaingun_update23
+  - chaingun_update01
+  - chaingun_update12
+  - chaingun_update13
+  - chaingun_update06
+  - chaingun_update22
+  - chaingun_update07
+  - chaingun_update14
+  - chaingun_update03
+  - chaingun_update15
+  - chaingun_update16
+  - chaingun_update17
+  - chaingun_update11
+  - chaingun_update18
+  m_RenderDataMap: {}
+  m_Tag: chaingung_Atlas
+  m_IsVariant: 0

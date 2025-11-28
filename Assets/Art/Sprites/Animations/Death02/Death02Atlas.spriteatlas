@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Death02Atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings:
+    - serializedVersion: 3
+      m_BuildTarget: DefaultTexturePlatform
+      m_MaxTextureSize: 2048
+      m_ResizeAlgorithm: 0
+      m_TextureFormat: -1
+      m_TextureCompression: 1
+      m_CompressionQuality: 80
+      m_CrunchedCompression: 1
+      m_AllowsAlphaSplitting: 0
+      m_Overridden: 0
+      m_AndroidETC2FallbackOverride: 0
+      m_ForceMaximumCompressionQuality_BC6H_BC7: 0
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 2800000, guid: 9cfdc3d6a8ee28246bcd45671d3166f7, type: 3}
+    - {fileID: 2800000, guid: 55c13f8ad5d96414c8e023930a70c65c, type: 3}
+    - {fileID: 2800000, guid: 31ca2ddcb135dcd4c8e2eb1856845fee, type: 3}
+    - {fileID: 2800000, guid: 3d691cf3e88166f468614d1ddba1c82b, type: 3}
+    - {fileID: 2800000, guid: f299bfbd5fba16b4f88581b6b4575831, type: 3}
+    - {fileID: 2800000, guid: d1b10c3ab3ef44643bd3bd7d11cffd9d, type: 3}
+    - {fileID: 2800000, guid: 73b271a93936b0f4f959f7f6bb2a8719, type: 3}
+    - {fileID: 2800000, guid: a8b8aeff426cd334ab0a32e6e307ccc6, type: 3}
+    - {fileID: 2800000, guid: 0f22f35f8f45920438197a7be91352d5, type: 3}
+    - {fileID: 2800000, guid: f4d5556be9e613442b16a4e010650efa, type: 3}
+    - {fileID: 2800000, guid: a723fc8178519884eb4a11e67f390ffc, type: 3}
+    - {fileID: 2800000, guid: 78ec85f3e4ce5a64090920675af44109, type: 3}
+    - {fileID: 2800000, guid: 126683457d0d6844686781b1ccf11765, type: 3}
+    - {fileID: 2800000, guid: fc43b4c064e509b4396072f3225848be, type: 3}
+    - {fileID: 2800000, guid: 5449e74649193b64b97d881b06e76a93, type: 3}
+    - {fileID: 2800000, guid: 7d64aef8b6f08f24cacdb8ea4016346b, type: 3}
+    - {fileID: 2800000, guid: 2486748f37aeb9846899a0af9a3591c4, type: 3}
+    - {fileID: 2800000, guid: 4161819195c682644872e6477c6fe8d5, type: 3}
+    - {fileID: 2800000, guid: 1c1daa75bd301ec4fbc30e558ccea526, type: 3}
+    - {fileID: 2800000, guid: 439ce6dcbcb22d64b81f339dbe62a000, type: 3}
+    - {fileID: 2800000, guid: 28b0240955615ef4e8a38bba47e3431a, type: 3}
+    - {fileID: 2800000, guid: 1b6e1bbd04a98bb4b900193566ce461b, type: 3}
+    - {fileID: 2800000, guid: f54d252a96ac2534bb9e543583a7ee78, type: 3}
+    - {fileID: 2800000, guid: 621533e2aa1a50c4dbf56467310c7f89, type: 3}
+    - {fileID: 2800000, guid: 9dedd26f40044bf47bd16034e1541ddf, type: 3}
+    - {fileID: 2800000, guid: cf8719b5fe119354f9c1efbb9d2e21e7, type: 3}
+    - {fileID: 2800000, guid: 0fd7883a7308ae8459636b4739a8f9bb, type: 3}
+    - {fileID: 2800000, guid: 2434ede61c576b0449701f488a8bd455, type: 3}
+    - {fileID: 2800000, guid: fb0d33ec16cc0fb429b466c8b0ab847e, type: 3}
+    - {fileID: 2800000, guid: 8a53f068f8bd3ca43851a2e55e09abf7, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: fc43b4c064e509b4396072f3225848be, type: 3}
+  - {fileID: 21300000, guid: a723fc8178519884eb4a11e67f390ffc, type: 3}
+  - {fileID: 21300000, guid: 4161819195c682644872e6477c6fe8d5, type: 3}
+  - {fileID: 21300000, guid: 621533e2aa1a50c4dbf56467310c7f89, type: 3}
+  - {fileID: 21300000, guid: 78ec85f3e4ce5a64090920675af44109, type: 3}
+  - {fileID: 21300000, guid: 3d691cf3e88166f468614d1ddba1c82b, type: 3}
+  - {fileID: 21300000, guid: 126683457d0d6844686781b1ccf11765, type: 3}
+  - {fileID: 21300000, guid: 1c1daa75bd301ec4fbc30e558ccea526, type: 3}
+  - {fileID: 21300000, guid: cf8719b5fe119354f9c1efbb9d2e21e7, type: 3}
+  - {fileID: 21300000, guid: 5449e74649193b64b97d881b06e76a93, type: 3}
+  - {fileID: 21300000, guid: 9cfdc3d6a8ee28246bcd45671d3166f7, type: 3}
+  - {fileID: 21300000, guid: 2434ede61c576b0449701f488a8bd455, type: 3}
+  - {fileID: 21300000, guid: 8a53f068f8bd3ca43851a2e55e09abf7, type: 3}
+  - {fileID: 21300000, guid: 7d64aef8b6f08f24cacdb8ea4016346b, type: 3}
+  - {fileID: 21300000, guid: 28b0240955615ef4e8a38bba47e3431a, type: 3}
+  - {fileID: 21300000, guid: 73b271a93936b0f4f959f7f6bb2a8719, type: 3}
+  - {fileID: 21300000, guid: f54d252a96ac2534bb9e543583a7ee78, type: 3}
+  - {fileID: 21300000, guid: 0fd7883a7308ae8459636b4739a8f9bb, type: 3}
+  - {fileID: 21300000, guid: d1b10c3ab3ef44643bd3bd7d11cffd9d, type: 3}
+  - {fileID: 21300000, guid: 55c13f8ad5d96414c8e023930a70c65c, type: 3}
+  - {fileID: 21300000, guid: f4d5556be9e613442b16a4e010650efa, type: 3}
+  - {fileID: 21300000, guid: 439ce6dcbcb22d64b81f339dbe62a000, type: 3}
+  - {fileID: 21300000, guid: 31ca2ddcb135dcd4c8e2eb1856845fee, type: 3}
+  - {fileID: 21300000, guid: fb0d33ec16cc0fb429b466c8b0ab847e, type: 3}
+  - {fileID: 21300000, guid: 1b6e1bbd04a98bb4b900193566ce461b, type: 3}
+  - {fileID: 21300000, guid: f299bfbd5fba16b4f88581b6b4575831, type: 3}
+  - {fileID: 21300000, guid: 0f22f35f8f45920438197a7be91352d5, type: 3}
+  - {fileID: 21300000, guid: 9dedd26f40044bf47bd16034e1541ddf, type: 3}
+  - {fileID: 21300000, guid: 2486748f37aeb9846899a0af9a3591c4, type: 3}
+  - {fileID: 21300000, guid: a8b8aeff426cd334ab0a32e6e307ccc6, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - Death213
+  - Death210
+  - Death217
+  - Death223
+  - Death211
+  - Death203
+  - Death212
+  - Death218
+  - Death225
+  - Death214
+  - Death200
+  - Death227
+  - Death229
+  - Death215
+  - Death220
+  - Death206
+  - Death222
+  - Death226
+  - Death205
+  - Death201
+  - Death209
+  - Death219
+  - Death202
+  - Death228
+  - Death221
+  - Death204
+  - Death208
+  - Death224
+  - Death216
+  - Death207
+  m_RenderDataMap: {}
+  m_Tag: Death02Atlas
+  m_IsVariant: 0

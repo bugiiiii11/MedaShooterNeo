@@ -1,0 +1,213 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d124a6bf94b2239428368ca501b7c864, type: 3}
+  m_Name: PerkDatabaseAsset
+  m_EditorClassIdentifier: 
+  RarityProbabilities:
+    keyData: 000102
+    valueData:
+    - 0.75
+    - 0.2
+    - 0.02
+  Perks:
+  - Title: Vampire bullets
+    Description: Hitting enemies will return portion of HP back for 30 seconds.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: 262613296178cd441b24a6fbc1d9e063, type: 2}
+    Icon: {fileID: 21300000, guid: 4b3ece46f94808343ac043e0dc134565, type: 3}
+    Background: {fileID: 21300000, guid: 430e64286afb8104f97e063bc6ef6fb8, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Slow time
+    Description: Enemy bullets will be slowed down for 1 minute.
+    Rarity: 2
+    Behaviour: {fileID: 11400000, guid: c9dd7f0c65cdfad41b825a9b2c033e5f, type: 2}
+    Icon: {fileID: 21300000, guid: f9e8bcc90e4ac8f48a9e7ea96be2912a, type: 3}
+    Background: {fileID: 21300000, guid: 4e5180a3b0904eb4b84ce317765e6cfc, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Barell roll
+    Description: Next 3 barrels wont explode but you can kick them back on the enemy
+      line and explode upon impact.
+    Rarity: 0
+    Behaviour: {fileID: 0}
+    Icon: {fileID: 21300000, guid: d54c2169e949c2f488a01999e8594cef, type: 3}
+    Background: {fileID: 21300000, guid: a4a5adbf6ef3fb34d8b37395c09c5681, type: 3}
+    IsBuildup: 0
+    IsDisabled: 1
+  - Title: Killing spree
+    Description: Your killing spree can't be stopped for 40 seconds.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: 040ecf1b4e8b8e04b90d1490d03cd3cb, type: 2}
+    Icon: {fileID: 21300000, guid: 1fbb76a4aeb8fc344bde17e0ce8770cd, type: 3}
+    Background: {fileID: 21300000, guid: 64d16ec022a29704d862e9da198b8b36, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Explosive gold
+    Description: Enemies will drop triple coins for 15 seconds.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: 7b7e5b4494d4c4e4fa1f599d5c7eb473, type: 2}
+    Icon: {fileID: 21300000, guid: f138cbd7611a66942ba526e9608fe08a, type: 3}
+    Background: {fileID: 21300000, guid: 2a85d7c5a3b9a334a8f05f5737a68307, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Invincible barrier
+    Description: Get invincibility for 15 seconds.
+    Rarity: 2
+    Behaviour: {fileID: 11400000, guid: 54447ecd994006843b4d61da39e48293, type: 2}
+    Icon: {fileID: 21300000, guid: 59760c3be47add24abc394f4c1cfc7fd, type: 3}
+    Background: {fileID: 21300000, guid: 647c3d3d9f169d544b9d294249a8156a, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Panic Attack
+    Description: For next 12 seconds, your attack speed is increased 3x.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: 63e90fe7813b0fc45b8bdc3638805bed, type: 2}
+    Icon: {fileID: 21300000, guid: 20125d5638e861f4296dabc5222865c6, type: 3}
+    Background: {fileID: 21300000, guid: 6308b2433de3fa94ea81e41c41e436ad, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Critical Situation
+    Description: Every hit will be guaranteed critical strike for next 30 seconds
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: 1e55246d903bb4b44929fcd56bd420b1, type: 2}
+    Icon: {fileID: 21300000, guid: 0497ea2aa2047a547887cb4eeed83baa, type: 3}
+    Background: {fileID: 21300000, guid: 7b780f7837ebd5e43a09f8ad8cc0b4b8, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: T.N.T
+    Description: Your bullets will be infused with explosive energy, dead enemies
+      will explode and damage others in 5 yards range for next 45 seconds.
+    Rarity: 2
+    Behaviour: {fileID: 11400000, guid: 7805e8c8285f52349b9d6b49bf6bd4ef, type: 2}
+    Icon: {fileID: 21300000, guid: d154eb0c6ce19c847923345daeaa73d4, type: 3}
+    Background: {fileID: 21300000, guid: aa86fceb2c5c9cc43be7758c9c8f9ff3, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Portal Barrel
+    Description: Next 3 barrels wont explode, instead creates a portal which enemies
+      will enter will reappear on the start of the line
+    Rarity: 1
+    Behaviour: {fileID: 0}
+    Icon: {fileID: 21300000, guid: f48be95f25a58da45b998e14c9f6f080, type: 3}
+    Background: {fileID: 21300000, guid: 0fcf7225e881c6944963fee2ad3306f1, type: 3}
+    IsBuildup: 0
+    IsDisabled: 1
+  - Title: Mine Field
+    Description: For next 30 seconds, mines will explode on enemies instead of you
+    Rarity: 0
+    Behaviour: {fileID: 0}
+    Icon: {fileID: 21300000, guid: e75f80d4da5d4c34b9701172a8069ea7, type: 3}
+    Background: {fileID: 21300000, guid: 27e6213de5b30814e8549388f5efbf1b, type: 3}
+    IsBuildup: 0
+    IsDisabled: 1
+  - Title: Fallen Angel
+    Description: When you die, you will respawn with half-full hp and with other
+      perk selection.
+    Rarity: 2
+    Behaviour: {fileID: 11400000, guid: f3c2289c4b02ea8448adeef146350cdd, type: 2}
+    Icon: {fileID: 21300000, guid: bdf1ec1a825b5c349842829717c4536b, type: 3}
+    Background: {fileID: 21300000, guid: 28528ba462510414e94ddc879c4dd00f, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Nano Injection
+    Description: Increase attack speed by 2%.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: d29dfff4b298946428e4964234f66127, type: 2}
+    Icon: {fileID: 21300000, guid: c6fdd01b57ee73942ac0b3d98034e744, type: 3}
+    Background: {fileID: 21300000, guid: c81b852d0c8c33f4198604f02b59d708, type: 3}
+    IsBuildup: 1
+    IsDisabled: 0
+  - Title: Adrenaline Boost
+    Description: Increase critical chance with all weapons by 4%.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: 9e838067e7e0b5547afbd6439dc1a0eb, type: 2}
+    Icon: {fileID: 21300000, guid: 03ce01b8b31333c44921f60e3b35b75d, type: 3}
+    Background: {fileID: 21300000, guid: e35ec2a9ef7434d498f5aefd5d3da3c1, type: 3}
+    IsBuildup: 1
+    IsDisabled: 0
+  - Title: Heartless
+    Description: Spawn multiple hearts in next few seconds to heal yourself.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: f719577bdaefa9a4b9eed1d087a3d4cc, type: 2}
+    Icon: {fileID: 21300000, guid: c4a7c69c40fc60141b0ab05b88290ac5, type: 3}
+    Background: {fileID: 21300000, guid: 52ef554e02bb14744947b08848c3dac8, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Insta Kill
+    Description: Slightly Increase a chance to instantly kill an enemy. Not working
+      on bosses.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: d8e67bd8435ea7843a8776146a93fde2, type: 2}
+    Icon: {fileID: 21300000, guid: fef6da7798a1c644b99cfa6d6ba60a8c, type: 3}
+    Background: {fileID: 21300000, guid: 54c41a72f9e351e4da46e09804171509, type: 3}
+    IsBuildup: 1
+    IsDisabled: 0
+  - Title: Energy Injection
+    Description: Permanently reduce cooldown of shield by 2 seconds.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: 92ebe182236e63644ba05d52ab9a1416, type: 2}
+    Icon: {fileID: 21300000, guid: b264553f0ab57cc458d6eec739064289, type: 3}
+    Background: {fileID: 21300000, guid: a657212bb278db7429e0d9b20160b2af, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Rocketier
+    Description: Every 5 seconds shoot rocket at random target. Stacking of perk
+      will increase rocket's damage.
+    Rarity: 1
+    Behaviour: {fileID: 0}
+    Icon: {fileID: 0}
+    Background: {fileID: 0}
+    IsBuildup: 0
+    IsDisabled: 1
+  - Title: Hunger
+    Description: Increase your max HP by 4%.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: cac443af4920950478e7581ba8176195, type: 2}
+    Icon: {fileID: 21300000, guid: 70701feefd544b84d8562def60141c21, type: 3}
+    Background: {fileID: 21300000, guid: c868df14da368ed469935fb8a00c5f43, type: 3}
+    IsBuildup: 1
+    IsDisabled: 0
+  - Title: Grenadier
+    Description: Each barrel destroyed in next 30 seconds will contribute to your
+      grenade energy that can be released at your location and set the line aflame.
+    Rarity: 2
+    Behaviour: {fileID: 0}
+    Icon: {fileID: 0}
+    Background: {fileID: 0}
+    IsBuildup: 0
+    IsDisabled: 1
+  - Title: Dodge
+    Description: Increase chance to dodge any damage.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: b8198ac4fa432c4449ac814c9399fab9, type: 2}
+    Icon: {fileID: 21300000, guid: a03ea384a8052de43963e1a1a813e3de, type: 3}
+    Background: {fileID: 21300000, guid: dc6fe28d934c7684189a734de5077495, type: 3}
+    IsBuildup: 1
+    IsDisabled: 0
+  - Title: Scrapper
+    Description: Increase chance of enemies dropping the shield energy to replenish
+      your armor.
+    Rarity: 1
+    Behaviour: {fileID: 11400000, guid: 5974d9da66f3f574bae31cfb7f50c07a, type: 2}
+    Icon: {fileID: 21300000, guid: f627a2e9fe2e6c44ea63f2079389cdd2, type: 3}
+    Background: {fileID: 21300000, guid: 096fffd982a10a24ea523af1c6df5190, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0
+  - Title: Lock and Load
+    Description: Increase time you can keep weapon powerups by 2 seconds.
+    Rarity: 0
+    Behaviour: {fileID: 11400000, guid: c7d01ba18a36b3b4b90bd39e061c4069, type: 2}
+    Icon: {fileID: 21300000, guid: 723e58810d4582940bf20671c4088867, type: 3}
+    Background: {fileID: 21300000, guid: 3ae708a92bbe1f348b3f8468f3be7cde, type: 3}
+    IsBuildup: 0
+    IsDisabled: 0

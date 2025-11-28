@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 956198357aee9614dbee7076ceb30ef7, type: 3}
+  m_Name: HeartlessPerk
+  m_EditorClassIdentifier: 
+  Id: 11
+  IsPassive: 0
+  Duration:
+    migratedVersion: 
+    currentCryptoKey: 1821743700
+    hiddenValue: 748320084
+    hiddenValueOldByte4:
+      b1: 0
+      b2: 0
+      b3: 0
+      b4: 0
+    inited: 1
+    fakeValue: 7
+    fakeValueActive: 1
+  HeartlessSpawner: {fileID: 3545959775513511252, guid: c54a70709b989ea408be631b08fcadb4,
+    type: 3}

@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8014537353621598815
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1768107751075264098}
+  - component: {fileID: 2175811487187084438}
+  m_Layer: 0
+  m_Name: PlayerProfile
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1768107751075264098
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8014537353621598815}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.937147, y: -1.8102324, z: -0.0092327595}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2175811487187084438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8014537353621598815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5410ba29d6579134abe7165371b60595, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPersistant: 1
+  walletAddress: 
+  IsUserValid: 0
+  IsUserStaker: 0
+  IsUserFarmer: 0
+  NftHeroes: {fileID: 11400000, guid: 3fc590e67dd02e345a110ee95d098e12, type: 2}
+  NftWeapons: {fileID: 11400000, guid: 1c70265a8f88d0c47a7f27f58c6ce0d3, type: 2}
+  NftHandler:
+    fractionAbilities:
+    - Fraction: 0
+      Config: {fileID: 11400000, guid: daaa29d8f5ab8e3448678c6c2fc3b6b8, type: 2}
+    - Fraction: 1
+      Config: {fileID: 11400000, guid: 6e7e34d9d7661c146bf5e37dcef67729, type: 2}
+    - Fraction: 2
+      Config: {fileID: 11400000, guid: 57a36e3e32a5ce64abe9abaf4a7eec80, type: 2}
+    otherAbilities:
+    - {fileID: 11400000, guid: 0f664f7145b99bb4c85c2b729c04620e, type: 2}
+    - {fileID: 11400000, guid: ad43e9c0f6628774bbb70f11a17b7bad, type: 2}
+    - {fileID: 11400000, guid: 870c4fe2b8898db4d8f72415d2f82b6f, type: 2}
+    - {fileID: 11400000, guid: 1ee274781f6f9c449a857e33b4710ecd, type: 2}
+    - {fileID: 11400000, guid: f4059a265f94c4f4984d30c5607660d8, type: 2}
+    - {fileID: 11400000, guid: ccf8e2c7b35119348a4ad64224ebc108, type: 2}
+    - {fileID: 11400000, guid: 3ffe9e126697e3848aefff6d98d1260a, type: 2}
+    - {fileID: 11400000, guid: 4fced617d844f734d879b196d91a8df7, type: 2}
+    - {fileID: 11400000, guid: 6fd374ef03384e74b9f17607a71eb657, type: 2}
+    - {fileID: 11400000, guid: ecc49d9d80c6f8546ba2651754ed11c0, type: 2}
+    - {fileID: 11400000, guid: 932bb1211f77f474ab0e792ae47c7ea9, type: 2}
+  EqHero: 
+  EqWeapon: 

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c83e4a42248fb04daa9522cff9541a7, type: 3}
+  m_Name: ReneAPICreds
+  m_EditorClassIdentifier: 
+  APIKey: 504bf650-6115-44fb-82f1-977754b5cc41
+  PrivateKey: MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCx+Q1N69ieg4r9Q8QrsLElkky+6CMlCGSi0UEdOHfwPsFVaL/3UXAvZV5y24GiLQlU07kCzv2pYxhXdZvWglbHIIUlrLqmPrU8535RjjMbbHXtPUIwlL9nLcSc6zBPbWi6xEL79bUFvbZ3ZOj3SPt8eGFwfElAYolDC6hlgaOeGLVZ//OmGVry+pVfXLOg8w1sW1g7OZ7AaxmCDqGCSWsZSwuC1yloOKPXX6o+5co+MyKkFU6XrwqwJz9TMp2RJvmfwp+262Kac3/apR8lEa3FbGWXcQYVU/Hk+DvPyQ2w6c6bqwb51zRlKTzvVLZQ8zx7BPwoag9JeivC15shy9aJAgMBAAECggEACNrcJVoccUiYuACw6D6Wlci5bk80/nD0NuCj9Xz7hLXOnz4CvR6tbwJDaIIQ6V2FxxVwsVnUp6KhUaqtmgbqo+YzkbwOHlrk4Bahg5PIaa8kD+16F1ozSsItc+REx1LpgM9miMxBGTvG8hpQeAtGzfrcWEEq0NwGOdKA6qoAVsuM5QW4g7gG3SEaIGqiU69MttJqDewytAfT05/X+sTatWe8Qsv2gmQyGdaM9owrkichOKpdfYLCOqjRiQEcQJtgpWVuaLFaN7oP+HBf9wXM7T1munpolx/YBk+yFHQWB+arNy9Fxuu4Nct4TjvXzVI4HEHF/HdePHcIVxDY5yCugQKBgQD7oboUiN7H4ONVOmJ39rXljKPteR/DEMyD/xjOhmTY/BaKZA4nEVbFDOXVSllMzpoH5DkHJBB5yz23yye++ep9CETPa8SOZp4koNEfK8nBUo8j7lUDHUrhpk/qpBcFYOkC59rwK9jlKqQuDZlv/vBuQhf8nJUOLvi9jUQv2u8hwQKBgQC1D/qJ6ptFqumOuyVQ0WK1/HrqXl/C0d3pxpU1wn7sGtqtKV3MyaWsdrG/CxwdKGnU/XvRYg2PRYO09o2HSmyS0+YC2A5INrderiHtnE4IHsE7J1yUj+/ZphidJ/4R+F7rZHrZsH5jNUjkbm25XPsi+a0Dc+/02XqEcHuI9JPWyQKBgD3d0HNWB3gbKal9tlIKXUR35KHxQsbh7XaSlJXKYycaK6yQ1w3x7GR8PFHJetUwgpxoF0FTM53OQ3lZwIbqySU+kDRzKZtdTYpx45iHWo5mbv0Fju86F3wNON7WwzY2UnO9b43XKfeGGWGdRFlN0+034M/h65/WGp/4CIi/ikXBAoGAX1IILe9Ky0SNLM0tefyhoPlIpHYGqAPgdiBLkT/Rne8NTLhIX3WRONhL/y2UIW2TOcQxGSwrw09vZSefnqf5vNq9bqXb7vyPUNMPnY36LqAyTjgMr1GPjd+5eZMCWOeO4RHG8y/NeeElfMz+CuX+eI1FHlo864RK0cp93r4TzrECgYAcLOruSHtPVkwgw3+O8aFZRe0O/eO32KnnVFl59q+YaCyXeYcRYuS7WEIbXDfGKCelmLaqlOHdmqXSbnXGu7CbuhUYSkleyhmzzCAF5faIBkkeIIbOAbfH6RM1fW4j6+a4AX5uNGZYkj/PB5vg+m6RVkYg0TXQmKp+I+oCCmew5A==
+  AuthToken: 
