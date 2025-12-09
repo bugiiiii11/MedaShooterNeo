@@ -23,10 +23,13 @@ public class UIInventory : Singleton<UIInventory>
     public byte ColumnCount = 5;
     public RectTransform Container;
     public TMPro.TextMeshProUGUI TitleText, GetNewText;
+    public TMPro.TextMeshProUGUI HeaderTitleText; // Header title at top of window
     public UIStats Stats;
 
     public Image GetNewImage;
     public Sprite GetNewHero, GetNewWeapon;
+    public Sprite ShieldSprite; // Bright shield sprite (shown when user owns NFT Land)
+    public Sprite StakingTechSprite; // "Staking Tech" sprite (shown when user doesn't own NFT Land)
 
     public GameObject HeroIconPrefab, WeaponIconPrefab, SpaceFillerPrefab, SelectYourHeroPrefab, SelectYourWeaponPrefab, StakingAbility, FarmingAbility, ArrowDown;
 
@@ -36,6 +39,31 @@ public class UIInventory : Singleton<UIInventory>
     {
         // load sprites
         LoadSprites();
+
+        // Initialize StakingAbility with grey shield (default state until land ticket check completes)
+        InitializeStakingAbilityAsGreyShield();
+    }
+
+    /// <summary>
+    /// Shows the StakingAbility button with "Staking Tech" sprite by default.
+    /// The sprite will be swapped to bright shield if user owns NFT Land after the API check completes.
+    /// </summary>
+    public void InitializeStakingAbilityAsGreyShield()
+    {
+        if (StakingAbility != null)
+        {
+            StakingAbility.SetActive(true);
+            var shieldImage = StakingAbility.GetComponent<Image>();
+            if (shieldImage != null)
+            {
+                // Show "Staking Tech" sprite by default (user doesn't own NFT Land)
+                if (StakingTechSprite != null)
+                {
+                    shieldImage.sprite = StakingTechSprite;
+                }
+                shieldImage.color = Color.white; // Full brightness, sprite itself shows the "inactive" state
+            }
+        }
     }
 
     private List<Sprite> allIcons;
@@ -157,7 +185,8 @@ public class UIInventory : Singleton<UIInventory>
         {
             Debug.LogWarning("🦸 WARNING: No heroes found to display");
             ClearScrollView();
-            TitleText.text = "Heroes";
+            TitleText.text = "NFT HEROES";
+            if (HeaderTitleText != null) HeaderTitleText.text = "NFT HEROES";
             ArrowDown.SetActive(true);
             PopulatedBy = PopulationType.Heroes;
         }
@@ -176,7 +205,8 @@ public class UIInventory : Singleton<UIInventory>
         {
             Debug.LogWarning("⚔️ WARNING: No weapons found to display");
             ClearScrollView();
-            TitleText.text = "Weapons";
+            TitleText.text = "NFT WEAPONS";
+            if (HeaderTitleText != null) HeaderTitleText.text = "NFT WEAPONS";
             ArrowDown.SetActive(true);
             PopulatedBy = PopulationType.Weapons;
         }
@@ -257,13 +287,15 @@ public class UIInventory : Singleton<UIInventory>
         var firstNft = nfts.First();
         if (firstNft is NftHero)
         {
-            TitleText.text = "Heroes";
+            TitleText.text = "NFT HEROES";
+            if (HeaderTitleText != null) HeaderTitleText.text = "NFT HEROES";
             PopulateHeroes(nfts);
             PopulatedBy = PopulationType.Heroes;
         }
         else if (firstNft is NftWeapon)
         {
-            TitleText.text = "Weapons";
+            TitleText.text = "NFT WEAPONS";
+            if (HeaderTitleText != null) HeaderTitleText.text = "NFT WEAPONS";
             PopulateWeapons(nfts);
             PopulatedBy = PopulationType.Weapons;
         }

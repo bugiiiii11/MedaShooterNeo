@@ -31,6 +31,7 @@ public class UINftHero : MonoBehaviour, IUiReferencable
 
     public virtual void Clicked()
     {
+        Debug.Log($"🦸 UINftHero.Clicked() - Nft: {Nft?.Name ?? "null"}, Type: {Nft?.GetType().Name ?? "null"}");
         UINftPreview.instance.Display(Nft, this);
     }
 

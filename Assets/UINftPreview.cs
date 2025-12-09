@@ -19,6 +19,7 @@ public class UINftPreview : Singleton<UINftPreview>
 {
     public TextSpriteState InvokeEquipState, AlreadyEquippedState;
     public TextMeshProUGUI ChooseNftMainTitle, ChooseNftMainTransition, ChooseYourNftScroll;
+    public TextMeshProUGUI WindowHeaderTitle; // The visible header title at top of window
     public UINftInfo HeroNftInfo;
     public Image EquipButton;
     public GameObject SelectIconPrefab, SelectIconWeaponPrefab;
@@ -96,21 +97,28 @@ public class UINftPreview : Singleton<UINftPreview>
     {
         if (!shouldEquipHero)
         {
-            // weapons is current
+            // heroes view is current
             ChooseYourNftScroll.text = "Select your hero";
-            ChooseNftMainTitle.text = "NFT Heroes";
-            ChooseNftMainTransition.text = "NFT Weapons";
+            if (ChooseNftMainTitle != null) ChooseNftMainTitle.text = "NFT HEROES";
+            if (ChooseNftMainTransition != null) ChooseNftMainTransition.text = "NFT Weapons";
+            // Update window header title
+            if (WindowHeaderTitle != null) WindowHeaderTitle.text = "NFT HEROES";
         }
         else
         {
+            // weapons view is current
             ChooseYourNftScroll.text = "Select your weapon";
-            ChooseNftMainTitle.text = "NFT Weapons";
-            ChooseNftMainTransition.text = "NFT Heroes";
+            if (ChooseNftMainTitle != null) ChooseNftMainTitle.text = "NFT WEAPONS";
+            if (ChooseNftMainTransition != null) ChooseNftMainTransition.text = "NFT Heroes";
+            // Update window header title
+            if (WindowHeaderTitle != null) WindowHeaderTitle.text = "NFT WEAPONS";
         }
     }
 
     public void DisplayWeapons()
     {
+        Debug.Log($"⚔️ DisplayWeapons() called - shouldEquipHero before: {shouldEquipHero}");
+
         AdjustTexts(true);
 
         MidPart.SetActive(false);
@@ -127,12 +135,15 @@ public class UINftPreview : Singleton<UINftPreview>
         }
 
         shouldEquipHero = false;
+        Debug.Log($"⚔️ DisplayWeapons() - shouldEquipHero set to: {shouldEquipHero}");
     }
 
     public void DisplayHeroes()
     {
+        Debug.Log($"🦸 DisplayHeroes() called - shouldEquipHero before: {shouldEquipHero}");
+
         AdjustTexts(false);
-        
+
         MidPart.SetActive(false);
         HeroesPart.SetActive(true);
 
@@ -148,6 +159,7 @@ public class UINftPreview : Singleton<UINftPreview>
         }
 
         shouldEquipHero = true;
+        Debug.Log($"🦸 DisplayHeroes() - shouldEquipHero set to: {shouldEquipHero}");
     }
 
     public void HideHeroes()
@@ -162,7 +174,10 @@ public class UINftPreview : Singleton<UINftPreview>
 
     public void Equip()
     {
+        Debug.Log($"🎮 Equip() called - shouldEquipHero: {shouldEquipHero}, SelectedHero: {SelectedHero?.Name ?? "null"}, SelectedWeapon: {SelectedWeapon?.Name ?? "null"}");
+
         bool unequip = EquipButton.sprite == AlreadyEquippedState.Image;
+        Debug.Log($"🎮 Equip() - unequip mode: {unequip}");
 
         // determine what to equip
         if(shouldEquipHero)
@@ -244,8 +259,12 @@ public class UINftPreview : Singleton<UINftPreview>
 
     public bool EquipSelectedWeapon()
     {
+        Debug.Log($"⚔️ EquipSelectedWeapon() called - SelectedWeapon: {SelectedWeapon?.Name ?? "NULL"}");
         if (SelectedWeapon == null)
+        {
+            Debug.LogWarning("⚔️ EquipSelectedWeapon() - FAILED: SelectedWeapon is null!");
             return false;
+        }
 
         PlayerProfileInfo.instance.EquippedWeapon = SelectedWeapon;
 
@@ -278,8 +297,12 @@ public class UINftPreview : Singleton<UINftPreview>
 
     public bool EquipSelectedHero()
     {
+        Debug.Log($"🦸 EquipSelectedHero() called - SelectedHero: {SelectedHero?.Name ?? "NULL"}");
         if (SelectedHero == null)
+        {
+            Debug.LogWarning("🦸 EquipSelectedHero() - FAILED: SelectedHero is null!");
             return false;
+        }
 
         PlayerProfileInfo.instance.EquippedHero = SelectedHero;
 
@@ -316,11 +339,14 @@ public class UINftPreview : Singleton<UINftPreview>
 
     internal void Display(INft nft, IUiReferencable sceneReference)
     {
+        Debug.Log($"🎯 Display() called with nft: {nft?.Name ?? "null"}, type: {nft?.GetType().Name ?? "null"}");
+
         HeroNftInfo.Setup(nft);
 
         if (nft is NftHero hero)
         {
             SelectedHero = hero;
+            Debug.Log($"🦸 Display() - Set SelectedHero to: {hero.Name}");
             // display stats changes
             var heroStats = SelectedHero?.ConvertToBoostedStats();
             var weapStats = (PlayerProfileInfo.instance.EquippedWeapon as NftWeapon)?.ConvertToBoostedStats();
@@ -329,6 +355,7 @@ public class UINftPreview : Singleton<UINftPreview>
         else if (nft is NftWeapon weapon)
         {
             SelectedWeapon = weapon;
+            Debug.Log($"⚔️ Display() - Set SelectedWeapon to: {weapon.Name}");
 
             var heroStats = (PlayerProfileInfo.instance.EquippedHero as NftHero)?.ConvertToBoostedStats();
             var weapStats = SelectedWeapon?.ConvertToBoostedStats();

@@ -20,7 +20,8 @@ public abstract class BasicBoss : DamageReceiver
     public virtual void Initialize(EnemySpawner spawner)
     {
         this.spawner = spawner;
-        UINumbersHandler.instance.SetBossInfo(true);
+        int bossPoints = UIBossInfo.CalculateBossPoints(spawner.waveNumber);
+        UINumbersHandler.instance.SetBossInfo(true, bossPoints);
         // stop parallax
         BackgroundResolver.Pause(true);
         // stop powerups

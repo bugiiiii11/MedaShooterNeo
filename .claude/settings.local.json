@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

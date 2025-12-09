@@ -51,11 +51,11 @@ public class MissingNftNotification : MonoBehaviour
         switch (id)
         {
             case "buy_shield":
-                Show("Get Your shield right now!", "Get far away with a shield during your battle journey! You have to stake your TECH tokens in Staking pool.", Shield, "Start Staking", "https://cryptomeda.tech/staking");
+                Show("Get Your shield ability!", "Obtain a shield ability during your battle journey! You have to own NFT Land in your wallet.", Shield, "Get NFT Land", "https://cryptomeda.tech/marketplace");
                 break;
 
             case "buy_firstperk":
-                Show("Get starting perk!", "Get far away with a starting perk chosen on the start of the game! You have to be part of ETH/TECH Farming pool.", ChoosePerk, "Start Farming", "https://cryptomeda.tech/staking");
+                Show("Get starting perk!", "Choose a starting perk on the start of the game! You have to own Meda tokens in your wallet.", ChoosePerk, "Get Meda Tokens", "https://cryptomeda.tech/");
                 break;
         }    
     }

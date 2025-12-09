@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using ElRaccoone.Tweens;
 using CodeStage.AntiCheat.ObscuredTypes;
 
@@ -11,6 +12,9 @@ public class OhShitButtonActivator : MonoBehaviour, IAbility
     public TMPro.TextMeshProUGUI CountingText;
     public AbilityConfig AbilityConfig;
     public GameObject ShotObject;
+
+    [Header("Icon Display")]
+    public Image AbilityIcon;
 
     /*public GameObject ShieldObject;
     public ShieldCounter ShieldCounter;
@@ -31,6 +35,25 @@ public class OhShitButtonActivator : MonoBehaviour, IAbility
         AbilityConfig.ShotObject = ShotObject;
         AbilityConfig.CountingText = CountingText;
         AbilityConfig.ShieldCounter = ShieldCounter;
+
+        // Set the ability icon if available
+        SetIcon();
+    }
+
+    /// <summary>
+    /// Sets the ability icon from the AbilityConfig
+    /// </summary>
+    public void SetIcon()
+    {
+        if (AbilityIcon != null && AbilityConfig != null && AbilityConfig.Icon != null)
+        {
+            AbilityIcon.sprite = AbilityConfig.Icon;
+            Debug.Log($"🛡️ Set ability icon for: {AbilityConfig.AbilityName}");
+        }
+        else if (AbilityIcon == null)
+        {
+            Debug.LogWarning($"🛡️ AbilityIcon Image component not assigned for: {AbilityConfig?.AbilityName ?? "Unknown"}");
+        }
     }
 
     public virtual void Activate()

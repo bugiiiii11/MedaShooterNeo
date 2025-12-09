@@ -37,6 +37,21 @@ public class DifficultyScaling : Singleton<DifficultyScaling>
     }
 
     public static float PlayerDamageFactor(int wave) => Mathf.Pow(wave, 3 / 2.3f);
-    public static float EnemyDamageFactor(int wave) => Mathf.Pow(wave, 3 / 2.02f);
+
+    public static float EnemyDamageFactor(int wave)
+    {
+        float baseFactor = Mathf.Pow(wave, 3 / 2.02f);
+
+        // After wave 30, enemies get progressively stronger
+        if (wave > 30)
+        {
+            // Additional 5% increase per wave after 30
+            float bonusMultiplier = 1f + (wave - 30) * 0.05f;
+            return baseFactor * bonusMultiplier;
+        }
+
+        return baseFactor;
+    }
+
     public static float PlayerCritFactor(int wave) => Mathf.Pow(wave, 3 / 2.4f);
 }

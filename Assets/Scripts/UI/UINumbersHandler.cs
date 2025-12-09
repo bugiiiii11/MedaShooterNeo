@@ -94,10 +94,13 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
         killingSpreeText.color = killingSpreeGradient.Evaluate( (percentage*1.0f) / max);
     }
 
-    public void SetBossInfo(bool show)
+    public void SetBossInfo(bool show, int bossPoints = 0)
     {
         if(show)
+        {
             bossInfo.SetValue(1);
+            bossInfo.SetBossPoints(bossPoints);
+        }
 
         var animator = GetComponent<Animator>();
 

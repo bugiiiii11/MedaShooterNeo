@@ -45,8 +45,14 @@ public class MinibossBase : BasicBoss
     {
         GameEffectsPool.SpawnNormalExplosion(_transform.position, 1.5f);
 
+        // Calculate points based on wave number:
+        // Wave 15 = 1000, Wave 20 = 2000, Wave 25 = 3000, etc.
+        int waveNumber = GameManager.instance.EnemySpawner.waveNumber + 1;
+        int minibossIndex = (waveNumber - 10) / 5; // Wave 15 = 1, Wave 20 = 2, Wave 25 = 3, etc.
+        int rewardPoints = minibossIndex * 1000;
+
         // add score but ignore multiplier..so we wont get values like 250 * 3
-        var scoreEvent = new RewardScoreEvent(enemyScriptableObject.RewardPoints);
+        var scoreEvent = new RewardScoreEvent(rewardPoints);
         scoreEvent.AllowMultiplier = false;
         GameManager.instance.EventManager.Dispatch(scoreEvent);
         Destroy(transform.parent.gameObject);

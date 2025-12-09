@@ -13,6 +13,8 @@ public class PlayerProfileInfo : Singleton<PlayerProfileInfo>
     public bool IsUserValid = false;
     public bool IsUserStaker = false;
     public bool IsUserFarmer = false;
+    public bool IsLandTicketOwner = false;
+    public long NftLandCount = 0; // Total staked amount for shield duration calculation
 
     public InventoryConfig NftHeroes;
     public InventoryConfig NftWeapons;

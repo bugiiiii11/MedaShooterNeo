@@ -191,7 +191,7 @@ MonoBehaviour:
         AdditionalData:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
-      RewardPoints: 1000
+      RewardPoints: 500
       ProbabilityInWave: 1
   - Index: 3
     IsBoss: 0

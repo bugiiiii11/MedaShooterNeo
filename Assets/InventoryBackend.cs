@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using Cryptomeda.Minigames.BackendComs;
 using System;
 using Cryptomeda.NFT.Json;
@@ -10,6 +11,9 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 public class InventoryBackend : MonoBehaviour
 {
+    // NFT Land Ticket contract address on Polygon
+    private const string LAND_TICKET_CONTRACT = "0xAAE02c81133d865D543Df02b1e458de2279C4a5b";
+
     public static Dictionary<string, string> WeaponNames = new Dictionary<string, string>
     {
         { "11", "Gladiator's Greatsword" },
@@ -50,7 +54,8 @@ public class InventoryBackend : MonoBehaviour
             if (string.IsNullOrWhiteSpace(addr))
             {
                 // addr = "0x32A7C95DC89D5AB912522337Fc0DB673F32514B5"; // Test wallet
-                addr = "0xA5e82D9C3d80B4dDB93766874A3c13c19eb3Da54"; // Test wallet
+                 addr = "0xA5e82D9C3d80B4dDB93766874A3c13c19eb3Da54"; // Test wallet
+                // addr = "0x9A87D7a9A537C4eBCA4442036Bd20Dc14821DE90"; // Test wallet
                 PlayerProfileInfo.instance.WalletAddress = addr;
                 Debug.Log($"🔧 EDITOR: Using test wallet address: {addr}");
             }
@@ -113,32 +118,45 @@ public class InventoryBackend : MonoBehaviour
         GetData<NftInventory>(RestfulEndpoint.UserNfts, address, OnReceivedNfts);
         GetData<StakingInfo>(RestfulEndpoint.Staking, address, (data) =>
         {
-            if (data != null && data.Standard != null && data.Standard.CurrentlyStaked.HasValue && data.Liquidity != null && data.Liquidity.CurrentlyStaked.HasValue)
+            Debug.Log($"🎫 Staking data received: {(data != null ? "valid" : "null")}");
+
+            if (data != null)
             {
-                PlayerProfileInfo.instance.IsUserStaker = data.Standard.CurrentlyStaked > 0 || data.Liquidity?.CurrentlyStaked > 0;
-                PlayerProfileInfo.instance.IsUserFarmer = data.Liquidity?.CurrentlyStaked > 0;
+                long standardStaked = data.Standard?.CurrentlyStaked ?? 0;
+                long liquidityStaked = data.Liquidity?.CurrentlyStaked ?? 0;
+                long totalStaked = standardStaked + liquidityStaked;
 
-                if (PlayerProfileInfo.instance.IsUserStaker)
-                {
-                    UIInventory.instance.StakingAbility.SetActive(true);
-                }
-                else
-                {
-                    UIInventory.instance.StakingAbility.SetActive(false);
-                }
+                Debug.Log($"🎫 Standard staked: {standardStaked}, Liquidity staked: {liquidityStaked}, Total: {totalStaked}");
 
-                if (PlayerProfileInfo.instance.IsUserFarmer)
+                PlayerProfileInfo.instance.IsUserStaker = totalStaked > 0;
+                PlayerProfileInfo.instance.IsUserFarmer = liquidityStaked > 0;
+                PlayerProfileInfo.instance.NftLandCount = totalStaked;
+
+                // NFT Land ownership is determined by staking data
+                // If user has any staked amount > 0, they own NFT Land
+                bool hasNftLand = totalStaked > 0;
+                PlayerProfileInfo.instance.IsLandTicketOwner = hasNftLand;
+
+                Debug.Log($"🎫 NFT Land ownership result: IsOwner = {hasNftLand}, Count = {totalStaked}");
+
+                // Update shield sprite based on NFT Land ownership
+                UpdateShieldSprite(hasNftLand);
+
+                // Notify AbilitySwitcher that land ticket check is complete (with shield duration)
+                NotifyLandTicketCheckComplete(hasNftLand);
+
+                // Update farming ability visibility
+                if (UIInventory.instance != null && UIInventory.instance.FarmingAbility != null)
                 {
-                    UIInventory.instance.FarmingAbility.SetActive(true);
-                }
-                else
-                {
-                    UIInventory.instance.FarmingAbility.SetActive(false);
+                    UIInventory.instance.FarmingAbility.SetActive(PlayerProfileInfo.instance.IsUserFarmer);
                 }
             }
             else
             {
-                UIInventory.instance.StakingAbility.SetActive(false);
+                Debug.LogWarning("🎫 Staking data is null - defaulting to no NFT Land");
+                PlayerProfileInfo.instance.IsLandTicketOwner = false;
+                PlayerProfileInfo.instance.NftLandCount = 0;
+                UpdateShieldSprite(false);
             }
         });
         GetData<NftWeaponInventory[]>(RestfulEndpoint.UserWeapons, address, OnReceivedWeapons);
@@ -448,4 +466,249 @@ public class InventoryBackend : MonoBehaviour
             callback(default);
         }
     }
+
+    #region NFT Land Ticket Check
+
+    /// <summary>
+    /// Check if wallet owns any NFT Land Tickets using Polygon RPC
+    /// Contract: 0xAAE02c81133d865D543Df02b1e458de2279C4a5b
+    /// </summary>
+    public void CheckLandTicketOwnership(string walletAddress)
+    {
+        if (string.IsNullOrEmpty(walletAddress))
+        {
+            Debug.LogWarning("🎫 Cannot check land ticket: wallet address is empty");
+            PlayerProfileInfo.instance.IsLandTicketOwner = false;
+            return;
+        }
+
+        StartCoroutine(CheckLandTicketBalanceCoroutine(walletAddress));
+    }
+
+    private IEnumerator CheckLandTicketBalanceCoroutine(string walletAddress)
+    {
+        Debug.Log($"🎫 Checking NFT Land Ticket ownership for: {walletAddress}");
+
+        // Use Polygon RPC to call balanceOf on the ERC-721 contract
+        // balanceOf(address) function selector: 0x70a08231
+        string paddedAddress = walletAddress.ToLower().Replace("0x", "").PadLeft(64, '0');
+        string data = "0x70a08231" + paddedAddress;
+
+        // JSON-RPC request body
+        var rpcRequest = new
+        {
+            jsonrpc = "2.0",
+            method = "eth_call",
+            @params = new object[]
+            {
+                new { to = LAND_TICKET_CONTRACT, data = data },
+                "latest"
+            },
+            id = 1
+        };
+
+        string jsonBody = JsonConvert.SerializeObject(rpcRequest);
+
+        // Use public Polygon RPC endpoint
+        string polygonRpc = "https://polygon-rpc.com";
+
+        using var request = new UnityWebRequest(polygonRpc, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.timeout = 15;
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            try
+            {
+                var response = JsonConvert.DeserializeObject<RpcResponse>(request.downloadHandler.text);
+                if (response != null && !string.IsNullOrEmpty(response.result))
+                {
+                    // Parse hex result to get balance
+                    string hexBalance = response.result;
+                    Debug.Log($"🎫 Raw hex balance response: {hexBalance}");
+
+                    bool hasBalance = false;
+
+                    if (hexBalance.StartsWith("0x"))
+                    {
+                        // Remove 0x prefix and leading zeros
+                        string hexValue = hexBalance.Substring(2).TrimStart('0');
+
+                        // If empty after trimming, balance is 0
+                        if (string.IsNullOrEmpty(hexValue))
+                        {
+                            hasBalance = false;
+                            Debug.Log("🎫 Balance is 0 (empty hex value)");
+                        }
+                        else
+                        {
+                            // Any non-zero value means they own at least one NFT
+                            hasBalance = true;
+                            Debug.Log($"🎫 Non-zero balance detected: 0x{hexValue}");
+                        }
+                    }
+
+                    PlayerProfileInfo.instance.IsLandTicketOwner = hasBalance;
+                    Debug.Log($"🎫 Land Ticket ownership result: IsOwner = {PlayerProfileInfo.instance.IsLandTicketOwner}");
+
+                    // Update UI based on land ticket ownership (for shield ability)
+                    // Show bright shield sprite if user owns NFT Land, "Staking Tech" sprite otherwise
+                    if (UIInventory.instance != null)
+                    {
+                        UIInventory.instance.StakingAbility.SetActive(true);
+                        var shieldImage = UIInventory.instance.StakingAbility.GetComponent<UnityEngine.UI.Image>();
+                        if (shieldImage != null)
+                        {
+                            // Swap sprite based on NFT Land ownership
+                            if (PlayerProfileInfo.instance.IsLandTicketOwner)
+                            {
+                                // User owns NFT Land - show bright shield sprite
+                                if (UIInventory.instance.ShieldSprite != null)
+                                {
+                                    shieldImage.sprite = UIInventory.instance.ShieldSprite;
+                                }
+                            }
+                            else
+                            {
+                                // User doesn't own NFT Land - show "Staking Tech" sprite
+                                if (UIInventory.instance.StakingTechSprite != null)
+                                {
+                                    shieldImage.sprite = UIInventory.instance.StakingTechSprite;
+                                }
+                            }
+                            shieldImage.color = Color.white; // Always full brightness
+                        }
+                    }
+
+                    // Notify AbilitySwitcher that land ticket check is complete
+                    NotifyLandTicketCheckComplete(hasBalance);
+                }
+                else
+                {
+                    Debug.LogWarning($"🎫 Invalid RPC response: {request.downloadHandler.text}");
+                    PlayerProfileInfo.instance.IsLandTicketOwner = false;
+                    SetStakingAbilityGreyed();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"🎫 Error parsing land ticket response: {e.Message}");
+                PlayerProfileInfo.instance.IsLandTicketOwner = false;
+                SetStakingAbilityGreyed();
+            }
+        }
+        else
+        {
+            Debug.LogError($"🎫 Failed to check land ticket: {request.error}");
+            PlayerProfileInfo.instance.IsLandTicketOwner = false;
+            SetStakingAbilityGreyed();
+        }
+    }
+
+    [Serializable]
+    private class RpcResponse
+    {
+        public string jsonrpc;
+        public int id;
+        public string result;
+        public RpcError error;
+    }
+
+    [Serializable]
+    private class RpcError
+    {
+        public int code;
+        public string message;
+    }
+
+    /// <summary>
+    /// Updates the shield button sprite based on NFT Land ownership
+    /// </summary>
+    private void UpdateShieldSprite(bool hasNftLand)
+    {
+        if (UIInventory.instance != null && UIInventory.instance.StakingAbility != null)
+        {
+            UIInventory.instance.StakingAbility.SetActive(true);
+            var shieldImage = UIInventory.instance.StakingAbility.GetComponent<UnityEngine.UI.Image>();
+            if (shieldImage != null)
+            {
+                if (hasNftLand)
+                {
+                    // User owns NFT Land - show blue shield sprite
+                    if (UIInventory.instance.ShieldSprite != null)
+                    {
+                        shieldImage.sprite = UIInventory.instance.ShieldSprite;
+                        Debug.Log("🛡️ Shield sprite set to BLUE (user owns NFT Land)");
+                    }
+                }
+                else
+                {
+                    // User doesn't own NFT Land - show grey shield sprite
+                    if (UIInventory.instance.StakingTechSprite != null)
+                    {
+                        shieldImage.sprite = UIInventory.instance.StakingTechSprite;
+                        Debug.Log("🛡️ Shield sprite set to GREY (user doesn't own NFT Land)");
+                    }
+                }
+                shieldImage.color = Color.white; // Full brightness
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper to show staking ability with "Staking Tech" sprite (user doesn't own NFT Land)
+    /// </summary>
+    private void SetStakingAbilityGreyed()
+    {
+        UpdateShieldSprite(false);
+    }
+
+    /// <summary>
+    /// Notifies AbilitySwitcher when land ticket check completes (works across scenes)
+    /// </summary>
+    private void NotifyLandTicketCheckComplete(bool isOwner)
+    {
+        Debug.Log($"🎫 Notifying land ticket check complete: isOwner = {isOwner}");
+
+        // If AbilitySwitcher exists (we're in gameplay scene), enable shield immediately
+        if (AbilitySwitcher.Instance != null && isOwner)
+        {
+            Debug.Log("🎫 AbilitySwitcher found, enabling shield ability now");
+            AbilitySwitcher.Instance.EnableShieldAbility();
+        }
+
+        // Also invoke the static event for any other listeners
+        OnLandTicketCheckComplete?.Invoke(isOwner);
+    }
+
+    /// <summary>
+    /// Static event that fires when land ticket ownership check completes.
+    /// Subscribe to this in AbilitySwitcher to handle async completion.
+    /// </summary>
+    public static event Action<bool> OnLandTicketCheckComplete;
+
+    /// <summary>
+    /// Calculates shield duration based on NFT Land count
+    /// 1-4: 7 seconds, 5-9: 8 seconds, 10-14: 9 seconds, 15+: 10 seconds
+    /// </summary>
+    public static float GetShieldDuration(long nftLandCount)
+    {
+        if (nftLandCount >= 15)
+            return 10f;
+        else if (nftLandCount >= 10)
+            return 9f;
+        else if (nftLandCount >= 5)
+            return 8f;
+        else if (nftLandCount >= 1)
+            return 7f;
+        else
+            return 7f; // Default
+    }
+
+    #endregion
 }

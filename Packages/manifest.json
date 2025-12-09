@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v8.0.1",
     "com.reneverse.services": "file:../rene-sdk-unity-1.0.1",
     "com.unity.2d.animation": "7.1.1",
     "com.unity.2d.pixel-perfect": "5.0.3",

@@ -31769,13 +31769,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 554e32a9ba938c043802867402ddfeab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   ShieldObject: {fileID: 507252629}
   ShieldCounter: {fileID: 1227510928}
   CountingText: {fileID: 660919477}
   AbilityConfig: {fileID: 11400000, guid: 870c4fe2b8898db4d8f72415d2f82b6f, type: 2}
   ShotObject: {fileID: 0}
+  AbilityIcon: {fileID: 1109075951}
 --- !u!225 &1109075955
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -51401,7 +51402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 171c5b7107b932041b2554139365e97a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BoundaryX: {x: -9, y: 0}
+  BoundaryX: {x: -9, y: 4.5}
   speedX: 3.3
   speedY: 3.7
   BoundaryRenderer: {fileID: 620841464}
@@ -51739,15 +51740,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5677410f85c7bf844a2699183ecf398d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   Buttons:
   - {fileID: 1530613221}
   - {fileID: 1887264963}
   - {fileID: 1264930637}
   - {fileID: 1109075954}
+  AbilityControllers: []
   WeaponButton: {fileID: 246897155}
   ContentForButtons: {fileID: 28281589}
+  ForceEnableShieldInEditor: 1
 --- !u!1 &1764356785
 GameObject:
   m_ObjectHideFlags: 0
