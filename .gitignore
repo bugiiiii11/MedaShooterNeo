@@ -68,4 +68,8 @@ crashlytics-build.properties
 .DS_Store
 
 # Windows
-Thumbs.dbnul
+Thumbs.db
+nul
+
+# Claude Code settings (personal)
+.claude/settings.local.json
