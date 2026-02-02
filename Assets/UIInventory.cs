@@ -31,7 +31,13 @@ public class UIInventory : Singleton<UIInventory>
     public Sprite ShieldSprite; // Bright shield sprite (shown when user owns NFT Land)
     public Sprite StakingTechSprite; // "Staking Tech" sprite (shown when user doesn't own NFT Land)
 
+    // Combat Boost indicator sprites
+    public Sprite CombatBoostActiveSprite; // Active boost sprite (bright/glowing)
+    public Sprite CombatBoostInactiveSprite; // Inactive boost sprite (grey/dimmed)
+
     public GameObject HeroIconPrefab, WeaponIconPrefab, SpaceFillerPrefab, SelectYourHeroPrefab, SelectYourWeaponPrefab, StakingAbility, FarmingAbility, ArrowDown;
+
+    public GameObject CombatBoostIndicator; // UI element showing combat boost status
 
     public PopulationType PopulatedBy = PopulationType.Heroes;
 
@@ -42,6 +48,9 @@ public class UIInventory : Singleton<UIInventory>
 
         // Initialize StakingAbility with grey shield (default state until land ticket check completes)
         InitializeStakingAbilityAsGreyShield();
+
+        // Initialize Combat Boost Indicator (inactive by default)
+        InitializeCombatBoostIndicator();
     }
 
     /// <summary>
@@ -63,6 +72,74 @@ public class UIInventory : Singleton<UIInventory>
                 }
                 shieldImage.color = Color.white; // Full brightness, sprite itself shows the "inactive" state
             }
+        }
+    }
+
+    /// <summary>
+    /// Initializes the Combat Boost Indicator with inactive sprite by default.
+    /// Will be updated when boost status is received from backend.
+    /// </summary>
+    public void InitializeCombatBoostIndicator()
+    {
+        if (CombatBoostIndicator != null)
+        {
+            CombatBoostIndicator.SetActive(true);
+            UpdateCombatBoostIndicator(false);
+            Debug.Log("💊 Combat Boost Indicator initialized (inactive state)");
+        }
+        else
+        {
+            Debug.LogWarning("💊 CombatBoostIndicator GameObject is not assigned in UIInventory!");
+        }
+    }
+
+    /// <summary>
+    /// Updates the Combat Boost Indicator based on boost status.
+    /// Shows active sprite (bright) if boost is active, inactive sprite (grey) otherwise.
+    /// </summary>
+    public void UpdateCombatBoostIndicator(bool hasActiveBoost)
+    {
+        if (CombatBoostIndicator == null)
+        {
+            Debug.LogWarning("💊 Cannot update Combat Boost Indicator: GameObject is null");
+            return;
+        }
+
+        var boostImage = CombatBoostIndicator.GetComponent<Image>();
+        if (boostImage != null)
+        {
+            if (hasActiveBoost)
+            {
+                // Show active sprite (bright/glowing)
+                if (CombatBoostActiveSprite != null)
+                {
+                    boostImage.sprite = CombatBoostActiveSprite;
+                    boostImage.color = Color.white;
+                    Debug.Log("💊 Combat Boost Indicator: ACTIVE (boost enabled)");
+                }
+                else
+                {
+                    Debug.LogWarning("💊 CombatBoostActiveSprite is not assigned!");
+                }
+            }
+            else
+            {
+                // Show inactive sprite (grey/dimmed)
+                if (CombatBoostInactiveSprite != null)
+                {
+                    boostImage.sprite = CombatBoostInactiveSprite;
+                    boostImage.color = Color.white;
+                    Debug.Log("💊 Combat Boost Indicator: INACTIVE (no boost)");
+                }
+                else
+                {
+                    Debug.LogWarning("💊 CombatBoostInactiveSprite is not assigned!");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("💊 CombatBoostIndicator has no Image component!");
         }
     }
 

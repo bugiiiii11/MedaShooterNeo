@@ -9,7 +9,10 @@
       "Bash(xargs:*)",
       "Bash(git add:*)",
       "Bash(dir:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git push:*)",
+      "Bash(findstr:*)",
+      "Bash(convert:*)"
     ],
     "deny": [],
     "ask": []

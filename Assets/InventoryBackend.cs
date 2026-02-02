@@ -223,6 +223,12 @@ public class InventoryBackend : MonoBehaviour
                 PlayerProfileInfo.instance.ActiveCombatBoost = boostData.Boost;
                 PlayerProfileInfo.instance.CombatBoostEffects = boostData.Boost.Effects;
 
+                // Update UI indicator to show active boost
+                if (UIInventory.instance != null)
+                {
+                    UIInventory.instance.UpdateCombatBoostIndicator(true);
+                }
+
                 // Note: Boost effects are applied in PlayerMovement.Start()
                 // when weapons are initialized. If the player is already in-game,
                 // effects won't apply until next game start.
@@ -249,6 +255,13 @@ public class InventoryBackend : MonoBehaviour
         PlayerProfileInfo.instance.HasActiveCombatBoost = false;
         PlayerProfileInfo.instance.ActiveCombatBoost = null;
         PlayerProfileInfo.instance.CombatBoostEffects = null;
+
+        // Update UI indicator to show inactive boost
+        if (UIInventory.instance != null)
+        {
+            UIInventory.instance.UpdateCombatBoostIndicator(false);
+        }
+
         Debug.Log("💊 Boost effects removed");
     }
 
