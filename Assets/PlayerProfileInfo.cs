@@ -20,6 +20,11 @@ public class PlayerProfileInfo : Singleton<PlayerProfileInfo>
     public InventoryConfig NftWeapons;
     public List<BoostPackage> BoostPackages = new List<BoostPackage>();
 
+    // Combat Boost (time-limited boosts from backend)
+    public bool HasActiveCombatBoost = false;
+    public CombatBoost ActiveCombatBoost = null;
+    public BoostEffects CombatBoostEffects = null;
+
     private INft equippedHero;
     public INft EquippedHero
     {

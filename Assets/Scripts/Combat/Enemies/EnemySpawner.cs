@@ -7,6 +7,7 @@ public class EnemySpawner : TimeCompute
 {
     public EnemyWavesProfile Profile;
     public EnemyWavesProfile UnendingProfile;
+    public EnemyWavesProfile Level2Profile;
 
     public Transform BossSpawnPoint, MinesHolder;
     public List<Transform> SpawnPositions => LevelInfo.instance.SpawnPositions;
@@ -38,12 +39,26 @@ public class EnemySpawner : TimeCompute
     public int StartAtWave = 0;
 #endif
 
-    private void Start() 
+    private void Start()
     {
         ComputeTime();
         AllEnemies = new GameObject("Enemies").transform;
         currentEnemyCount = 0;
         spawnedEnemiesCount = 0;
+
+        // Check for Level 2 and swap profile if needed
+        if (PlayerPrefs.GetInt("IsLevel2", 0) == 1)
+        {
+            if (Level2Profile != null)
+            {
+                Profile = Level2Profile;
+                Debug.Log("🎮 Level 2 activated - using Level2Profile");
+            }
+
+            // Clear the flag after reading
+            PlayerPrefs.SetInt("IsLevel2", 0);
+            PlayerPrefs.Save();
+        }
 
         InvokeRepeating(nameof(CheckForMissingEnemies), 5, 5);
 

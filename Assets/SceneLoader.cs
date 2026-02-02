@@ -9,4 +9,11 @@ public class SceneLoader : MonoBehaviour
     {
         SceneManager.LoadScene(level);
     }
+
+    public void LoadLevel2(int level)
+    {
+        PlayerPrefs.SetInt("IsLevel2", 1);
+        PlayerPrefs.Save();
+        SceneManager.LoadScene(level);
+    }
 }

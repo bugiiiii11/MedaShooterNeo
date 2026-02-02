@@ -88,7 +88,7 @@ namespace Cryptomeda.Minigames.BackendComs
                         newUrl = $"{railwayBase}/api/v1/stake/get_data/";
                         break;
                     case RestfulEndpoint.BoostPackages:
-                        newUrl = $"{railwayBase}/api/v1/user/active_boost_cards";
+                        newUrl = $"{railwayBase}/api/boosts/active";
                         break;
                     default:
                         continue; // Skip unknown endpoints

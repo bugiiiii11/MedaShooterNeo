@@ -161,6 +161,95 @@ public class InventoryBackend : MonoBehaviour
         });
         GetData<NftWeaponInventory[]>(RestfulEndpoint.UserWeapons, address, OnReceivedWeapons);
         // GetData<List<BoostPackage>>(RestfulEndpoint.BoostPackages, address, OnReceivedBoostPackages);
+
+        // Fetch combat boost status
+        GetActiveCombatBoost(address);
+    }
+
+    /// <summary>
+    /// Fetches active combat boost from backend
+    /// </summary>
+    public void GetActiveCombatBoost(string walletAddress)
+    {
+        if (string.IsNullOrEmpty(walletAddress))
+        {
+            Debug.LogWarning("⚠️ Cannot fetch combat boost: wallet address is empty");
+            return;
+        }
+
+        Debug.Log($"💊 Fetching combat boost for: {walletAddress}");
+
+        RestfulManager.GetByUrlParam(
+            RestfulEndpoint.BoostPackages,
+            $"?address={walletAddress}",
+            OnReceivedCombatBoost
+        );
+    }
+
+    /// <summary>
+    /// Handles the response from /api/boosts/active endpoint
+    /// </summary>
+    private void OnReceivedCombatBoost(Response response)
+    {
+        if (response.Code >= 400)
+        {
+            Debug.LogWarning($"⚠️ Failed to fetch combat boost: {response.Text}");
+            RemoveBoostEffects();
+            return;
+        }
+
+        try
+        {
+            var boostData = JsonConvert.DeserializeObject<CombatBoostResponse>(response.Text);
+
+            if (boostData == null)
+            {
+                Debug.LogWarning("⚠️ Combat boost response is null");
+                RemoveBoostEffects();
+                return;
+            }
+
+            if (boostData.HasActiveBoost && boostData.Boost != null)
+            {
+                Debug.Log($"✅ Active Combat Boost Found!");
+                Debug.Log($"   Type: {boostData.Boost.Type}");
+                Debug.Log($"   Remaining: {boostData.Boost.RemainingSeconds}s ({boostData.Boost.RemainingSeconds / 60} min)");
+                Debug.Log($"   Effects: DMG x{boostData.Boost.Effects.DamageMultiplier}, " +
+                          $"FireRate x{boostData.Boost.Effects.FireRateMultiplier}, " +
+                          $"Crit +{boostData.Boost.Effects.CritBonus * 100}%");
+
+                // Store boost data in PlayerProfileInfo
+                PlayerProfileInfo.instance.HasActiveCombatBoost = true;
+                PlayerProfileInfo.instance.ActiveCombatBoost = boostData.Boost;
+                PlayerProfileInfo.instance.CombatBoostEffects = boostData.Boost.Effects;
+
+                // Note: Boost effects are applied in PlayerMovement.Start()
+                // when weapons are initialized. If the player is already in-game,
+                // effects won't apply until next game start.
+            }
+            else
+            {
+                Debug.Log("ℹ️ No active combat boost");
+                RemoveBoostEffects();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"❌ Error parsing combat boost response: {e.Message}");
+            Debug.LogError($"❌ Response text: {response.Text?.Substring(0, Math.Min(500, response.Text.Length))}");
+            RemoveBoostEffects();
+        }
+    }
+
+    /// <summary>
+    /// Removes boost effects and resets to base stats
+    /// </summary>
+    private void RemoveBoostEffects()
+    {
+        PlayerProfileInfo.instance.HasActiveCombatBoost = false;
+        PlayerProfileInfo.instance.ActiveCombatBoost = null;
+        PlayerProfileInfo.instance.CombatBoostEffects = null;
+        Debug.Log("💊 Boost effects removed");
     }
 
     private void OnReceivedBoostPackages(List<BoostPackage> obj)

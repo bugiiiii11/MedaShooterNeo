@@ -113,6 +113,41 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
+        // Apply Combat Boost effects (time-limited boosts from backend)
+        if (PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.HasActiveCombatBoost)
+        {
+            var boostEffects = PlayerProfileInfo.instance.CombatBoostEffects;
+            if (boostEffects != null)
+            {
+                Debug.Log("💊 Applying Combat Boost effects to weapons:");
+                Debug.Log($"   Damage Multiplier: x{boostEffects.DamageMultiplier}");
+                Debug.Log($"   Fire Rate Multiplier: x{boostEffects.FireRateMultiplier}");
+                Debug.Log($"   Crit Bonus: +{boostEffects.CritBonus * 100}%");
+
+                // Apply to all weapons
+                foreach (var weapon in WeaponController.GetAllWeapons())
+                {
+                    // Damage: multiply by damageMultiplier (e.g., 1.3 = +30% damage)
+                    var originalDamage = weapon.DamageRange;
+                    weapon.DamageRange = new Vector2Int(
+                        Mathf.RoundToInt(weapon.DamageRange.x * boostEffects.DamageMultiplier),
+                        Mathf.RoundToInt(weapon.DamageRange.y * boostEffects.DamageMultiplier)
+                    );
+
+                    // Fire Rate: divide by fireRateMultiplier (lower fire rate = faster shooting)
+                    // fireRateMultiplier of 1.15 means 15% faster, so divide fire rate by 1.15
+                    weapon.FireRate = weapon.FireRate / boostEffects.FireRateMultiplier;
+                    weapon.FireRate = Mathf.Clamp(weapon.FireRate, 0.1f, 5);
+
+                    // Critical Chance: add critBonus (e.g., 0.07 = +7% crit)
+                    weapon.Data.AdditionalData.CriticalChance += boostEffects.CritBonus;
+
+                    Debug.Log($"   ✅ Boosted {weapon.TypeOfWeapon}: Damage {originalDamage} -> {weapon.DamageRange}, " +
+                              $"FireRate {weapon.FireRate:F2}, Crit {weapon.Data.AdditionalData.CriticalChance:F2}");
+                }
+            }
+        }
+
         defaultSpeed = new Vector2(speedX, speedY);
         //weap.Data.AdditionalData.CricitalChanceBonusDamage = BaseStats.CritDamage;
     }
