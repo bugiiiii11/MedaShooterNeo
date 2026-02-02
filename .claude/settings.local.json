@@ -12,7 +12,8 @@
       "Bash(curl:*)",
       "Bash(git push:*)",
       "Bash(findstr:*)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
