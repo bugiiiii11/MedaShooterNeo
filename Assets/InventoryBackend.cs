@@ -111,6 +111,19 @@ public class InventoryBackend : MonoBehaviour
 
         PlayerProfileInfo.instance.BoostPackages = new List<BoostPackage>();
 
+        // 🔧 FIX: Clear combat boost data when fetching new inventory
+        // This prevents stale boost data from previous wallet showing
+        PlayerProfileInfo.instance.HasActiveCombatBoost = false;
+        PlayerProfileInfo.instance.ActiveCombatBoost = null;
+        PlayerProfileInfo.instance.CombatBoostEffects = null;
+
+        // Update UI indicator to inactive immediately (will be updated to active if boost is found)
+        if (UIInventory.instance != null)
+        {
+            UIInventory.instance.UpdateCombatBoostIndicator(false);
+            Debug.Log("💊 Combat boost data cleared for new wallet");
+        }
+
         /*UICardPreview.instance.Unequip();
         UICardPreview.instance.UnequipWeapon();
         UICardPreview.instance.UnequipBoosts();*/
