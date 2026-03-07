@@ -36,7 +36,48 @@ public class CombatBoost
     [JsonProperty("remainingSeconds")]
     public int RemainingSeconds { get; set; }
 
+    // Backend returns effects as a JSON string, not an object
+    // So we need to handle both cases
+    private string _effectsJson;
+
     [JsonProperty("effects")]
+    public object EffectsRaw
+    {
+        get => Effects;
+        set
+        {
+            if (value is string jsonString)
+            {
+                // Backend returned effects as a JSON string - parse it
+                _effectsJson = jsonString;
+                try
+                {
+                    Effects = JsonConvert.DeserializeObject<BoostEffects>(jsonString);
+                    Debug.Log($"💊 Parsed effects from JSON string successfully");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"💊 Failed to parse effects JSON string: {e.Message}");
+                    Effects = new BoostEffects(); // Use defaults
+                }
+            }
+            else if (value != null)
+            {
+                // Try to deserialize as BoostEffects object directly
+                try
+                {
+                    var json = JsonConvert.SerializeObject(value);
+                    Effects = JsonConvert.DeserializeObject<BoostEffects>(json);
+                }
+                catch
+                {
+                    Effects = new BoostEffects();
+                }
+            }
+        }
+    }
+
+    [JsonIgnore]
     public BoostEffects Effects { get; set; }
 }
 

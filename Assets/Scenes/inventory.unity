@@ -7641,8 +7641,12 @@ MonoBehaviour:
   GetNewWeapon: {fileID: -1005799918, guid: fcbb71c74bff54e44962129a196e5377, type: 3}
   ShieldSprite: {fileID: 996944487, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
   StakingTechSprite: {fileID: 31781171, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
-  CombatBoostActiveSprite: {fileID: 0}
-  CombatBoostInactiveSprite: {fileID: 0}
+  CombatBoostActiveSprite: {fileID: 21300000, guid: 26271692c0be3f3458f9c931c46dea83,
+    type: 3}
+  CombatBoostInactiveSprite: {fileID: 21300000, guid: 95af4aeba46a8b346b23cad0b8c0f25c,
+    type: 3}
+  PerkActiveSprite: {fileID: 21300000, guid: 5dce67c0aa9d7cb47b8145ddb5a891bf, type: 3}
+  PerkInactiveSprite: {fileID: 21300000, guid: 6478f587025f9b44091884e36884139c, type: 3}
   HeroIconPrefab: {fileID: 3298283867442105152, guid: 7baecb28a8b40544cad1993a99a0ac95,
     type: 3}
   WeaponIconPrefab: {fileID: 3298283867442105152, guid: aa6a2a4a241f65c448940380d193d45f,
@@ -7654,9 +7658,9 @@ MonoBehaviour:
   SelectYourWeaponPrefab: {fileID: 6033955130925220649, guid: 912a51fd9f97a6c4998ad19faa654b32,
     type: 3}
   StakingAbility: {fileID: 1274290002}
-  FarmingAbility: {fileID: 1027520848}
+  FarmingAbility: {fileID: 1356453650}
   ArrowDown: {fileID: 1316244215}
-  CombatBoostIndicator: {fileID: 0}
+  CombatBoostIndicator: {fileID: 1568433656}
   PopulatedBy: 0
 --- !u!1 &311728875
 GameObject:
@@ -13066,7 +13070,7 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -13107,7 +13111,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -17087,7 +17091,7 @@ RectTransform:
   m_GameObject: {fileID: 1027520848}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1502415, y: 1.1933757, z: 1.1360409}
+  m_LocalScale: {x: 1.150241, y: 1.193376, z: 1.136041}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1356453651}
@@ -17095,7 +17099,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 81.49994, y: 81.500015}
+  m_AnchoredPosition: {x: 81.49994, y: 81.5}
   m_SizeDelta: {x: 125.9301, y: 116.4113}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1027520850
@@ -17114,11 +17118,11 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 300384134, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6478f587025f9b44091884e36884139c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -17155,7 +17159,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -17176,7 +17180,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 1027520850}
+  m_TargetGraphic: {fileID: 0}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
@@ -17627,7 +17631,8 @@ MonoBehaviour:
   MissingWeapon: {fileID: 21300000, guid: 6cf17873bdbe1524fb38111599d8026c, type: 3}
   MissingHero: {fileID: 21300000, guid: 6ac81e11846e49342b9f5e00ec0669ed, type: 3}
   Shield: {fileID: 996944487, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
-  ChoosePerk: {fileID: 300384134, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
+  ChoosePerk: {fileID: -650016185, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
+  CombatBoost: {fileID: 21300000, guid: 26271692c0be3f3458f9c931c46dea83, type: 3}
 --- !u!1 &1080278053
 GameObject:
   m_ObjectHideFlags: 0
@@ -18156,6 +18161,8 @@ MonoBehaviour:
     type: 3}
   CombatBoostInactiveSprite: {fileID: 21300000, guid: 95af4aeba46a8b346b23cad0b8c0f25c,
     type: 3}
+  PerkActiveSprite: {fileID: 0}
+  PerkInactiveSprite: {fileID: 0}
   HeroIconPrefab: {fileID: 3298283867442105152, guid: 7baecb28a8b40544cad1993a99a0ac95,
     type: 3}
   WeaponIconPrefab: {fileID: 3298283867442105152, guid: aa6a2a4a241f65c448940380d193d45f,
@@ -18167,7 +18174,7 @@ MonoBehaviour:
   SelectYourWeaponPrefab: {fileID: 6033955130925220649, guid: 912a51fd9f97a6c4998ad19faa654b32,
     type: 3}
   StakingAbility: {fileID: 1274290002}
-  FarmingAbility: {fileID: 0}
+  FarmingAbility: {fileID: 1356453650}
   ArrowDown: {fileID: 1316244215}
   CombatBoostIndicator: {fileID: 1568433656}
   PopulatedBy: 0
@@ -20834,7 +20841,7 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -21600,7 +21607,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 626, y: 116}
-  m_SizeDelta: {x: 163.2, y: 163.2}
+  m_SizeDelta: {x: 163.20001, y: 163.19995}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1356453652
 MonoBehaviour:
@@ -21621,7 +21628,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 0
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -21674,11 +21681,11 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -650016185, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6478f587025f9b44091884e36884139c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -22554,7 +22561,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1430805752
 RectTransform:
   m_ObjectHideFlags: 0
@@ -24697,7 +24704,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: buy_firstperk
+          m_StringArgument: buy_boost
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1568433659
@@ -29574,7 +29581,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 300384134, guid: bb01576615bdd7444addd2abd1dfbe8a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 26271692c0be3f3458f9c931c46dea83, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

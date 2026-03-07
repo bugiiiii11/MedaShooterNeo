@@ -114,19 +114,33 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // Apply Combat Boost effects (time-limited boosts from backend)
+        Debug.Log("💊 === COMBAT BOOST CHECK ===");
+        Debug.Log($"💊 PlayerProfileInfo.instance != null: {PlayerProfileInfo.instance != null}");
+        if (PlayerProfileInfo.instance != null)
+        {
+            Debug.Log($"💊 HasActiveCombatBoost: {PlayerProfileInfo.instance.HasActiveCombatBoost}");
+            Debug.Log($"💊 ActiveCombatBoost: {(PlayerProfileInfo.instance.ActiveCombatBoost != null ? "NOT NULL" : "NULL")}");
+            Debug.Log($"💊 CombatBoostEffects: {(PlayerProfileInfo.instance.CombatBoostEffects != null ? "NOT NULL" : "NULL")}");
+        }
+
         if (PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.HasActiveCombatBoost)
         {
             var boostEffects = PlayerProfileInfo.instance.CombatBoostEffects;
             if (boostEffects != null)
             {
-                Debug.Log("💊 Applying Combat Boost effects to weapons:");
+                Debug.Log("💊 ✅ Applying Combat Boost effects to weapons:");
                 Debug.Log($"   Damage Multiplier: x{boostEffects.DamageMultiplier}");
                 Debug.Log($"   Fire Rate Multiplier: x{boostEffects.FireRateMultiplier}");
                 Debug.Log($"   Crit Bonus: +{boostEffects.CritBonus * 100}%");
 
+                var allWeapons = WeaponController.GetAllWeapons();
+                var weaponCount = 0;
+
                 // Apply to all weapons
-                foreach (var weapon in WeaponController.GetAllWeapons())
+                foreach (var weapon in allWeapons)
                 {
+                    weaponCount++;
+
                     // Damage: multiply by damageMultiplier (e.g., 1.3 = +30% damage)
                     var originalDamage = weapon.DamageRange;
                     weapon.DamageRange = new Vector2Int(
@@ -145,7 +159,26 @@ public class PlayerMovement : MonoBehaviour
                     Debug.Log($"   ✅ Boosted {weapon.TypeOfWeapon}: Damage {originalDamage} -> {weapon.DamageRange}, " +
                               $"FireRate {weapon.FireRate:F2}, Crit {weapon.Data.AdditionalData.CriticalChance:F2}");
                 }
+
+                Debug.Log($"💊 ✅ Successfully applied boost to {weaponCount} weapons!");
+
+                // Switch to Zombiechad skin when combat boost is active
+                var avatar = GetComponent<F3DCharacterAvatar>();
+                if (avatar != null)
+                {
+                    avatar.SkinUsed = F3DCharacterAvatar.SkinName.Zombiechad;
+                    avatar.SwitchToChar();
+                    Debug.Log("💊 🎨 Switched player skin to ZOMBIECHAD (boosted)");
+                }
             }
+            else
+            {
+                Debug.LogWarning("💊 ⚠️ HasActiveCombatBoost is true but CombatBoostEffects is NULL!");
+            }
+        }
+        else
+        {
+            Debug.Log("💊 ℹ️ No active combat boost to apply");
         }
 
         defaultSpeed = new Vector2(speedX, speedY);

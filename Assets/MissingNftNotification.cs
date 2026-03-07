@@ -12,10 +12,16 @@ public class MissingNftNotification : MonoBehaviour
     public Image ImageHolder, NormalImage;
     public GameObject Holder;
 
-    public Sprite MissingWeapon, MissingHero, Shield, ChoosePerk;
+    public Sprite MissingWeapon, MissingHero, Shield, ChoosePerk, CombatBoost;
 
     public void Show(string title, string description, Sprite sprite)
     {
+        if (Title == null || Description == null || ImageHolder == null || NormalImage == null || Holder == null || ButtonText == null || ActionButton == null)
+        {
+            Debug.LogError("⚠️ MissingNftNotification.Show() - Missing component references! Please assign all fields in Inspector.");
+            return;
+        }
+
         Title.text = title;
         Description.text = description;
         ImageHolder.sprite = sprite;
@@ -26,12 +32,24 @@ public class MissingNftNotification : MonoBehaviour
 
         Holder.TweenCanvasGroupAlpha(1, 0.5f).SetFrom(0);
 
+        ActionButton.gameObject.SetActive(true);
         ButtonText.text = "Open Marketplace";
         ActionButton.Link = "https://cryptomeda.tech/marketplace";
     }
 
     public void Show(string title, string description, Sprite sprite, string buttonText, string link)
     {
+        if (Title == null || Description == null || NormalImage == null || ImageHolder == null || Holder == null || ButtonText == null || ActionButton == null)
+        {
+            Debug.LogError("⚠️ MissingNftNotification.Show(5 params) - Missing component references! Please assign all fields in Inspector.");
+            return;
+        }
+
+        if (sprite == null)
+        {
+            Debug.LogWarning($"⚠️ MissingNftNotification.Show() - sprite parameter is null for popup: {title}");
+        }
+
         Title.text = title;
         Description.text = description;
         NormalImage.sprite = sprite;
@@ -42,26 +60,68 @@ public class MissingNftNotification : MonoBehaviour
 
         Holder.TweenCanvasGroupAlpha(1, 0.5f).SetFrom(0);
 
-        ButtonText.text = buttonText;
-        ActionButton.Link = link;
+        // Hide button if buttonText is empty, otherwise show it
+        if (string.IsNullOrEmpty(buttonText))
+        {
+            ActionButton.gameObject.SetActive(false);
+        }
+        else
+        {
+            ActionButton.gameObject.SetActive(true);
+            ButtonText.text = buttonText;
+            ActionButton.Link = link;
+        }
     }
 
     public void Show(string id)
     {
+        Debug.Log($"🔔 MissingNftNotification.Show(id) called with: {id}");
+
         switch (id)
         {
             case "buy_shield":
-                Show("Get Your shield ability!", "Obtain a shield ability during your battle journey! You have to own NFT Land in your wallet.", Shield, "Get NFT Land", "https://cryptomeda.tech/marketplace");
+                if (Shield == null)
+                {
+                    Debug.LogError("⚠️ Shield sprite is not assigned in MissingNftNotification Inspector!");
+                    return;
+                }
+                Show("Get Your Shield Ability!", "Own NFT land in your wallet to use shield ability in the game. The more land plots you have, the longer shield duration.", Shield, "", "");
                 break;
 
             case "buy_firstperk":
-                Show("Get starting perk!", "Choose a starting perk on the start of the game! You have to own Meda tokens in your wallet.", ChoosePerk, "Get Meda Tokens", "https://cryptomeda.tech/");
+                Debug.Log("🔔 buy_firstperk case triggered - checking ChoosePerk sprite...");
+                if (ChoosePerk == null)
+                {
+                    Debug.LogError("⚠️ ChoosePerk sprite is not assigned in MissingNftNotification Inspector!");
+                    return;
+                }
+                Debug.Log($"🔔 ChoosePerk sprite is valid: {ChoosePerk.name}, showing popup...");
+                Show("Get starting perk!", "Choose a starting perk on the start of the game! You have to own Meda tokens in your wallet.", ChoosePerk, "", "");
                 break;
-        }    
+
+            case "buy_boost":
+                if (CombatBoost == null)
+                {
+                    Debug.LogError("⚠️ CombatBoost sprite is not assigned in MissingNftNotification Inspector!");
+                    return;
+                }
+                Show("Activate Combat Boosts!", "Activate boosts to enhance player stats in the game. Purchase a boost package to gain damage, fire rate, and critical hit bonuses!", CombatBoost, "Get Boosts", "https://cryptomeda.tech/meda-shooter");
+                break;
+
+            default:
+                Debug.LogWarning($"⚠️ Unknown notification id: {id}");
+                break;
+        }
     }
 
     public void Hide()
     {
+        if (Holder == null)
+        {
+            Debug.LogError("⚠️ MissingNftNotification.Hide() - Holder is null!");
+            return;
+        }
+
         Holder.TweenCanvasGroupAlpha(0, 0.5f).SetFrom(1).SetOnComplete(() =>
         {
             Holder.SetActive(false);

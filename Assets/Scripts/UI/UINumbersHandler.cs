@@ -15,7 +15,7 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
     private Gradient killingSpreeGradient;
 
     [SerializeField]
-    private TMPro.TextMeshProUGUI scoreText, coinsText, killingSpreeText;
+    private TMPro.TextMeshProUGUI scoreText, coinsText, killingSpreeText, waveText;
     [SerializeField]
     private UIBossInfo bossInfo;
 
@@ -42,7 +42,16 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
             }
         });
 
-        killingSpreeText.text = "";
+        SetWave(1);
+        GameManager.instance.EventManager.AddListener<NextWaveEvent>(ev =>
+        {
+            SetWave(ev.NextWave.Index + 1);
+        });
+
+        if (killingSpreeText != null)
+        {
+            killingSpreeText.text = "";
+        }
     }
 
     private void SetCoins(int coinAmount)
@@ -54,6 +63,14 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
             {
                 coinIcon.TweenLocalScale(new Vector3(1f, 1, 1f), 0.15f);
             });
+    }
+
+    private void SetWave(int waveNumber)
+    {
+        if (waveText != null)
+        {
+            waveText.text = waveNumber.ToString();
+        }
     }
 
     public void AddScore(int score)
@@ -84,6 +101,11 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
 
     public void SetKillingSpree(int percentage, int max)
     {
+        if (killingSpreeText == null)
+        {
+            return;
+        }
+
         if(percentage == 0 || max == 0)
         {
             killingSpreeText.text = "";

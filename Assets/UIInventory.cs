@@ -35,6 +35,10 @@ public class UIInventory : Singleton<UIInventory>
     public Sprite CombatBoostActiveSprite; // Active boost sprite (bright/glowing)
     public Sprite CombatBoostInactiveSprite; // Inactive boost sprite (grey/dimmed)
 
+    // Farming Perk indicator sprites
+    public Sprite PerkActiveSprite; // Active perk sprite (user has liquidity staked)
+    public Sprite PerkInactiveSprite; // Inactive perk sprite (user doesn't have liquidity staked)
+
     public GameObject HeroIconPrefab, WeaponIconPrefab, SpaceFillerPrefab, SelectYourHeroPrefab, SelectYourWeaponPrefab, StakingAbility, FarmingAbility, ArrowDown;
 
     public GameObject CombatBoostIndicator; // UI element showing combat boost status
@@ -51,6 +55,9 @@ public class UIInventory : Singleton<UIInventory>
 
         // Initialize Combat Boost Indicator (inactive by default)
         InitializeCombatBoostIndicator();
+
+        // Initialize Farming Perk Indicator (inactive by default)
+        InitializeFarmingPerkIndicator();
     }
 
     /// <summary>
@@ -84,8 +91,33 @@ public class UIInventory : Singleton<UIInventory>
         if (CombatBoostIndicator != null)
         {
             CombatBoostIndicator.SetActive(true);
-            UpdateCombatBoostIndicator(false);
-            Debug.Log("💊 Combat Boost Indicator initialized (inactive state)");
+
+            // Force set inactive sprite immediately
+            var boostImage = CombatBoostIndicator.GetComponent<Image>();
+            if (boostImage != null && CombatBoostInactiveSprite != null)
+            {
+                boostImage.sprite = CombatBoostInactiveSprite;
+                boostImage.color = Color.white;
+                Debug.Log($"💊 InitializeCombatBoostIndicator: Set to INACTIVE sprite");
+            }
+            else
+            {
+                Debug.LogWarning($"💊 InitializeCombatBoostIndicator: boostImage={boostImage != null}, InactiveSprite={CombatBoostInactiveSprite != null}");
+            }
+
+            // Check PlayerProfileInfo boost status and sync with it
+            bool hasBoost = PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.HasActiveCombatBoost;
+            Debug.Log($"💊 InitializeCombatBoostIndicator: PlayerProfileInfo.HasActiveCombatBoost = {hasBoost}");
+
+#if UNITY_EDITOR
+            // Warn if debug boost is enabled in editor
+            if (PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.UseDebugCombatBoost)
+            {
+                Debug.LogWarning($"💊 ⚠️ UseDebugCombatBoost is ENABLED in PlayerProfileInfo! This will show active boost indicator even without real boost data.");
+            }
+#endif
+
+            UpdateCombatBoostIndicator(hasBoost);
         }
         else
         {
@@ -140,6 +172,90 @@ public class UIInventory : Singleton<UIInventory>
         else
         {
             Debug.LogError("💊 CombatBoostIndicator has no Image component!");
+        }
+    }
+
+    /// <summary>
+    /// Initializes the Farming Perk Indicator with inactive sprite by default.
+    /// Will be updated when staking status is received from backend.
+    /// </summary>
+    public void InitializeFarmingPerkIndicator()
+    {
+        if (FarmingAbility != null)
+        {
+            FarmingAbility.SetActive(true);
+
+            // Force set inactive sprite immediately
+            var perkImage = FarmingAbility.GetComponent<Image>();
+            if (perkImage != null && PerkInactiveSprite != null)
+            {
+                perkImage.sprite = PerkInactiveSprite;
+                perkImage.color = Color.white;
+                Debug.Log($"🌾 InitializeFarmingPerkIndicator: Set to INACTIVE sprite");
+            }
+            else
+            {
+                Debug.LogWarning($"🌾 InitializeFarmingPerkIndicator: perkImage={perkImage != null}, InactiveSprite={PerkInactiveSprite != null}");
+            }
+
+            // Check PlayerProfileInfo farmer status and sync with it
+            bool isFarmer = PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.IsUserFarmer;
+            Debug.Log($"🌾 InitializeFarmingPerkIndicator: PlayerProfileInfo.IsUserFarmer = {isFarmer}");
+
+            UpdateFarmingPerkIndicator(isFarmer);
+        }
+        else
+        {
+            Debug.LogWarning("🌾 FarmingAbility GameObject is not assigned in UIInventory!");
+        }
+    }
+
+    /// <summary>
+    /// Updates the Farming Perk indicator sprite based on farmer status
+    /// </summary>
+    public void UpdateFarmingPerkIndicator(bool isFarmer)
+    {
+        if (FarmingAbility == null)
+        {
+            Debug.LogWarning("🌾 Cannot update Farming Perk Indicator: GameObject is null");
+            return;
+        }
+
+        var perkImage = FarmingAbility.GetComponent<Image>();
+        if (perkImage != null)
+        {
+            if (isFarmer)
+            {
+                // Show active sprite (user has liquidity staked)
+                if (PerkActiveSprite != null)
+                {
+                    perkImage.sprite = PerkActiveSprite;
+                    perkImage.color = Color.white;
+                    Debug.Log("🌾 Farming Perk Indicator: ACTIVE (user is farmer)");
+                }
+                else
+                {
+                    Debug.LogWarning("🌾 PerkActiveSprite is not assigned!");
+                }
+            }
+            else
+            {
+                // Show inactive sprite (user doesn't have liquidity staked)
+                if (PerkInactiveSprite != null)
+                {
+                    perkImage.sprite = PerkInactiveSprite;
+                    perkImage.color = Color.white;
+                    Debug.Log("🌾 Farming Perk Indicator: INACTIVE (user is not farmer)");
+                }
+                else
+                {
+                    Debug.LogWarning("🌾 PerkInactiveSprite is not assigned!");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("🌾 FarmingAbility has no Image component!");
         }
     }
 
@@ -257,6 +373,13 @@ public class UIInventory : Singleton<UIInventory>
         {
             Debug.Log($"🦸 DEBUG: Calling PopulateScrollView with {PlayerProfileInfo.instance.NftHeroes.Nfts.Count} heroes");
             PopulateScrollView(PlayerProfileInfo.instance.NftHeroes.Nfts);
+
+            // Refresh Preview visuals if items are equipped (called after UI is built)
+            if (Preview != null)
+            {
+                Preview.RefreshEquippedVisuals();
+                Debug.Log("🎯 DisplayHeroes: Refreshed Preview visuals");
+            }
         }
         else
         {
@@ -277,6 +400,13 @@ public class UIInventory : Singleton<UIInventory>
         {
             Debug.Log($"⚔️ DEBUG: Calling PopulateScrollView with {PlayerProfileInfo.instance.NftWeapons.Nfts.Count} weapons");
             PopulateScrollView(PlayerProfileInfo.instance.NftWeapons.Nfts);
+
+            // Refresh Preview visuals if items are equipped (called after UI is built)
+            if (Preview != null)
+            {
+                Preview.RefreshEquippedVisuals();
+                Debug.Log("🎯 DisplayWeapons: Refreshed Preview visuals");
+            }
         }
         else
         {

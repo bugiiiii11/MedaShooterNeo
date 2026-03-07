@@ -53,9 +53,9 @@ public class InventoryBackend : MonoBehaviour
 #if UNITY_EDITOR
             if (string.IsNullOrWhiteSpace(addr))
             {
-                // addr = "0x32A7C95DC89D5AB912522337Fc0DB673F32514B5"; // Test wallet
-                 addr = "0xA5e82D9C3d80B4dDB93766874A3c13c19eb3Da54"; // Test wallet
-                // addr = "0x9A87D7a9A537C4eBCA4442036Bd20Dc14821DE90"; // Test wallet
+                 addr = "0x32A7C95DC89D5AB912522337Fc0DB673F32514B5"; // Test wallet Chaos test wallet
+                //addr = "0xA5e82D9C3d80B4dDB93766874A3c13c19eb3Da54"; // Test wallet
+                // addr = "0x605223e48E0AbB4F8c619B3d001FC2a20bF70A77"; // Test wallet
                 PlayerProfileInfo.instance.WalletAddress = addr;
                 Debug.Log($"🔧 EDITOR: Using test wallet address: {addr}");
             }
@@ -158,10 +158,10 @@ public class InventoryBackend : MonoBehaviour
                 // Notify AbilitySwitcher that land ticket check is complete (with shield duration)
                 NotifyLandTicketCheckComplete(hasNftLand);
 
-                // Update farming ability visibility
-                if (UIInventory.instance != null && UIInventory.instance.FarmingAbility != null)
+                // Update farming perk indicator sprite based on farmer status
+                if (UIInventory.instance != null)
                 {
-                    UIInventory.instance.FarmingAbility.SetActive(PlayerProfileInfo.instance.IsUserFarmer);
+                    UIInventory.instance.UpdateFarmingPerkIndicator(PlayerProfileInfo.instance.IsUserFarmer);
                 }
             }
             else
@@ -190,13 +190,17 @@ public class InventoryBackend : MonoBehaviour
             return;
         }
 
-        Debug.Log($"💊 Fetching combat boost for: {walletAddress}");
+        // Construct full URL directly to avoid any URL manipulation issues
+        string baseUrl = "https://swarm-resistance-backend-dev-production.up.railway.app";
+        string fullUrl = $"{baseUrl}/api/boosts/active?address={walletAddress}";
 
-        RestfulManager.GetByUrlParam(
-            RestfulEndpoint.BoostPackages,
-            $"?address={walletAddress}",
-            OnReceivedCombatBoost
-        );
+        Debug.Log($"💊 ========================================");
+        Debug.Log($"💊 FETCHING COMBAT BOOST");
+        Debug.Log($"💊 Wallet: {walletAddress}");
+        Debug.Log($"💊 Full URL: {fullUrl}");
+        Debug.Log($"💊 ========================================");
+
+        RestfulManager.GetFromUrl(fullUrl, OnReceivedCombatBoost);
     }
 
     /// <summary>
@@ -204,32 +208,63 @@ public class InventoryBackend : MonoBehaviour
     /// </summary>
     private void OnReceivedCombatBoost(Response response)
     {
+        Debug.Log($"💊 ========================================");
+        Debug.Log($"💊 COMBAT BOOST RESPONSE RECEIVED");
+        Debug.Log($"💊 Response Code: {response.Code}");
+        Debug.Log($"💊 Response Text Length: {response.Text?.Length ?? 0} chars");
+        Debug.Log($"💊 ========================================");
+
         if (response.Code >= 400)
         {
-            Debug.LogWarning($"⚠️ Failed to fetch combat boost: {response.Text}");
+            Debug.LogError($"💊 ❌ API Error {response.Code}: {response.Text}");
+            Debug.LogError($"💊 This usually means the endpoint returned an error. Check if:");
+            Debug.LogError($"💊 1. The backend is running");
+            Debug.LogError($"💊 2. The URL is correct");
+            Debug.LogError($"💊 3. The wallet address is valid");
             RemoveBoostEffects();
             return;
         }
 
+        if (string.IsNullOrEmpty(response.Text))
+        {
+            Debug.LogError($"💊 ❌ Response text is empty! This should not happen.");
+            RemoveBoostEffects();
+            return;
+        }
+
+        Debug.Log($"💊 Full Response Text: {response.Text}");
+        Debug.Log($"💊 ========================================");
+
         try
         {
+            Debug.Log($"💊 Response Data: {response.Text}");
             var boostData = JsonConvert.DeserializeObject<CombatBoostResponse>(response.Text);
 
             if (boostData == null)
             {
-                Debug.LogWarning("⚠️ Combat boost response is null");
+                Debug.LogWarning("💊 ⚠️ Combat boost response deserialized to null");
                 RemoveBoostEffects();
                 return;
             }
 
+            Debug.Log($"💊 HasActiveBoost: {boostData.HasActiveBoost}");
+
             if (boostData.HasActiveBoost && boostData.Boost != null)
             {
-                Debug.Log($"✅ Active Combat Boost Found!");
-                Debug.Log($"   Type: {boostData.Boost.Type}");
-                Debug.Log($"   Remaining: {boostData.Boost.RemainingSeconds}s ({boostData.Boost.RemainingSeconds / 60} min)");
-                Debug.Log($"   Effects: DMG x{boostData.Boost.Effects.DamageMultiplier}, " +
-                          $"FireRate x{boostData.Boost.Effects.FireRateMultiplier}, " +
-                          $"Crit +{boostData.Boost.Effects.CritBonus * 100}%");
+                Debug.Log($"💊 ========================================");
+                Debug.Log($"💊 ✅ ACTIVE COMBAT BOOST DETECTED!");
+                Debug.Log($"💊 ========================================");
+                Debug.Log($"💊   Boost ID: {boostData.Boost.Id}");
+                Debug.Log($"💊   Type: {boostData.Boost.Type}");
+                Debug.Log($"💊   Activated: {boostData.Boost.ActivatedAt}");
+                Debug.Log($"💊   Expires: {boostData.Boost.ExpiresAt}");
+                Debug.Log($"💊   Remaining: {boostData.Boost.RemainingSeconds}s ({boostData.Boost.RemainingSeconds / 60} min)");
+                Debug.Log($"💊 ========================================");
+                Debug.Log($"💊   BOOST EFFECTS:");
+                Debug.Log($"💊   • Damage Multiplier: x{boostData.Boost.Effects.DamageMultiplier} (+{(boostData.Boost.Effects.DamageMultiplier - 1f) * 100}%)");
+                Debug.Log($"💊   • Fire Rate Multiplier: x{boostData.Boost.Effects.FireRateMultiplier} (+{(boostData.Boost.Effects.FireRateMultiplier - 1f) * 100}%)");
+                Debug.Log($"💊   • Crit Bonus: +{boostData.Boost.Effects.CritBonus * 100}%");
+                Debug.Log($"💊 ========================================");
 
                 // Store boost data in PlayerProfileInfo
                 PlayerProfileInfo.instance.HasActiveCombatBoost = true;
@@ -240,7 +275,26 @@ public class InventoryBackend : MonoBehaviour
                 if (UIInventory.instance != null)
                 {
                     UIInventory.instance.UpdateCombatBoostIndicator(true);
+                    Debug.Log("💊 ✅ UI Indicator updated to ACTIVE state");
+
+                    // Refresh stats display to show boosted values in green
+                    if (UIInventory.instance.Stats != null)
+                    {
+                        UIInventory.instance.Stats.RefreshStats();
+                        Debug.Log("💊 ✅ Stats display refreshed with boost effects");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("💊 ⚠️ UIInventory.Stats is NULL - cannot refresh stats display!");
+                        Debug.LogWarning("💊 Make sure the Stats field is assigned in the UIInventory Inspector");
+                    }
                 }
+                else
+                {
+                    Debug.LogWarning("💊 ⚠️ UIInventory.instance is NULL - cannot update UI");
+                }
+
+                Debug.Log($"💊 ✅ Boost data stored in PlayerProfileInfo (will persist to game scene)");
 
                 // Note: Boost effects are applied in PlayerMovement.Start()
                 // when weapons are initialized. If the player is already in-game,
@@ -248,14 +302,31 @@ public class InventoryBackend : MonoBehaviour
             }
             else
             {
-                Debug.Log("ℹ️ No active combat boost");
+                Debug.Log($"💊 ========================================");
+                Debug.Log($"💊 ℹ️ NO ACTIVE COMBAT BOOST");
+                Debug.Log($"💊 This wallet does not have an active boost");
+                Debug.Log($"💊 ========================================");
                 RemoveBoostEffects();
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"❌ Error parsing combat boost response: {e.Message}");
-            Debug.LogError($"❌ Response text: {response.Text?.Substring(0, Math.Min(500, response.Text.Length))}");
+            Debug.LogError($"💊 ========================================");
+            Debug.LogError($"💊 ❌ ERROR PARSING COMBAT BOOST RESPONSE");
+            Debug.LogError($"💊 Error: {e.Message}");
+            Debug.LogError($"💊 Stack: {e.StackTrace}");
+
+            if (response.Text != null)
+            {
+                int maxLength = Math.Min(500, response.Text.Length);
+                Debug.LogError($"💊 Response text (first 500 chars): {response.Text.Substring(0, maxLength)}");
+            }
+            else
+            {
+                Debug.LogError($"💊 Response text: null");
+            }
+
+            Debug.LogError($"💊 ========================================");
             RemoveBoostEffects();
         }
     }
@@ -273,6 +344,17 @@ public class InventoryBackend : MonoBehaviour
         if (UIInventory.instance != null)
         {
             UIInventory.instance.UpdateCombatBoostIndicator(false);
+
+            // Refresh stats display to remove boost effects (remove green color)
+            if (UIInventory.instance.Stats != null)
+            {
+                UIInventory.instance.Stats.RefreshStats();
+                Debug.Log("💊 Stats display refreshed (boost removed)");
+            }
+            else
+            {
+                Debug.LogWarning("💊 ⚠️ UIInventory.Stats is NULL - cannot refresh stats display");
+            }
         }
 
         Debug.Log("💊 Boost effects removed");
@@ -337,6 +419,48 @@ public class InventoryBackend : MonoBehaviour
         {
             Debug.Log("⚔️ DEBUG: Calling UIInventory.instance.DisplayWeapons() from OnReceivedWeapons");
             UIInventory.instance.DisplayWeapons();
+
+            // Auto-equip the best weapon (highest stats) if nothing is equipped
+            if (PlayerProfileInfo.instance.EquippedWeapon == null &&
+                PlayerProfileInfo.instance.NftWeapons.Nfts.Count > 0)
+            {
+                // Find the weapon with the highest total stats (same sorting as UI display)
+                var bestWeapon = PlayerProfileInfo.instance.NftWeapons.Nfts
+                    .Cast<NftWeapon>()
+                    .OrderByDescending(x => x.Sum())
+                    .FirstOrDefault();
+
+                if (bestWeapon != null)
+                {
+                    // Set the equipped weapon data
+                    PlayerProfileInfo.instance.EquippedWeapon = bestWeapon;
+
+                    // Update visual icon using UINftPreview (the actual preview system in inventory scene)
+                    if (UINftPreview.instance != null)
+                    {
+                        UINftPreview.instance.EquippedWeaponImage.gameObject.SetActive(true);
+                        UINftPreview.instance.EquippedWeaponImage.sprite = bestWeapon.Visualization;
+                        Debug.Log($"⚔️ ✅ Auto-equipped BEST weapon: {bestWeapon.Name} (Sum: {bestWeapon.Sum()}) with visual icon");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"⚔️ ⚠️ UINftPreview.instance is NULL, visual icon won't appear");
+                    }
+
+                    UIInventory.instance.PopulateScrollView(PlayerProfileInfo.instance.NftWeapons);
+                }
+            }
+            else
+            {
+                Debug.Log($"⚔️ Auto-equip skipped: Already equipped or no weapons available");
+            }
+
+            // Refresh stats to ensure boost effects are shown (in case boost data arrived before weapons)
+            if (UIInventory.instance.Stats != null)
+            {
+                UIInventory.instance.Stats.RefreshStats();
+                Debug.Log("💊 Stats refreshed after weapons loaded (ensures boost effects are displayed)");
+            }
         }
         else
         {
@@ -532,6 +656,45 @@ public class InventoryBackend : MonoBehaviour
         {
             Debug.Log("🦸 DEBUG: Calling UIInventory.instance.DisplayHeroes() from NftBuilder");
             UIInventory.instance.DisplayHeroes();
+
+            // Auto-equip the best hero (highest attributes sum) if nothing is equipped
+            if (PlayerProfileInfo.instance.EquippedHero == null &&
+                PlayerProfileInfo.instance.NftHeroes != null &&
+                PlayerProfileInfo.instance.NftHeroes.Nfts.Count > 0)
+            {
+                // Find the hero with the highest total attributes (same sorting as UI display)
+                var bestHero = PlayerProfileInfo.instance.NftHeroes.Nfts
+                    .Cast<NftHero>()
+                    .OrderByDescending(x => x.Attributes.Sum())
+                    .FirstOrDefault();
+
+                if (bestHero != null)
+                {
+                    // Set the equipped hero data
+                    PlayerProfileInfo.instance.EquippedHero = bestHero;
+
+                    // Update visual icon using UINftPreview (the actual preview system in inventory scene)
+                    if (UINftPreview.instance != null)
+                    {
+                        UINftPreview.instance.EquippedHeroImage.gameObject.SetActive(true);
+                        UINftPreview.instance.EquippedHeroImage.sprite = bestHero.Visualization;
+                        Debug.Log($"🦸 ✅ Auto-equipped BEST hero: {bestHero.Name} (Attributes Sum: {bestHero.Attributes.Sum()}) with visual icon");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"🦸 ⚠️ UINftPreview.instance is NULL, visual icon won't appear");
+                    }
+
+                    UIInventory.instance.PopulateScrollView(PlayerProfileInfo.instance.NftHeroes);
+                }
+            }
+
+            // Refresh stats to ensure boost effects are shown (in case boost data arrived before heroes)
+            if (UIInventory.instance.Stats != null)
+            {
+                UIInventory.instance.Stats.RefreshStats();
+                Debug.Log("💊 Stats refreshed after heroes loaded (ensures boost effects are displayed)");
+            }
         }
         else
         {

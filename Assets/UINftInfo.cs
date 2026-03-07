@@ -16,6 +16,18 @@ public class UINftInfo : MonoBehaviour
 
     public void Setup(INft nft)
     {
+        if (nft == null)
+        {
+            Debug.LogError("⚠️ UINftInfo.Setup() - nft is NULL!");
+            return;
+        }
+
+        if (Icon == null || Title == null || Fraction == null || Description == null)
+        {
+            Debug.LogError("⚠️ UINftInfo.Setup() - Missing component references! Please assign all fields in Inspector.");
+            return;
+        }
+
         Icon.sprite = nft.Visualization;
         //Fraction.text =
         Title.text = nft.Name;
@@ -46,8 +58,23 @@ public class UINftInfo : MonoBehaviour
     private void GenerateWeaponSkills(NftWeapon weap)
     {
         UINftPreview.ClearScrollView(SkillsContent);
+
+        if (SkillsPrefab == null)
+        {
+            Debug.LogError("⚠️ SkillsPrefab is not assigned in UINftInfo Inspector!");
+            return;
+        }
+
+        var abilityDescriptor = PlayerProfileInfo.instance.GetWeaponAbilityDescriptor(WeaponButtonActivator.GetDetieredWeaponName(weap.Name.ToLower()));
+
+        if (abilityDescriptor == null)
+        {
+            Debug.LogWarning($"⚠️ No ability descriptor found for weapon: {weap.Name}");
+            return;
+        }
+
         var obj = Instantiate(SkillsPrefab, SkillsContent).GetComponent<Image>();
-        var ability = Instantiate(PlayerProfileInfo.instance.GetWeaponAbilityDescriptor(WeaponButtonActivator.GetDetieredWeaponName(weap.Name.ToLower())));
+        var ability = Instantiate(abilityDescriptor);
         obj.sprite = ability.Icon;
         ability.AbilityName = weap.Name;
         obj.GetComponentInChildren<TextMeshProUGUI>().text = ability.AbilityName;
@@ -58,7 +85,20 @@ public class UINftInfo : MonoBehaviour
     {
         UINftPreview.ClearScrollView(SkillsContent);
 
+        if (SkillsPrefab == null)
+        {
+            Debug.LogError("⚠️ SkillsPrefab is not assigned in UINftInfo Inspector!");
+            return;
+        }
+
         var heroAbility = PlayerProfileInfo.instance.NftHandler.GetAbilityForFraction(nft.Fraction);
+
+        if (heroAbility == null)
+        {
+            Debug.LogWarning($"⚠️ No ability found for hero fraction: {nft.Fraction}");
+            return;
+        }
+
         var obj = Instantiate(SkillsPrefab, SkillsContent).GetComponent<Image>();
         obj.sprite = heroAbility.Icon;
         obj.GetComponentInChildren<TextMeshProUGUI>().text = heroAbility.AbilityName;

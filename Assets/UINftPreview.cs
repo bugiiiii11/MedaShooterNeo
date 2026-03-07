@@ -341,6 +341,12 @@ public class UINftPreview : Singleton<UINftPreview>
     {
         Debug.Log($"🎯 Display() called with nft: {nft?.Name ?? "null"}, type: {nft?.GetType().Name ?? "null"}");
 
+        if (HeroNftInfo == null)
+        {
+            Debug.LogError("⚠️ HeroNftInfo is not assigned in UINftPreview Inspector!");
+            return;
+        }
+
         HeroNftInfo.Setup(nft);
 
         if (nft is NftHero hero)

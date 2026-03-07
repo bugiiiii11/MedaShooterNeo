@@ -3,7 +3,10 @@
 public class Singleton<Instance> : MonoBehaviour where Instance : Singleton<Instance>
 {
     public static Instance instance;
-    public bool isPersistant;
+
+    [SerializeField]
+    [Tooltip("If true, this object will persist between scene loads using DontDestroyOnLoad")]
+    public bool isPersistant = false;
 
     public virtual void Awake()
     {

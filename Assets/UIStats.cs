@@ -11,6 +11,14 @@ public class UIStats : MonoBehaviour
 
     private void Start()
     {
+        RefreshStats();
+    }
+
+    /// <summary>
+    /// Refreshes the stats display. Call this when boost status changes.
+    /// </summary>
+    public void RefreshStats()
+    {
         WeaponBoostedStats wbs = null;
         HeroBoostedStats hbs = null;
 
@@ -34,6 +42,15 @@ public class UIStats : MonoBehaviour
         float value = 0;
         if (stats != null && PlayerProfileInfo.instance.EquippedHero != null)
             heroAbility = PlayerProfileInfo.instance.NftHandler.GetAbilityForFraction((PlayerProfileInfo.instance.EquippedHero as NftHero).Fraction);
+
+        // Get combat boost effects if active
+        BoostEffects boostEffects = null;
+        bool hasActiveBoost = PlayerProfileInfo.instance != null && PlayerProfileInfo.instance.HasActiveCombatBoost;
+        if (hasActiveBoost)
+        {
+            boostEffects = PlayerProfileInfo.instance.CombatBoostEffects;
+            Debug.Log($"💊 UIStats: Combat boost is active, applying to display");
+        }
 
         if (PlayerProfileInfo.instance.EquippedHero != null && PlayerProfileInfo.instance.EquippedWeapon != null)
         {
@@ -79,26 +96,56 @@ public class UIStats : MonoBehaviour
 
         if (PlayerProfileInfo.instance.EquippedWeapon != null)
         {
-            value = PlayerBaseStats.Damage.y*1.4f* weapStats.DamageFactor;
+            // === DAMAGE ===
+            float baseDamage = PlayerBaseStats.Damage.y * 1.4f;
+            float weaponDamageBonus = baseDamage * weapStats.DamageFactor;
+            float totalDamage = baseDamage + weaponDamageBonus;
+
+            // Apply combat boost to damage (multiply by damageMultiplier)
+            if (hasActiveBoost && boostEffects != null)
+            {
+                totalDamage *= boostEffects.DamageMultiplier;
+            }
+
+            value = totalDamage - baseDamage;
             if (value < 0.2f)
-                sb.Append(Mathf.CeilToInt(PlayerBaseStats.Damage.y*1.4f + value)).Append("\n");
+                sb.Append(Mathf.CeilToInt(totalDamage)).Append("\n");
             else
-                sb.Append("<color=green>").Append(Mathf.CeilToInt(PlayerBaseStats.Damage.y * 1.4f + value)).Append("</color>\n");
+                sb.Append("<color=green>").Append(Mathf.CeilToInt(totalDamage)).Append("</color>\n");
 
-            // crit chance
-            value = weapStats.CriticalChanceIncrease;
-            if (value == 0)
-                sb.Append(Mathf.RoundToInt((PlayerBaseStats.CritChancePerc + value) * 100)).Append("%\n");
-            else
-                sb.Append("<color=green>").Append( Mathf.RoundToInt((PlayerBaseStats.CritChancePerc + value)*100)).Append("%</color>\n");
+            // === CRITICAL CHANCE ===
+            float baseCrit = PlayerBaseStats.CritChancePerc;
+            float weaponCritBonus = weapStats.CriticalChanceIncrease;
+            float totalCrit = baseCrit + weaponCritBonus;
 
-            // firerate
-            value = Mathf.RoundToInt(60f / (PlayerBaseStats.FireRatePerc - weapStats.FireRateIncrease)) - Mathf.RoundToInt(60f / PlayerBaseStats.FireRatePerc);
-            var current = Mathf.RoundToInt(60f / (PlayerBaseStats.FireRatePerc - weapStats.FireRateIncrease)) - Mathf.RoundToInt(60f / PlayerBaseStats.FireRatePerc);
-            if (value == 0)
-                sb.Append(Mathf.RoundToInt(60f / PlayerBaseStats.FireRatePerc)+current).Append("\n");
+            // Apply combat boost to crit (add critBonus)
+            if (hasActiveBoost && boostEffects != null)
+            {
+                totalCrit += boostEffects.CritBonus;
+            }
+
+            value = totalCrit - baseCrit;
+            if (value < 0.001f)
+                sb.Append(Mathf.RoundToInt(totalCrit * 100)).Append("%\n");
             else
-                sb.Append("<color=green>").Append(Mathf.RoundToInt(60f / PlayerBaseStats.FireRatePerc)+current).Append("</color>\n");
+                sb.Append("<color=green>").Append(Mathf.RoundToInt(totalCrit * 100)).Append("%</color>\n");
+
+            // === FIRE RATE ===
+            float baseFireRateValue = 60f / PlayerBaseStats.FireRatePerc;
+            float weaponFireRate = 60f / (PlayerBaseStats.FireRatePerc - weapStats.FireRateIncrease);
+            float totalFireRate = weaponFireRate;
+
+            // Apply combat boost to fire rate (multiply by fireRateMultiplier)
+            if (hasActiveBoost && boostEffects != null)
+            {
+                totalFireRate *= boostEffects.FireRateMultiplier;
+            }
+
+            value = totalFireRate - baseFireRateValue;
+            if (value < 0.2f)
+                sb.Append(Mathf.RoundToInt(totalFireRate)).Append("\n");
+            else
+                sb.Append("<color=green>").Append(Mathf.RoundToInt(totalFireRate)).Append("</color>\n");
 
 
             //sb.Append(Mathf.RoundToInt(damageX)).Append("-").Append(Mathf.RoundToInt(damageY)).Append("<color=green> + ").Append(Mathf.CeilToInt(damageY * weapStats.DamageFactor)).Append("</color>\n")//#############
@@ -109,9 +156,29 @@ public class UIStats : MonoBehaviour
         }
         else
         {
-            sb.Append(Mathf.RoundToInt(damageY)).Append("\n")//#############
-            .Append(PlayerBaseStats.CritChancePerc*100).Append("%\n")//#############
-            .Append(Mathf.RoundToInt(60f /PlayerBaseStats.FireRatePerc)).Append("\n");
+            // No equipped weapon - show base stats with combat boost if active
+            float baseDamage = Mathf.RoundToInt(damageY);
+            float baseCrit = PlayerBaseStats.CritChancePerc;
+            float baseFireRate = 60f / PlayerBaseStats.FireRatePerc;
+
+            // Apply combat boost if active
+            if (hasActiveBoost && boostEffects != null)
+            {
+                float boostedDamage = baseDamage * boostEffects.DamageMultiplier;
+                float boostedCrit = baseCrit + boostEffects.CritBonus;
+                float boostedFireRate = baseFireRate * boostEffects.FireRateMultiplier;
+
+                sb.Append("<color=green>").Append(Mathf.RoundToInt(boostedDamage)).Append("</color>\n");
+                sb.Append("<color=green>").Append(Mathf.RoundToInt(boostedCrit * 100)).Append("%</color>\n");
+                sb.Append("<color=green>").Append(Mathf.RoundToInt(boostedFireRate)).Append("</color>\n");
+            }
+            else
+            {
+                // No boost - show base stats
+                sb.Append(Mathf.RoundToInt(baseDamage)).Append("\n");
+                sb.Append(Mathf.RoundToInt(baseCrit * 100)).Append("%\n");
+                sb.Append(Mathf.RoundToInt(baseFireRate)).Append("\n");
+            }
         }
 
         StatsNumbersText.text = sb.ToString();
