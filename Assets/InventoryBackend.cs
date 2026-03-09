@@ -191,7 +191,7 @@ public class InventoryBackend : MonoBehaviour
         }
 
         // Construct full URL directly to avoid any URL manipulation issues
-        string baseUrl = "https://swarm-resistance-backend-dev-production.up.railway.app";
+        string baseUrl = "https://swarm-resistance-backend-production.up.railway.app";
         string fullUrl = $"{baseUrl}/api/boosts/active?address={walletAddress}";
 
         Debug.Log($"💊 ========================================");
