@@ -73,3 +73,6 @@ nul
 
 # Claude Code settings (personal)
 .claude/settings.local.json
+
+# WebGL builds (go into fe/public/unity-builds/, not here)
+WebGLBuilds/
