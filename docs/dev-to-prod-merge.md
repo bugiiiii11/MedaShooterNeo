@@ -77,17 +77,57 @@ git -C ms push origin dev
 
 ### 7. Build and deploy WebGL
 
-1. Open `ms/` in Unity (on `main` branch)
-2. Build WebGL
-3. Copy build output to `fe/public/unity-builds/medashooter/Build/`
-4. Commit and push `fe`:
+One command, straight into the frontend tree. `-msEnv` must match the branch (`prod` on `main`);
+the build refuses to start if the committed backend URL disagrees with it.
+
 ```bash
-git -C fe add public/unity-builds/
+"C:/Program Files/Unity/Hub/Editor/2021.3.45f2/Editor/Unity.exe" \
+  -batchmode -quit -nographics \
+  -projectPath "<repo>/MedaShooterNeo" \
+  -executeMethod BuildScript.BuildWebGLDeploy \
+  -msEnv prod -msVersion v6 \
+  -msOut "<repo>/frontend/public/unity-builds/medashooter" \
+  -logFile build.log
+```
+
+Then commit and push `fe`:
+```bash
+git -C fe add public/unity-builds/ public/medashooter-frame.html vercel.json
 git -C fe commit -m "feat: Update WebGL build to vX.Y.Z"
 git -C fe push origin main
 ```
 
-Vercel auto-deploys on push.
+Vercel auto-deploys on push. Requires a signed-in Unity licence -- batchmode fails with
+"No valid Unity Editor license found" if the Hub account is not active. GUI fallback: the
+same logic is on the Editor `Build/` menu.
+
+#### Version suffix contract -- NOT optional
+
+`vercel.json` serves the data and wasm files with `max-age=31536000`. Reusing a filename strands
+returning players on a stale half of the build, and it will not reproduce on your machine because
+your cache is cold. **Bump `-msVersion` on every single build that changes anything.**
+
+`BuildWebGLDeploy` renames all four outputs for you:
+
+| Unity emits | Deployed as |
+|-------------|-------------|
+| `medashooter.data.gz` | `medashooter.data.<ver>.gzip` |
+| `medashooter.wasm.gz` | `medashooter.wasm.<ver>.gzip` |
+| `medashooter.framework.js.gz` | `medashooter.framework.<ver>.js.gzip` |
+| `medashooter.loader.js` | `medashooter.loader.<ver>.js` |
+
+Then update, in the same commit:
+- `fe/public/medashooter-frame.html` -- the four `*Url` fields **and** the hardcoded `script.src`
+  that loads the loader.
+- `fe/vercel.json` -- the four matching routes. Compressed files need
+  `Content-Encoding: gzip`; the loader does not.
+
+#### Binary patching is retired (S199)
+
+Builds before v5 were hand-patched with UnityPy (`ms_data_v4_patch.py`) to blank dead
+`cryptomeda.tech` links and deactivate a ReneVerse ad panel. **All of that now lives in source** --
+see `ms2-pre-coding-checklist.md` Section B. Do not resurrect the patch pipeline; if a dead link
+reappears, fix it in the scene or in `OpenLinkButton`'s URL constants and rebuild.
 
 ## Verification
 

@@ -20,7 +20,8 @@ public class AbilityVideoPlayer : MonoBehaviour
     {
         gameObject.SetActive(true);
         AbilityConfig heroAbility = null;
-        LinkButton.Link = "https://cryptomeda.tech/marketplace";
+        LinkButton.gameObject.SetActive(true);
+        LinkButton.Link = OpenLinkButton.MarketplaceUrl;
         LinkButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Go To Market";
         switch (id)
         {
@@ -45,8 +46,9 @@ public class AbilityVideoPlayer : MonoBehaviour
                 Video.url = "https://dui1zywca5dp5.cloudfront.net/videos/snap.mp4";
                 break;
             case 3:
-                LinkButton.Link = "https://cryptomeda.tech/staking";
-                LinkButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Stake";
+                // Shield is land-gated now, not staking-gated, and cryptomeda.tech/staking
+                // is dead -- no destination to send the player to, so drop the button.
+                LinkButton.gameObject.SetActive(false);
 
                 TitleText.text = "Shield";
                 Description.text = "Generate a shield that will absorb all damage for 7 seconds.";

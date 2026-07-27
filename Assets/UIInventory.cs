@@ -523,7 +523,7 @@ public class UIInventory : Singleton<UIInventory>
 
         try
         {
-            GetNewText.transform.parent.Find("redirect").GetComponent<OpenLinkButton>().Link = "https://cryptomeda.tech/marketplace";
+            GetNewText.transform.parent.Find("redirect").GetComponent<OpenLinkButton>().Link = OpenLinkButton.MarketplaceUrl;
         }
         catch (Exception e)
         {
@@ -570,7 +570,7 @@ public class UIInventory : Singleton<UIInventory>
 
         try
         {
-            GetNewText.transform.parent.Find("redirect").GetComponent<OpenLinkButton>().Link = "https://cryptomeda.tech/marketplace/weapons-sale";
+            GetNewText.transform.parent.Find("redirect").GetComponent<OpenLinkButton>().Link = OpenLinkButton.MarketplaceUrl;
         }
         catch (Exception e)
         {

@@ -9,14 +9,6 @@
       },
       "hash": "7b25f7ce3edb92a9fa7efe234bc5ebe993d5a784"
     },
-    "com.reneverse.services": {
-      "version": "file:../rene-sdk-unity-1.0.1",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.0.2"
-      }
-    },
     "com.unity.2d.animation": {
       "version": "7.1.1",
       "depth": 0,

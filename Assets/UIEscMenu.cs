@@ -10,8 +10,6 @@ public class UIEscMenu : MonoBehaviour
     public GameObject TutorialScreen, NotifScreen, PerksCanvas;
     private bool isHidden = true;
 
-    public VideoAdUi ServingAd;
-
     public void Kill()
     {
         toInvoke = () => GameManager.instance.Player.InstantKillPlayer();
@@ -51,18 +49,6 @@ public class UIEscMenu : MonoBehaviour
         isHidden = false;
 
         PerksCanvas.SetActive(false);
-
-        StartCoroutine(SetVideoActive(true));
-    }
-
-    IEnumerator SetVideoActive(bool active)
-    {
-        yield return new WaitForEndOfFrame();
-
-        if (active)
-            ServingAd.ServeAd();
-        else
-            ServingAd.DisableAd();
     }
 
     public void HideEscMenu()
@@ -76,7 +62,6 @@ public class UIEscMenu : MonoBehaviour
         isHidden = true;
 
         PerksCanvas.SetActive(true);
-        StartCoroutine(SetVideoActive(false));
     }
 
     private void Update()

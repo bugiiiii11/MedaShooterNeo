@@ -7311,7 +7311,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: https://cryptomeda.tech/marketplace/
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 527742c4c8ec1534ab019c54b404a9a7, type: 2}
   m_sharedMaterial: {fileID: -9051393025183882147, guid: 527742c4c8ec1534ab019c54b404a9a7,
@@ -60339,7 +60339,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17b5d78d11985b342a97a937890a5a15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Link: https://cryptomeda.tech/marketplace/
+  Link: https://opensea.io/collection/cryptomedacards-v4
 --- !u!114 &2075539783
 MonoBehaviour:
   m_ObjectHideFlags: 0

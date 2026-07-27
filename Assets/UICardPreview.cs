@@ -174,7 +174,7 @@ public class UICardPreview: MonoBehaviour
 
     public void Buy()
     {
-        var url = "https://cryptomeda.tech/marketplace";
+        var url = OpenLinkButton.MarketplaceUrl;
         DialogBox.DisplayRedirectDialog("You will be redirected to your browser", url, () =>
         {
             Application.OpenURL(url);

@@ -635,7 +635,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17b5d78d11985b342a97a937890a5a15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Link: https://cryptomeda.tech/marketplace
+  Link: https://opensea.io/collection/cryptomedacards-v4
 --- !u!1 &6870047658996205621
 GameObject:
   m_ObjectHideFlags: 0

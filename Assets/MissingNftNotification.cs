@@ -34,7 +34,7 @@ public class MissingNftNotification : MonoBehaviour
 
         ActionButton.gameObject.SetActive(true);
         ButtonText.text = "Open Marketplace";
-        ActionButton.Link = "https://cryptomeda.tech/marketplace";
+        ActionButton.Link = OpenLinkButton.MarketplaceUrl;
     }
 
     public void Show(string title, string description, Sprite sprite, string buttonText, string link)
@@ -105,7 +105,7 @@ public class MissingNftNotification : MonoBehaviour
                     Debug.LogError("⚠️ CombatBoost sprite is not assigned in MissingNftNotification Inspector!");
                     return;
                 }
-                Show("Activate Combat Boosts!", "Activate boosts to enhance player stats in the game. Purchase a boost package to gain damage, fire rate, and critical hit bonuses!", CombatBoost, "Get Boosts", "https://cryptomeda.tech/meda-shooter");
+                Show("Activate Combat Boosts!", "Activate boosts to enhance player stats in the game. Purchase a boost package to gain damage, fire rate, and critical hit bonuses!", CombatBoost, "Get Boosts", OpenLinkButton.MedaShooterUrl);
                 break;
 
             default:
