@@ -454,3 +454,109 @@ runs from `NextWave`, i.e. as the following wave begins), and the HUD adds one.
 The score-blacklist decision in Section K is **parked and tagged for the CTO** -- see
 `swarm-meta/ms2-track-note.md`, "What we need from your side" item 3. No change was made to the
 heuristic, the blacklist table or the submit path.
+
+## M. Phase 1 tuning (S205) -- the DEEP RUN, and build v10
+
+**The Phase 2 gate is cleared.** Founder played to **wave 36**: "gameplay is pretty good ... there
+was no gameplay with low amount of enemies, it's pretty fun and hard". That single run disproves
+both open Phase 1 bugs, which no earlier playtest could:
+
+- **S202's dead wave** was a ~1-in-7 draw per wave *transition*. 36 waves is ~35 draws; the
+  probability of missing a live 1-in-7 defect across that many trials is under 0.5%. The founder
+  specifically reported the opposite symptom -- no thin waves at all.
+- **S201's counter leak** only manifested after the miniboss sweep that runs every 5 waves past
+  w10, so wave 36 crossed it five times. The wave chip climbed correctly throughout (it is the
+  instrument that made this checkable, which is what it was enabled for).
+
+Minibosses: "was fine, I didn't realize any bug" -- with the caveat that the founder was not
+watching for a freeze specifically. Boss-kill hit-stop was already off in v9 regardless.
+
+### 1. Kill screen shake -- now ZERO
+
+Founder: "killing enemies still shake the screen (very slightly), it would be better without shaking
+the screen so the gameplay is 100% smooth." This is precisely the lever Section L predicted would be
+asked for next, and the reasoning there was incomplete: 0.055 units on a ~13-unit camera is small
+*per kill*, but at late-wave kill rates the shake never resolves between kills. It stops reading as
+impact and becomes a permanently unsteady frame -- the opposite of a shake's purpose.
+
+`JuiceSettings.ShakeKillAmount = 0f`, plus a guard in `CameraShake.SetShake` that returns on a
+non-positive amplitude. The guard matters for more than tidiness: without it a zero-amplitude
+request would still run `shakeDuration = Mathf.Max(...)`, letting a silenced source **extend a loud
+shake already in flight**. With it, this is a true no-op -- no request, no transform write, no
+`CurrentOffset` for `BackgroundResolver` to subtract.
+
+**Deliberately still shaking:** boss kills, explosions, abilities. Rare, discrete, self-announcing,
+and the camera settles long before the next one. Zero those constants if that ever changes.
+
+### 2. "Sometimes the game was lagging a bit - control movement delay" -- muzzle-flash churn
+
+Founder was unsure whether this was their laptop. Partly answerable from the code: there was one
+clearly disproportionate allocation on the hot path, and it is now gone.
+
+`Weapon.SpawnMuzzleFlash` did `Instantiate` + `Destroy(flash, 0.32f)` **on every shot**, for every
+weapon in the scene. Why this fits the symptom rather than merely being wasteful:
+
+- the player's fire cooldown starts at 0.65s and per-wave upgrades plus NFT boosts drive it toward
+  0.1s, so the allocation rate **grows through a run** -- matching "sometimes", and matching that it
+  was not reported in shorter runs;
+- **enemy weapons allocated one per shot too.** They are skipped only on the Low preset, and
+  `DetectQuality` returns High for every WebGL client (Section J), so on the only platform that
+  ships, every enemy shot paid it. Late waves put many shooters on screen at once;
+- each instance is a multi-`ParticleSystem` prefab, and WebGL's collector is single-threaded, so the
+  reclaim lands as a frame-time spike. A spike is *felt as input delay* because `PlayerMovement`
+  samples `SimpleInput` once per `Update` -- a dropped frame is a dropped input sample.
+
+Fix: each weapon retains **one** flash instance, parented to `FXSocket` as before, and replays it
+(`Clear(false)` then `Play(false)` over a flat, non-allocating `GetComponentsInChildren` list). Cost
+after the first shot is zero allocations.
+
+What makes reuse legitimate here, verified rather than assumed:
+
+- **every** system under `Resources/Effects/MuzzleFlash` is `looping: 0` (grep returns zero
+  `looping: 1` in the folder), so a retained instance emits its burst and then sits idle and
+  invisible. A looping flash would have become a permanent one;
+- `DampenGlow` **multiplies** startSize and alpha, so it must run once per *instance*, never per
+  shot -- re-running it would compound 0.4x per shot and erase the pistol glow within a few rounds.
+  It is on the creation branch only, which returns before the replay path;
+- `TypeOfWeapon` is assigned only in `Awake`, and the one runtime-looking `FXSocket` assignment is
+  inside `#if UNITY_EDITOR` (`PopulateFromDuplicate`), so a cached per-weapon instance can never be
+  stranded on a stale socket or hold the wrong weapon's flash.
+
+`JuiceSettings.MuzzleFlashSeconds` is now inert and documented as such -- it governed only the
+delete timer. Visible flash duration has always come from the prefabs' particle lifetimes.
+
+**NOT fixed, and the next lever if lag persists:** projectiles are still `Instantiate`/`Destroy` per
+shot (`Weapon.cs` ~520), as are per-hit impact effects (`SpriteProjectile`) and enemies themselves.
+Those are real churn but a riskier refactor (physics, collider and damage state must survive reuse),
+so they were left out of a build meant to be playtested. `PoolManager` + `GameEffectsPool` already
+provide the pattern when it is worth doing.
+
+### 3. Wave chip moved under Score -- it was colliding with the collected perks
+
+Founder: "wave element was a bit overlapping collected perks, it would be better to have wave
+counter below score." Confirmed and quantified from the scene, and S204 put it there:
+
+- the v9 wave text spans canvas x **1504-1840**;
+- `CollectedPerks`' `PerkContainer` is anchored **top-right** and spans roughly x **1545-2275**.
+
+~295px of overlap. It looked clean at wave 5 only because the container is a `GridLayoutGroup` with
+`StartCorner: UpperRight` and `StartAxis: Horizontal` -- icons start at the right edge and fill
+**leftward**, wrapping downward when the row is full. So the row walks into the wave chip as a run
+goes on, around the 7th-8th perk, and is guaranteed to by wave 36.
+
+The chip now sits directly below `Score` (panel to x 270.67 / y -232.79; its bg and text children
+from x 1020 to 245, matching Score's bg exactly). It is the same sprite at the same scale and x, so
+the two read as one stacked block. This position cannot collide with the perk row at any count --
+the grid wraps inside its own container and never extends past its left edge, far right of x 445 --
+and it clears the boss HP bar, which was the original reason the chip shipped disabled.
+
+### Build v10
+
+Batchmode, **exit 0**, zero compile errors, label `v1.3.3 [DEV]`. All three `.gzip` outputs verified
+`1f8b`, loader plain text, stock `index.html` + `TemplateData/` deleted (Section D gotcha), 4 frame
+URLs + 4 `vercel.json` route pairs bumped and the JSON re-parsed. Frontend build green; eslint 359
+errors -- **exactly** the S201 baseline, no new ones.
+
+**v10 is unplayed.** Smoke list: kills leave the camera dead still; a wave-36-length run still feels
+smooth under heavy fire (the muzzle-flash change is the thing being tested); the wave chip reads
+cleanly under Score with a full perk row; pistol halo and fullscreen focus unregressed.

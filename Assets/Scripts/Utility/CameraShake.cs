@@ -106,6 +106,13 @@ public class CameraShake : Singleton<CameraShake>
         if (!JuiceSettings.ShakeEnabled)
             return;
 
+        // A zero-amplitude request is a disabled shake, not a short one, so it must not touch
+        // shakeDuration either -- Mathf.Max below would otherwise EXTEND a shake already in
+        // flight at its own amplitude, letting a silenced source prolong a loud one. This is what
+        // makes JuiceSettings.ShakeKillAmount = 0 a genuine no-op rather than a zero-length write.
+        if (amplitude <= 0f)
+            return;
+
         // Only take the max against an amplitude that is still in flight. Carrying the previous
         // value across an idle gap would mean one big shake permanently raised the floor for
         // every small one after it.

@@ -68,6 +68,15 @@ public class Weapon : MonoBehaviour
 
     private bool _isEnemyWeapon;
 
+    /// <summary>
+    /// This weapon's one muzzle-flash instance, reused for every shot it ever fires (S205).
+    ///
+    /// Held per weapon rather than per weapon TYPE because the flash is parented to FXSocket so it
+    /// rides the recoil animation -- two enemies firing the same gun need their own. It is a child
+    /// of the socket, so it dies with the weapon and needs no cleanup path of its own.
+    /// </summary>
+    private GameObject _muzzleFlashInstance;
+
     private void Awake()
     {
         _colliders = transform.root.GetComponentsInChildren<Collider2D>();
@@ -157,7 +166,7 @@ public class Weapon : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns a muzzle flash at the barrel. Parented to FXSocket so it rides the weapon's recoil
+    /// Plays a muzzle flash at the barrel. Parented to FXSocket so it rides the weapon's recoil
     /// animation, which is the whole reason it reads as a gunshot rather than a decal.
     ///
     /// Called from Fire/TripleFire/RoundFire/MissileFire rather than from the shared
@@ -165,6 +174,25 @@ public class Weapon : MonoBehaviour
     /// fire three flashes for a shotgun volley and four for a round-fire enemy.
     /// MeleeWeapon overrides all four of those methods with empty bodies, so swords are excluded
     /// for free.
+    ///
+    /// S205 -- this used to Instantiate a fresh flash and Destroy it 0.32s later, ON EVERY SHOT,
+    /// for every weapon in the scene. That was the heaviest recurring allocation in the game and
+    /// the best candidate for the founder's intermittent "control movement delay" at wave 36:
+    ///
+    ///  - the player's fire cooldown starts at 0.65s and per-wave upgrades plus NFT boosts drive
+    ///    it toward 0.1s, so the rate GROWS through a run -- matching "sometimes";
+    ///  - enemy weapons are only skipped on the Low preset, and DetectQuality returns High for
+    ///    every WebGL client, so on the shipping platform each enemy shot allocated one too. Late
+    ///    waves put many shooters on screen at once;
+    ///  - each instance is a multi-ParticleSystem prefab, and WebGL runs a single-threaded
+    ///    collector, so the reclaim lands as a frame-time spike rather than background work.
+    ///    A spike in a frame is felt as input lag, because Update samples SimpleInput once a frame.
+    ///
+    /// Every system under Resources/Effects/MuzzleFlash is looping: 0 (verified across the whole
+    /// folder), so a retained instance emits its burst and then sits idle and invisible -- which
+    /// is what makes reuse possible here and is why the flash is replayed rather than respawned.
+    /// The old Destroy timer was the only thing MuzzleFlashSeconds governed; the prefabs' own
+    /// particle lifetimes have always been what the player actually sees.
     /// </summary>
     protected void SpawnMuzzleFlash()
     {
@@ -174,13 +202,9 @@ public class Weapon : MonoBehaviour
         if (_isEnemyWeapon && !JuiceSettings.IsHigh)
             return;
 
-        var prefab = GetMuzzleFlashPrefab(TypeOfWeapon);
-        if (prefab == null)
-            return;
-
         // Same direction/rotation maths the projectile spawn paths use: FXSocket's parent carries
         // a negative lossyScale.x when the character faces left, and the flash has to be flipped
-        // with it.
+        // with it. Recomputed per shot -- the character can turn between two shots.
         var dir = Mathf.Sign(FXSocket.parent.lossyScale.x);
         var position = FXSocket.position + FXSocket.right * ProjectileOffset.x * dir;
         var rotation = FXSocket.rotation;
@@ -188,15 +212,59 @@ public class Weapon : MonoBehaviour
         if (dir < 0)
             rotation *= Quaternion.Euler(0, 0, 180);
 
-        // These prefabs have stopAction None, so they never clean themselves up.
-        var flash = Instantiate(prefab, position, rotation, FXSocket);
+        if (_muzzleFlashInstance == null)
+        {
+            var prefab = GetMuzzleFlashPrefab(TypeOfWeapon);
+            if (prefab == null)
+                return;
 
-        // Safe here and nowhere later: playOnAwake starts the system on Instantiate, but a
-        // ParticleSystem does not emit until its own simulation step, which runs after Update.
-        if (TypeOfWeapon == WeaponType.Pistol)
-            DampenGlow(flash, JuiceSettings.PistolGlowSizeScale, JuiceSettings.PistolGlowAlphaScale);
+            // These prefabs have stopAction None, so they never clean themselves up -- which is
+            // exactly the behaviour being relied on now.
+            _muzzleFlashInstance = Instantiate(prefab, position, rotation, FXSocket);
 
-        Destroy(flash, JuiceSettings.MuzzleFlashSeconds);
+            // Once per instance, never per shot: DampenGlow MULTIPLIES startSize and alpha, so
+            // re-running it on a reused flash would compound 0.4x per shot and the pistol's glow
+            // would vanish within a few rounds. Safe at this point in the frame -- playOnAwake has
+            // started the system, but a ParticleSystem does not emit until its own simulation
+            // step, which runs after Update.
+            if (TypeOfWeapon == WeaponType.Pistol)
+                DampenGlow(_muzzleFlashInstance, JuiceSettings.PistolGlowSizeScale, JuiceSettings.PistolGlowAlphaScale);
+
+            return;
+        }
+
+        _muzzleFlashInstance.transform.SetPositionAndRotation(position, rotation);
+        ReplayFlash(_muzzleFlashInstance);
+    }
+
+    /// <summary>
+    /// Restarts a retained flash's burst.
+    ///
+    /// Clear before Play so a shot fired while the previous burst is still fading starts clean
+    /// instead of stacking particles -- at a 0.1s cooldown against particle lifetimes several
+    /// times that, overlap is the normal case, not the edge case.
+    ///
+    /// withChildren: false on both calls, because the systems are collected as a flat list here;
+    /// letting each call recurse would re-clear and re-play every descendant once per level of
+    /// nesting.
+    /// </summary>
+    private static void ReplayFlash(GameObject flash)
+    {
+        // Same non-allocating overload and same scratch list as DampenGlow -- this runs on the
+        // hot fire path, and the two never overlap (DampenGlow runs only on the creation branch,
+        // which returns before reaching here).
+        flash.GetComponentsInChildren(true, _flashSystems);
+
+        for (var i = 0; i < _flashSystems.Count; i++)
+        {
+            var ps = _flashSystems[i];
+            ps.Clear(false);
+            ps.Play(false);
+        }
+
+        // Leaving the list populated would keep this flash's components referenced until the next
+        // shot, and hand DampenGlow a stale buffer if a weapon is created later.
+        _flashSystems.Clear();
     }
 
     /// <summary>

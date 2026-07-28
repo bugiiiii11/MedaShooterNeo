@@ -50,8 +50,17 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
         // Score and Coins) but shipped switched OFF and unfinished -- its "WAVE" label and its
         // number were two centre-aligned 336px text boxes 70px apart, so they overlapped, and the
         // chip sat inside the span the boss HP bar draws over. It is now on, the second label
-        // object is off, the panel is slid right into the empty band between the boss bar and the
-        // settings gear, and this one text carries the whole string.
+        // object is off, and this one text carries the whole string.
+        //
+        // S205: the chip now sits DIRECTLY BELOW Score (founder call, wave-36 playtest). S204 had
+        // put it in the band right of the boss bar, which is also where CollectedPerks lives --
+        // that container is anchored top-RIGHT and spans canvas x 1545-2275, against wave text at
+        // 1504-1840, so the two overlap by ~295px. It looked clean early only because a couple of
+        // perk icons sit at the container's right end; the row fills leftward into the wave chip
+        // as the run goes on. The chip is now aligned under Score's frame -- same bg sprite, same
+        // scale, same x -- so the two read as one stacked HUD block. It shares a little vertical
+        // band with the Boss row's RECT, which is a full-width stretch, but not with anything the
+        // boss row draws: that bar is centred near x 1335 and this chip spans x 109-445.
         SetWave(1);
         GameManager.instance.EventManager.AddListener<RunWaveChangedEvent>(ev =>
         {

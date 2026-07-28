@@ -120,7 +120,27 @@ public static class JuiceSettings
     // Camera shake (Juice 2)
     // ---------------------------------------------------------------------
 
-    public const float ShakeKillAmount = 0.055f;
+    /// <summary>
+    /// ZERO since S205, by founder call after the wave-36 playtest: "killing enemies still shake
+    /// the screen (very slightly), it would be better without shaking the screen so the gameplay
+    /// is 100% smooth".
+    ///
+    /// This was the lever the S204 note predicted would be asked for next, and it is the honest
+    /// one: turning hit-stop off removed the time dip but left the camera translating on every
+    /// kill. At the kill rates this game reaches past wave 20 the shake never resolves between
+    /// kills, so it stops reading as impact and becomes a permanently unsteady frame -- the exact
+    /// opposite of what a shake is for.
+    ///
+    /// CameraShake.SetShake early-returns on a non-positive amplitude, so this is a true no-op:
+    /// no shake request, no transform write, no CurrentOffset for BackgroundResolver to subtract.
+    ///
+    /// Deliberately NOT zeroed: boss kills, explosions and abilities. Those are rare, discrete,
+    /// self-announcing moments where the camera settles long before the next one, and the founder
+    /// called minibosses "fine". If the screen should be dead still there too, zero those
+    /// constants -- the mechanism needs no further change.
+    /// </summary>
+    public const float ShakeKillAmount = 0f;
+
     public const float ShakeKillDuration = 0.09f;
     public const float ShakeBossKillAmount = 0.22f;
     public const float ShakeBossKillDuration = 0.32f;
@@ -168,6 +188,16 @@ public static class JuiceSettings
     // Muzzle flash + trails (Juice 5)
     // ---------------------------------------------------------------------
 
+    /// <summary>
+    /// NO LONGER GOVERNS ANYTHING VISIBLE (S205). This was the delay on the per-shot
+    /// Destroy(flash, ...) that Weapon.SpawnMuzzleFlash no longer performs -- each weapon now
+    /// keeps one flash instance and replays it. How long a flash is actually seen has always been
+    /// the prefabs' own particle lifetimes (0.05-0.08s on the pistol glow), never this value.
+    ///
+    /// Kept because it is public and costs nothing, but do not reach for it to tune flash
+    /// duration: it will do nothing. Tune the prefabs under Resources/Effects/MuzzleFlash, or the
+    /// Pistol*Scale constants above.
+    /// </summary>
     public const float MuzzleFlashSeconds = 0.32f;
 
     /// <summary>
