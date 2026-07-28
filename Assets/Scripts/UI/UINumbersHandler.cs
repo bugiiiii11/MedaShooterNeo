@@ -45,6 +45,13 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
         // The run counter, not the wave asset's index -- see RunWaveChangedEvent (S203). The two
         // agree in the campaign and diverge immediately in endless, where waves are drawn at
         // random and the index is not a wave number at all.
+        //
+        // S204: the "Wave" chip in develop_overhaul.unity was authored (same NumberBg frame as
+        // Score and Coins) but shipped switched OFF and unfinished -- its "WAVE" label and its
+        // number were two centre-aligned 336px text boxes 70px apart, so they overlapped, and the
+        // chip sat inside the span the boss HP bar draws over. It is now on, the second label
+        // object is off, the panel is slid right into the empty band between the boss bar and the
+        // settings gear, and this one text carries the whole string.
         SetWave(1);
         GameManager.instance.EventManager.AddListener<RunWaveChangedEvent>(ev =>
         {
@@ -72,7 +79,7 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
     {
         if (waveText != null)
         {
-            waveText.text = waveNumber.ToString();
+            waveText.text = $"WAVE {waveNumber}";
         }
     }
 

@@ -376,3 +376,81 @@ clock, around w84 with the Phase 1 density floor. Still needs a deep run to actu
 Build v8: batchmode, exit 0, 537.5s, zero compile errors. Stock `index.html` + `TemplateData/`
 deleted per Section I. Frame + `vercel.json` moved to v8 (JSON re-parsed after editing, per the
 S202 sed hazard). Label `v1.3.0 [DEV]` -> `v1.3.1 [DEV]`.
+
+## L. Phase 1 tuning (S204) -- second playtest pass, build v9
+
+Founder verdict on v8: gameplay good, **pistol halo fixed**. Three new items, all founder-reported.
+
+### 1. "If I kill an enemy there is some effect ... which feels like a small lag" -- hit-stop, OFF
+
+Not a frame-rate problem and not the particles: it is hit-stop doing exactly what it was written to
+do. `DamageReceiver` requested a 55ms drop to 8% `Time.timeScale` on every kill and 40ms on every
+crit; `GameEffectsPool.SpawnBossKillBurst` asked for 120ms.
+
+The technique earns its keep in games where the player commits to discrete attacks. This one
+auto-fires while the player holds a movement axis, so a timeScale dip is felt as the *ship*
+stalling mid-input, and it recurs several times a second. The 0.18s cooldown prevented hit-stops
+from *chaining*; it never made an individual one read as weight. The founder's comparison point --
+"in [the previous] version there is not this effect, so the game goes smoothly" -- is correct:
+before Phase 1 nothing in this project touched `Time.timeScale` outside of pause.
+
+`JuiceSettings.HitStopEnabled` now defaults **false** (both the field and the `ReadFlag` fallback --
+they must agree, or a PlayerPrefs key written by the future settings panel resurrects it). The
+system is intact behind the flag. **Camera shake, hit flash and the kill VFX are untouched** -- none
+of them stop time, and the per-kill shake is 0.055 world units on a ~13-unit camera, well under the
+threshold of "a lag". If the founder does want the screen fully still on a kill, the remaining lever
+is `ShakeKillAmount` / `ShakeKillDuration`, not this.
+
+Side effect worth carrying: `JuiceRuntime.StolenSeconds` now stays 0 for a whole run, so the
+duration handed to `BuildScore` is once again plain scaled time with no compensation term -- one
+fewer moving part beneath the blacklist heuristic (Section K).
+
+### 2. Fullscreen made the game "pause" -- it never paused; the iframe lost keyboard focus
+
+**No Unity change, and nothing was ever paused.** `Time.timeScale` was untouched, `IsGamePaused`
+stayed false, enemies kept moving. Verified from the shipped bundle: neither
+`medashooter.framework.*.js` nor the loader registers any blur/visibility handler, and the WebGL
+player setting `runInBackground: 0` has no effect here. The three `PauseGame` wirings in the
+gameplay scene all belong to the ESC menu, the settings panel and a dialog.
+
+What actually happens: the Fullscreen button lives in the parent SPA
+(`MedaShooterPage.jsx`), not in the iframe. The player moves with `SimpleInput` -> Unity's keyboard
+handlers, which are bound inside the **frame's** document. Clicking a button in the parent document
+moves focus out of the frame, so every subsequent keypress goes to the parent and the ship stops
+answering -- indistinguishable from a freeze, and one click on the canvas "fixes" it.
+
+Fixed on both sides of the boundary: the button blurs itself and calls
+`iframe.contentWindow.focus()`; the frame focuses `#unity-canvas` after `SetFullscreen(1)` and again
+on `fullscreenchange` / `webkitfullscreenchange`, because the browser moves focus itself on the way
+in *and* out. `#unity-canvas` already carried `tabindex="-1"`, which is what makes it focusable at
+all. A new `MS_FOCUS` message lets the parent hand focus back for any other reason.
+
+**This class of bug is not specific to the fullscreen button** -- any parent-document control that
+takes focus mid-run does the same thing. There is exactly one today.
+
+### 3. Wave number on the HUD -- the chip already existed and was switched off
+
+`develop_overhaul.unity` ships a `Wave` panel under `UI/PlayerHud/Numbers`, a sibling of `Score` and
+`Coins` and built from the same `NumberBg` frame -- but with `m_IsActive: 0`, and unfinished in two
+ways that explain why:
+
+- its "WAVE" label and its number were two **centre-aligned 336px-wide** text boxes only 70px apart,
+  so at the authored 55.32pt they overlapped;
+- it sat at canvas x 786-1318 (reference 2560x1440, match-width), inside the span the boss HP bar
+  draws over. The boss-info clips fade `Coins` out for exactly that reason and never mention `Wave`,
+  so enabling it in place would have put the wave number under the boss bar -- the moment a tester
+  most wants to read it.
+
+So: panel enabled, the second label object disabled, the panel slid +620px into the empty band
+between the boss bar (ends ~1335) and the settings gear (starts ~2336), and `SetWave` now writes the
+whole string (`WAVE 12`) into the one remaining text. Font, colour and frame are the game's own --
+it reads as a third chip in the existing Score/Coins strip.
+
+No off-by-one: `EnemySpawner.waveNumber` counts waves *cleared* (0 during wave 1; `AdvanceWaveNumber`
+runs from `NextWave`, i.e. as the following wave begins), and the HUD adds one.
+
+### Anti-cheat: deliberately not touched (founder call, S204)
+
+The score-blacklist decision in Section K is **parked and tagged for the CTO** -- see
+`swarm-meta/ms2-track-note.md`, "What we need from your side" item 3. No change was made to the
+heuristic, the blacklist table or the submit path.

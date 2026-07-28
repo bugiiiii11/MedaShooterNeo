@@ -41,7 +41,28 @@ public static class JuiceSettings
     public const string QualityKey = "juiceQuality";
 
     public static bool ShakeEnabled = true;
-    public static bool HitStopEnabled = true;
+
+    /// <summary>
+    /// OFF since S204, by founder call after the v8 playtest: "if I kill enemy, there is some
+    /// effect ... which feels like a small lag".
+    ///
+    /// That is exactly what hit-stop is -- Time.timeScale drops to 8% for 55ms on every kill. In a
+    /// twitch shooter where the player is holding a movement axis and the weapon auto-fires, the
+    /// ship visibly stalls mid-input, and at the kill rates this game reaches it fires several
+    /// times a second. The 0.18s cooldown stops it CHAINING but does nothing about each individual
+    /// stutter. Pre-Phase-1 builds had no timeScale manipulation at all, which is the "smooth" the
+    /// founder is comparing against.
+    ///
+    /// The system is kept, not deleted: it stays behind this flag for the settings-panel work
+    /// still owed from Phase 1, and it is the only juice item that can be re-enabled by flipping
+    /// one bool. Kill VFX, camera shake and hit flash are untouched -- none of them stop time.
+    ///
+    /// Side benefit: JuiceRuntime.StolenSeconds now stays 0 for a whole run, so the duration sent
+    /// to the score endpoint is once again pure scaled time with no compensation term, which is
+    /// one fewer moving part under the blacklist heuristic (GDD 3.1).
+    /// </summary>
+    public static bool HitStopEnabled = false;
+
     public static bool HitFlashEnabled = true;
     public static bool KillVfxEnabled = true;
     public static bool MuzzleFlashEnabled = true;
@@ -208,7 +229,7 @@ public static class JuiceSettings
         _initialized = true;
 
         ShakeEnabled = ReadFlag(ShakeKey, true);
-        HitStopEnabled = ReadFlag(HitStopKey, true);
+        HitStopEnabled = ReadFlag(HitStopKey, false);
         HitFlashEnabled = ReadFlag(HitFlashKey, true);
         KillVfxEnabled = ReadFlag(KillVfxKey, true);
         MuzzleFlashEnabled = ReadFlag(MuzzleFlashKey, true);
