@@ -79,6 +79,39 @@ public class EnemySpawner : TimeCompute
 #endif
     }
 
+    /// <summary>
+    /// Clears one enemy off the field, keeping <see cref="currentEnemyCount"/> honest.
+    /// Returns whether anything was actually cleared.
+    /// </summary>
+    /// <remarks>
+    /// The field sweeps used to call SetActive(false) directly. That never fires
+    /// BasicEnemy.OnSendKilledDataToSpawner, so every enemy a boss or miniboss wiped stayed
+    /// counted as alive forever -- and both bosses sweep the field on spawn. Once the phantom
+    /// count reached MaxEnemyCount the spawn gate in Update() stopped opening and the rest of
+    /// the run played out empty, with CheckForMissingEnemies advancing a wave every 15s. That
+    /// was the empty-wave bug (found S201).
+    /// Deliberately NOT routed through BasicEnemy.Kill(): these sweeps are silent by design and
+    /// Kill() awards score and rolls drops.
+    /// </remarks>
+    private bool ClearEnemy(Transform enemy)
+    {
+        if (!enemy.gameObject.activeSelf)
+            return false;
+
+        // An enemy already playing its death animation has fired the event and been
+        // subtracted; subtracting twice would under-count and over-spawn.
+        var basicEnemy = enemy.GetComponent<BasicEnemy>();
+        var alreadySubtracted = basicEnemy != null && basicEnemy.IsDead;
+
+        GameEffectsPool.SpawnNormalExplosionMuted(enemy.position, 1);
+        enemy.gameObject.SetActive(false);
+
+        if (!alreadySubtracted)
+            currentEnemyCount = Mathf.Max(0, currentEnemyCount - 1);
+
+        return true;
+    }
+
     internal void KillAllEnemies(GameObject except)
     {
         var killedAny = false;
@@ -87,9 +120,8 @@ public class EnemySpawner : TimeCompute
             if (enemy.gameObject == except.transform.parent.gameObject)
                 continue;
 
-            GameEffectsPool.SpawnNormalExplosionMuted(enemy.position, 1);
-            enemy.gameObject.SetActive(false);
-            killedAny = true;
+            if (ClearEnemy(enemy))
+                killedAny = true;
         }
 
         if(killedAny)
@@ -100,8 +132,7 @@ public class EnemySpawner : TimeCompute
     {
         foreach (Transform enemy in AllEnemies)
         {
-            GameEffectsPool.SpawnNormalExplosionMuted(enemy.position, 1);
-            enemy.gameObject.SetActive(false);
+            ClearEnemy(enemy);
         }
         OneShotAudioPool.SpawnOneShot(LevelProps.instance.GameOverSound, 0.6f);
     }
@@ -123,9 +154,38 @@ public class EnemySpawner : TimeCompute
         if (durationSinceLastSpawn > 15 && !GameManager.instance.IsGamePaused)
         {
             // there is some error
+            // Nothing has spawned for 15s, so the spawn gate is stuck. Resync the live count
+            // against reality BEFORE advancing: this used to only mask a leaking counter by
+            // rolling the wave over, which is why the bug read as "some waves are empty"
+            // instead of "the run is over". Any future leak now heals within 15s (S201).
+            ResyncEnemyCount();
             NextWave(currentWave);
             lastSpawnTime = Time.time;
         }
+    }
+
+    /// <summary>
+    /// Recomputes <see cref="currentEnemyCount"/> from the enemies actually on the field.
+    /// Only safe to call with no boss active -- a miniboss is parented under AllEnemies but
+    /// never increments the counter, so it would be counted twice. Both callers of this are
+    /// already behind an IsBossActive() guard.
+    /// </summary>
+    private void ResyncEnemyCount()
+    {
+        var alive = 0;
+        foreach (Transform enemy in AllEnemies)
+        {
+            if (!enemy.gameObject.activeSelf)
+                continue;
+
+            var basicEnemy = enemy.GetComponent<BasicEnemy>();
+            if (basicEnemy != null && basicEnemy.IsDead)
+                continue;
+
+            alive++;
+        }
+
+        currentEnemyCount = alive;
     }
 
     public void Headstart(int index)
@@ -494,9 +554,14 @@ public class EnemySpawner : TimeCompute
 
     public void OnEnemyKilled(BasicEnemy enemy)
     {
-        currentEnemyCount--;
+        currentEnemyCount = Mathf.Max(0, currentEnemyCount - 1);
     }
 
+    // Boss accounting is asymmetric and deliberately left that way: a full boss increments
+    // currentEnemyCount (Update's IsBoss branch falls through to the ++), a miniboss never does
+    // (SpawnMinibossDelayed instantiates directly). So do NOT "fix" this by adding a blanket
+    // decrement here -- it would subtract for minibosses that were never added, under-count the
+    // field and over-spawn. The residual +1 per full boss is absorbed by ResyncEnemyCount().
     public void OnEnemyKilled(BasicBoss boss)
     {
         // boss killed, skip all

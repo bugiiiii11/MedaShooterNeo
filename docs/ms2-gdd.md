@@ -40,10 +40,39 @@ MedaShooter was the community's most-loved game. MS 2.0 keeps its soul -- a hard
 
 | Defect | Root cause (file) | Fix sketch |
 |--------|-------------------|-----------|
-| Empty waves / dead air | `currentEnemyCount` leaks: `KillAllEnemies()` + Snap deactivate enemies without decrementing (`EnemySpawner.cs:82-107`); spawner thinks field is full | Route ALL enemy removal through one accounting path |
-| Waves silently skipped | 15s `CheckForMissingEnemies` watchdog masks the leak by force-advancing waves (`EnemySpawner.cs:113-129`) | Watchdog becomes telemetry-only once the leak is fixed |
-| Thin endless waves | Endless picks next wave uniformly at random incl. silent/low-content waves (`EnemySpawner.cs:476`) | Weighted selection; silent waves excluded or budgeted |
+| Empty waves / dead air | **CONFIRMED + FIXED IN SOURCE S201 (unbuilt).** See 2.2.1 -- the hypothesis was right about `KillAllEnemies` and **wrong about Snap** | Done: `ClearEnemy()` is the single accounting path for sweeps |
+| Waves silently skipped | 15s `CheckForMissingEnemies` watchdog masked the leak by force-advancing waves (`EnemySpawner.cs:113-129`) | **S201: watchdog now resyncs the counter from the live field before advancing** -- see the deviation note in 3.1 |
+| Thin endless waves | Endless picks next wave uniformly at random incl. silent/low-content waves (`EnemySpawner.cs:476`) | Weighted selection; silent waves excluded or budgeted. **STILL OPEN** |
 | Perceived dated graphics | No hit feedback, minimal VFX, no post-processing | Juice pass (3.2) before any art decision |
+
+#### 2.2.1 Empty waves: the confirmed mechanism (S201)
+
+`currentEnemyCount` is incremented on every spawn and decremented in exactly one place --
+`OnEnemyKilled(BasicEnemy)`, wired to `BasicEnemy.OnSendKilledDataToSpawner`. The spawn gate in
+`Update()` is `currentEnemyCount < MaxEnemyCount + increaseNumberOfEnemies`, so an over-count
+closes the gate.
+
+Both `KillAllEnemies` overloads deactivated enemies with a raw `SetActive(false)`, which never
+fires that event. **And the callers are the problem: `BasicBoss.Initialize` and
+`MinibossBase.Initialize` both sweep the field on spawn** (`BasicBoss.cs:30`,
+`MinibossBase.cs:32`) -- minibosses arrive every 5 waves past wave 10. So the counter gained a
+permanent phantom for every enemy alive at each boss arrival. Once the phantoms reached
+`MaxEnemyCount`, the gate never opened again: no enemies for the **rest of the run**, while the
+15s watchdog rolled the wave over and over. Not "some waves are empty" -- the run was over.
+
+The `if (currentEnemyCount == 0) SpawnCooldown -= ...` recovery on `EnemySpawner.cs:225` cannot
+help, because the stuck count is never 0.
+
+Two corrections to the original hypothesis, both from reading the call graph:
+
+- **Snap is NOT a leak.** `SnapAbility` calls `BasicEnemy.ExplodeOnSnap()` -> `Kill(false)`, which
+  fires the event and decrements. Same for the off-screen despawn path (`BasicEnemy.cs:208-211`)
+  and melee explode. Every path except the two sweeps was already correct.
+- **Boss accounting is asymmetric**, and it is a second, much slower leak: a full boss increments
+  the counter (Update's `IsBoss` branch falls through to the `++`) but `OnEnemyKilled(BasicBoss)`
+  never decrements, while a miniboss does neither. A blanket decrement there would therefore
+  under-count minibosses and over-spawn -- there is a comment in the file warning against exactly
+  that. The residual +1 per full boss is absorbed by the new resync instead.
 
 ### 2.3 Anti-cheat today
 
@@ -60,9 +89,18 @@ Determinism (3.3) is the structural fix: a seeded spawn schedule the server can 
 ### 3.1 Wave and level system
 
 **Fixes (Phase 1):**
-- Single enemy-removal accounting path: every despawn (killed, sniped, escaped, Snap, KillAllEnemies, boss-clear) decrements through `OnEnemyKilled`-equivalent. Add an assertion counter in dev builds.
-- Endless wave selection: weighted-random over non-silent waves with a density floor (min enemies/minute); silent waves only as scripted breathers, never random.
-- Watchdog stays as telemetry (log + metric), no longer gameplay-corrective.
+- ~~Single enemy-removal accounting path~~ **DONE S201 (source, unbuilt).** Every path already
+  decremented except the two `KillAllEnemies` sweeps; both now go through `ClearEnemy()`, which
+  skips already-dead enemies so it cannot double-subtract and clamps at 0. Root cause: 2.2.1.
+- Endless wave selection: weighted-random over non-silent waves with a density floor (min enemies/minute); silent waves only as scripted breathers, never random. **Still open.**
+- ~~Watchdog stays as telemetry, no longer gameplay-corrective.~~ **DEVIATION, founder call owed.**
+  It now calls `ResyncEnemyCount()` -- recomputing the count from enemies actually on the field --
+  and then still advances the wave. Rationale: demoting it to telemetry-only means any *future*
+  leak stalls the run permanently again with nothing to catch it, whereas a resync heals the whole
+  bug class within 15s. The wave-advance was kept as a belt-and-braces net; with the counter
+  honest it should never fire, and if it does, that is a real stall worth recovering from. If you
+  want strict pacing instead (no force-advance ever), that is a one-line change during the pacing
+  pass -- but keep the resync.
 
 **Campaign levels (Phase 3):** the engine already supports this -- `EnemySpawner` has profile swapping (`Level2Profile` hook exists) and `EnemyWavesProfile` assets are data-driven. Structure mirrors OD's biome model:
 
