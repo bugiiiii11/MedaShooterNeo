@@ -19,7 +19,7 @@
 | `unity-mcp-temp/` | **Orphan gitlink** (mode 160000, no `.gitmodules`, empty on disk). Its hash equals the `com.coplaydev.unity-mcp` git package commit -- a leftover clone. Removed from the index. |
 | `com.coplaydev.unity-mcp` | KEPT (founder editor tooling, not shipped). It resolves from a GitHub URL at project open -- if that ever hangs a build, this is the first suspect. |
 
-## B. Port the v4 binary patches into source -- CODE DONE (S199), scene surgery blocked on Unity licence
+## B. Port the v4 binary patches into source -- DONE (code S199, scene surgery S200)
 
 Patches enumerated exactly from the S191/S193 archive notes plus the frame's own comment block
 (`frontend/public/medashooter-frame.html:114-121`). No guesswork remained -- the count reconciled.
@@ -29,7 +29,7 @@ Patches enumerated exactly from the S191/S193 archive notes plus the frame's own
 | 1 | Dialog sentence + open-URL IL2CPP literals (S191) | Real URLs now live in `OpenLinkButton.MarketplaceUrl` / `.MedaShooterUrl` consts; the 5 scattered literals reference them |
 | 2 | Two static prefab TMP URL lines blanked (S191) | `m_text` emptied in `inventory.unity:8335`, `develop_overhaul.unity:7314` (DialogBox overwrites it at runtime anyway) |
 | 3 | Seven serialized `OpenLinkButton.Link` blanked (S193) | All 7 retargeted to the live OpenSea collection |
-| 4 | Three ReneVerse Video Ad Surface GameObjects deactivated (S193) | 2 of 3 gone with the SDK; **the third, the scene instance, is still owed** -- see Section I |
+| 4 | Three ReneVerse Video Ad Surface GameObjects deactivated (S193) | 2 of 3 gone with the SDK; **the third (the `develop_overhaul.unity` instance) removed S200** via `Ms2Cleanup` |
 
 S193 recorded the third patch as "level3 + 2 resources.assets prefabs" without identifying the
 last two. They were the SDK's own `Resources/BuiltIn/Video Ad Surface.prefab` and
@@ -45,7 +45,7 @@ build** and were deliberately left alone.
 
 - [x] Enumerate patches precisely.
 - [x] Port the code-side patches.
-- [ ] Remove the ad GameObject from `develop_overhaul.unity` (needs Unity -- Section I).
+- [x] Remove the ad GameObject from `develop_overhaul.unity` (S200). `grep -c "Video Ad"` on that scene = 0.
 
 ### `grep -r cryptomeda Assets/` -- which hits are intentional
 
@@ -58,10 +58,10 @@ After the port, every remaining hit is deliberate. Do NOT "clean" these:
 
 ## C. Parity build (the core of Phase 0)
 
-- [ ] Open project in Unity **2021.3.45f2 exactly** (installed). Do NOT let Unity upgrade the project. Expect `.spriteatlas` phantom diffs on first open (LF/CRLF, safe to discard).
-- [ ] Confirm project compiles clean; note any missing-reference warnings in scenes (drift indicator).
+- [x] Open project in Unity **2021.3.45f2 exactly** (S200, batchmode -- never opened in the GUI, so no upgrade prompt and no phantom `.spriteatlas` diffs materialized).
+- [x] **Compiles clean (S200).** Zero errors. Only 4 benign `CS0219`/`CS0414` unused-variable warnings (`BackgroundResolver.cs` x3, `UIGameOverScreen.cs` x1). No missing-reference warnings in any of the 4 build scenes -- the predicted drift did not exist once `VideoAdUi.cs` was gone.
 - [ ] Check in-game version label (`menu.unity` ~line 5960 `m_text:`) vs live prod label -- tells us how far source is ahead of the last build.
-- [ ] Build WebGL (dev branch -> dev backend URLs). Record: build time, output size per file, compression setting (gzip -- must match `.gzip` serving contract).
+- [x] **Build WebGL (S200), dev backend, guard passed.** Build time **1111.5s (~18.5 min)** on the founder machine, cold `Library` rebuild before it (~15 min more). Compression `webGLCompressionFormat: 1` (Gzip) confirmed in `ProjectSettings.asset:751`; all three compressed outputs verified to carry gzip magic `1f8b`, loader verified plain text.
 - [x] **Rename contract -- ANSWERED, and the old one had a latent bug.** `vercel.json` serves `medashooter.wasm.gzip` with `max-age=31536000` but **never versioned it**. Only the data file carried a version. A rebuild changing C# changes the wasm, so a returning player would have got new `data.v5` against a year-old cached wasm -- a mismatched build. **All four outputs now carry the suffix**: `medashooter.{data,wasm}.v5.gzip`, `medashooter.framework.v5.js.gzip`, `medashooter.loader.v5.js`. `BuildScript.ApplyVersionSuffix` does the renaming so it cannot be forgotten. Frame + `vercel.json` must be updated together with it.
 - [ ] Deploy to dev frontend, behind the existing iframe. Full smoke on dev:
   - [ ] Boots in iframe, 16:9 intact, no white-screen; loading banner keyed on `!isLoaded` still works.
@@ -86,7 +86,13 @@ was added rather than replacing it. The pre-existing CLI entry `BuildWebGL()` de
       other, so a wrong-host hit is decisive.
 - [x] Post-build version rename for all four outputs (see Section C).
 - [x] Clears `Build/` first, so a stale file from a previous version cannot masquerade as deployed.
-- [ ] Actually run it (blocked -- Section I).
+- [x] **Actually run it (S200) -- worked first try, exit 0.**
+
+**One gap the script does NOT cover, found S200.** Unity also emits its stock template page
+(`index.html` + `TemplateData/`) into `-msOut`. Neither was in the repo before, nothing references
+them, and the emitted `index.html` points at the *unversioned* `medashooter.loader.js` -- a dead
+page shipped into `public/`. Deleted by hand after the build. **Delete them after every build**, or
+teach `BuildWebGLDeploy` to remove them.
 
 ```
 "C:/Program Files/Unity/Hub/Editor/2021.3.45f2/Editor/Unity.exe" \
@@ -127,29 +133,65 @@ without the CLI: **Build > Phase 0 - Remove ReneVerse Ad Objects**, then **Build
 - [ ] CTO ask piggyback: the `cryptomeda.tech` dead-URL cleanup (section B) overlaps CTO's open nft_service.py ask -- coordinate so both sides change together.
 - [ ] No prod DB migrations in Phase 0-1. First migration lands Phase 2 (envelope columns); follows the S133 rule: verify every object on prod via endpoint after running.
 
-## I. S199 execution log -- what is done, and the one thing blocking the rest
+## I. Execution log (S199 code, S200 build)
 
-### BLOCKER: this machine has no usable Unity editor licence
+### The S199 licence blocker -- RESOLVED S200
 
-Every batchmode invocation dies before importing a single asset:
+S199 could not build: batchmode died at `Found 0 entitlement groups` / `No valid Unity Editor
+license found`. Root cause was simply a stale token -- **the founder signing into Unity Hub
+interactively fixed it**, exactly as S199 predicted. Headless Hub launches never will.
+
+Verify before blaming anything else (instant, no project load):
 
 ```
-Entitlement-based licensing initiated
-[Licensing::Client] Error: Code 500 ... No ULF license found., Token not found in cache
-[Licensing::Client] Error: Code 404 ... Found 0 entitlement groups and 0 free entitlements
-No valid Unity Editor license found. Please activate your license.
+"C:\Program Files\Unity\Hub\Editor\2021.3.45f2\Editor\Data\Resources\Licensing\Client\Unity.Licensing.Client.exe" --showEntitlements
 ```
 
-`UnityEntitlementLicense.xml` exists (dated 2026-03-25) and a Unity account is signed into the Hub
-config, but the licensing client cannot mint an access token. Starting Unity Hub headlessly did not
-refresh it -- **the sign-in has to be done interactively by the founder.**
+Wants `Product Name: Unity Personal` with `com.unity.editor.headless` listed. The entitlement file
+is at `%LOCALAPPDATA%\Unity\licenses\UnityEntitlementLicense.xml` (**not** `C:\ProgramData\Unity\`,
+which does not exist on this machine) and carries an `UpdateDate` roughly a month out -- so expect
+to re-sign-in periodically. Two log lines are benign noise even on a healthy run: a licensing-client
+signature `Code 10` warning and `Access token is unavailable; failed to update`.
 
-To unblock: open Unity Hub, confirm the account is signed in and a Personal seat is active, then
-re-run the two commands in Section D. If the CLI still refuses, run the two `Build/` menu items from
-a GUI Editor session instead -- that path does not depend on batchmode entitlements.
+### S200: Phase 0 build DONE
 
-Nothing downstream of this was faked: no build was produced, no smoke test was run, and no
-parity claim is made.
+Both Section D commands ran in batchmode, first try, exit 0. No GUI session was needed.
+
+- **Scene surgery:** `Ms2Cleanup` removed exactly 1 object across the 4 build scenes --
+  `UI/PlayerControls/EscMenu/LeftPart (1)/Video Ad Surface(Clone)`. Script + `.meta` deleted after.
+- **The diff was far smaller than S199 predicted:** 516 deletions / 1 insertion, not a whole-file
+  re-serialize. Surgical and correct -- prefab-instance block, the RawImage/VideoPlayer/AudioSource
+  objects, the parent `m_Children` entry, and the dangling `ServingAd` field on `UIEscMenu`.
+  The single insertion is a float wobble: a RectTransform `m_AnchoredPosition.y` `-8` ->
+  `-7.9999695`. Invisible; left alone rather than fought.
+- **Build:** 1111.5s, guard passed for `env=dev`, all four outputs suffixed `v5`.
+
+| File | v4 (live) | v5 (source) |
+|------|-----------|-------------|
+| `data` | 38.91 MB | **36.47 MB** |
+| `wasm` | 8.82 MB | **7.93 MB** |
+| `framework` | 431 KB (served *uncompressed*) | **88 KB** (gzipped) |
+| `loader` | 19 KB | 19 KB |
+
+**The framework file changed transport, not just name.** Live v4 served
+`medashooter.framework.js` as plain JS; v5 is `medashooter.framework.v5.js.gzip`, so its
+`vercel.json` route needed a `Content-Encoding: gzip` header it never had. Renaming the paths alone
+would have fed gzip bytes to the browser as JavaScript and white-screened dev. Header added.
+
+### Still owed
+
+1. **Founder parity smoke (Section C) -- the Phase 0 pass bar.** Nothing below is claimed as
+   verified: no one has played the v5 build. It is committed locally but NOT pushed, so dev has not
+   redeployed yet.
+2. In-game version label vs live prod label (Section C) -- still unchecked.
+3. Sections E (baseline metrics: FPS, load-to-interactive, score distribution) and G (colleague/CTO
+   sync). Build time + output sizes above are the first two E rows.
+4. **Dead code now pointing at deleted files:** `MedaShooterPagePROD.jsx:124` and
+   `MedaShooterResistancePage.jsx:28` reference the old unversioned filenames. Neither is routed in
+   `App.jsx` (only `MedaShooterPage` is), so nothing breaks -- but they are actively misleading.
+5. `frontend/public/medashooter-frame.html` references `streamingAssetsUrl:
+   '/unity-builds/medashooter/StreamingAssets'` and **no such folder exists** -- and did not before
+   v5 either. Pre-existing dead config, not a regression.
 
 ### Done and committed
 
@@ -159,24 +201,15 @@ parity claim is made.
   field plus its `SetVideoActive` coroutine in `UIEscMenu.cs`.
 - All code-side and serialized link de-branding (Section B table).
 - `BuildScript.BuildWebGLDeploy` + backend-URL guard + version-suffix rename.
-- `Assets/Editor/Ms2Cleanup.cs` -- one-shot scene surgery, written but never executed.
-
-### Still owed, in order
-
-1. Run `Ms2Cleanup.RemoveReneVerseAdObjects`. It removes the `Video Ad Surface(Clone)` prefab
-   instance from `develop_overhaul.unity`. **Expect a large scene diff** -- Unity re-serializes the
-   whole file, which also drops the now-dangling `ServingAd` reference. Verify with
-   `grep -c "Video Ad" Assets/Scenes/develop_overhaul.unity` returning 0, then delete `Ms2Cleanup.cs`.
-2. Run the deploy build (Section D), then update `medashooter-frame.html` (four `*Url` fields **and**
-   the hardcoded `script.src` loader path) and the four `vercel.json` routes to the `v5` names.
-3. Sections C smoke list, E baseline metrics, G coordination.
+- `Assets/Editor/Ms2Cleanup.cs` -- one-shot scene surgery. **Executed S200, then deleted.**
+- **S200:** scene surgery run, v5 build produced, frame + `vercel.json` moved to v5 names.
 
 ### Two things to watch on the first build
 
-- **`VideoAdUi.cs` had an unguarded `using UnityEditor;`** and was the only runtime script in the
-  codebase that did. That is a hard WebGL compile error, which means the current source has not
-  produced a player build in some time. It is gone now, but expect *other* drift to surface on the
-  first real compile.
+- ~~**`VideoAdUi.cs` had an unguarded `using UnityEditor;`**~~ **RESOLVED S200 -- and it was the
+  only drift.** Removing that file was sufficient; the first real compile produced zero errors and
+  no missing-reference warnings. The worry that source "had not produced a player build in some
+  time" turned out to cost nothing.
 - **The confirm dialog's wording changes.** Live v4 says "You will be redirected to OpenSea"
   (a same-length IL2CPP patch). Source says "You will be redirected to your browser" and now shows
   the real destination on the URL line, which live v4 blanked. Links go to two different hosts now,

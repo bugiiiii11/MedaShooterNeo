@@ -76,3 +76,6 @@ nul
 
 # WebGL builds (go into fe/public/unity-builds/, not here)
 WebGLBuilds/
+
+# Unity batchmode logs from BuildWebGLDeploy / one-shot editor methods
+ms2-*.log
