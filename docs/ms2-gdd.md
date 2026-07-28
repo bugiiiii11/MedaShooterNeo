@@ -342,7 +342,7 @@ Verdict: a bigger project than the whole MW revival, for one mode. Revisit only 
 | Phase | Name | Contents | Ships when |
 |-------|------|----------|-----------|
 | 0 | Pre-coding | Parity rebuild from source, port v4 binary patches into source, baseline metrics, founder decisions. Full runbook: `ms2-pre-coding-checklist.md` | Fresh source build == live game on dev |
-| 1 | Fix + Juice | 3.1 fixes (counter leak, weighted endless), 3.2 juice pass items 1-5 | Founder playtest sign-off on dev. **Code complete S202; awaiting the playtest** |
+| 1 | Fix + Juice | 3.1 fixes (counter leak, weighted endless), 3.2 juice pass items 1-5 | Founder playtest sign-off on dev. **Shipped to dev as v7 (S202). Founder played it: "working nicely" -- a positive first read, not yet the deep-run check (see below)** |
 | 2 | Determinism | Seeded schedule RNG + Python mirror + envelope validation on submit (shadow mode first: log-only, no rejects) | Mirror matches client schedule on N test seeds; shadow-mode false-positive rate ~0 |
 | 3 | Levels + Daily | Campaign profiles + backdrops + juice item 6; daily challenge (needs Phase 2) | Founder playtest; daily runs on dev for a full week |
 | 4 | Pilot Level | Ladder + unlocks + backend tables + Vault/profile surface | Founder signs unlock table + ladder tuning |

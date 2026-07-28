@@ -231,6 +231,22 @@ along with the first Phase 1 build.
 
 ## J. Phase 1 (S202) -- what shipped, and what it means for the build
 
+**Status: live on dev as `v7` (label `v1.3.0 [DEV]`). Founder played it the same session and
+reported it "working nicely."**
+
+That clears the obvious regressions -- the build boots, the juice pass does not break anything
+visible, and nothing about the wave rewrite made the game worse to play. It does **not** yet close
+Phase 1's definition of done, because the two things most worth proving both need a long run and a
+short one cannot show either:
+
+1. **The empty-wave fix needs depth.** The S201 half only manifests after a miniboss sweeps the
+   field (every 5 waves past wave 10), and the S202 half was a 1-in-7 draw per wave transition in
+   endless. A short run can pass while both bugs are still there. Watch for the opposite failure
+   too: over-spawning would mean the counter now under-counts.
+2. **The blacklist crossover sits deep.** See the founder decision in `ms2-gdd.md` 3.1 -- the
+   estimate is around wave 84. Checking `medashooter_blacklist` after a wave-85+ run is the only
+   way to find out whether the estimate is right before real players do.
+
 Phase 0 is closed; this section only records the build-facing consequences. Design detail lives in
 `ms2-gdd.md` 2.2.2, 3.1 and 3.2.
 
