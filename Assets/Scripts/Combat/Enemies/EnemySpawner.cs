@@ -237,6 +237,20 @@ public class EnemySpawner : TimeCompute
 
             // spawn enemy
             var enemy = currentWave.GetEnemyRandomByProbability();
+
+            // Belt and braces against unspawnable wave data. Without this, a wave whose enemies
+            // have no prefab reaches Instantiate(null) and throws -- before currentEnemyCount++,
+            // before spawnedEnemiesCount++ and before lastSpawnTime is refreshed, so the wave can
+            // never advance itself and the throw repeats every frame until CheckForMissingEnemies
+            // rolls it over 15-20s later. The endless profile shipped exactly such a wave.
+            // Rerolling costs one frame instead.
+            if (enemy == null || enemy.Prefab == null)
+            {
+                Debug.LogWarning($"[EnemySpawner] Wave {currentActiveWave} has no spawnable enemy; skipping to the next wave.");
+                NextWave(currentWave);
+                return;
+            }
+
             GameObject obj;
 
             if (currentWave.IsBoss)
@@ -515,6 +529,145 @@ public class EnemySpawner : TimeCompute
     private void CalculateSpawnTime(EnemyWave wave)
     {
         SpawnCooldown = Random.Range(wave.SpawnCooldownRange.x, wave.SpawnCooldownRange.y) * SpawnRateFactor;
+
+        // Density floor (GDD 3.1). Deliberately endless-only: the campaign profile's pacing is
+        // hand-authored and its long early gaps are intentional, whereas endless just replays six
+        // waves forever and one of them (Index 9) has a spawn range topping out at 9.16s -- about
+        // 10.8 enemies/minute against 20-25 for every other endless wave. That reads as the game
+        // forgetting about you.
+        if (!IsDefaultWave)
+            SpawnCooldown = Mathf.Clamp(SpawnCooldown, MinSpawnGapSeconds, EndlessMaxSpawnGap());
+    }
+
+    // ---------------------------------------------------------------------
+    // Endless wave selection (GDD 3.1, S202)
+    //
+    // Was: currentActiveWave = Random.Range(0, Profile.Waves.Count) -- uniform over every entry
+    // in the profile, including entries with no spawnable enemy at all. Now: weighted by how
+    // dense a wave actually is, never twice in a row, and unplayable entries are excluded rather
+    // than relied on to fail gracefully.
+    // ---------------------------------------------------------------------
+
+    private const float MinSpawnGapSeconds = 0.15f;
+    private const float EndlessMaxGapEarly = 3.0f;
+    private const float EndlessMaxGapLate = 1.8f;
+
+    private readonly List<int> endlessCandidates = new List<int>();
+    private readonly List<float> endlessWeights = new List<float>();
+    private float endlessWeightTotal;
+    private int lastEndlessWave = -1;
+    private bool endlessCandidatesBuilt;
+
+    /// <summary>Longest tolerable silence between spawns, tightening from wave 10 to wave 30.</summary>
+    private float EndlessMaxSpawnGap()
+    {
+        var t = Mathf.InverseLerp(10f, 30f, waveNumber);
+        return Mathf.Lerp(EndlessMaxGapEarly, EndlessMaxGapLate, t);
+    }
+
+    /// <summary>
+    /// A wave is playable only if it can actually put an enemy on the field. Checking the
+    /// probability alone is not enough (a wave can hold a real prefab at probability 0) and
+    /// checking the prefab alone is not enough either (GetEnemyRandomByProbability short-circuits
+    /// to Enemies[0] when every probability is 0).
+    /// </summary>
+    private static bool IsWavePlayable(EnemyWave wave)
+    {
+        if (wave == null || wave.Enemies == null || wave.Enemies.Count == 0)
+            return false;
+
+        for (var i = 0; i < wave.Enemies.Count; i++)
+        {
+            var enemy = wave.Enemies[i];
+
+            if (enemy != null && enemy.Prefab != null && enemy.ProbabilityInWave > 0f)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Expected enemies per minute at SpawnRateFactor 1, used as the selection weight.
+    ///
+    /// The zero-cooldown guard is not cosmetic: a wave authored with SpawnCooldownRange {0,0}
+    /// yields 60/0 = infinity, and an infinite weight would make that one wave win every single
+    /// draw. Treating it as the fastest allowed cadence keeps it finite and honest.
+    /// </summary>
+    private static float WaveDensityPerMinute(EnemyWave wave)
+    {
+        var meanCooldown = (wave.SpawnCooldownRange.x + wave.SpawnCooldownRange.y) * 0.5f;
+        meanCooldown = Mathf.Max(meanCooldown, MinSpawnGapSeconds);
+
+        return Mathf.Clamp(60f / meanCooldown, 1f, 60f);
+    }
+
+    private void RebuildEndlessCandidates()
+    {
+        endlessCandidates.Clear();
+        endlessWeights.Clear();
+        endlessWeightTotal = 0f;
+        endlessCandidatesBuilt = true;
+
+        if (Profile == null || Profile.Waves == null)
+            return;
+
+        for (var i = 0; i < Profile.Waves.Count; i++)
+        {
+            var wave = Profile.Waves[i];
+
+            // Silent waves are scripted breathers -- they suppress the per-wave stat upgrade and
+            // the difficulty tick -- so they must never come up in a random rotation. The endless
+            // profile happens to have none today; this keeps that true if one is ever authored.
+            if (wave == null || wave.IsSilent || !IsWavePlayable(wave))
+                continue;
+
+            var weight = WaveDensityPerMinute(wave);
+            endlessCandidates.Add(i);
+            endlessWeights.Add(weight);
+            endlessWeightTotal += weight;
+        }
+
+        if (endlessCandidates.Count == 0)
+            Debug.LogError("[EnemySpawner] The endless profile has no playable waves; falling back to index 0.");
+    }
+
+    private int PickEndlessWave()
+    {
+        if (!endlessCandidatesBuilt)
+            RebuildEndlessCandidates();
+
+        if (endlessCandidates.Count == 0)
+            return 0;
+
+        if (endlessCandidates.Count == 1)
+            return endlessCandidates[0];
+
+        var picked = DrawWeightedWave();
+
+        // One redraw is enough to break back-to-back repeats without skewing the distribution
+        // the way a reject-until-different loop would.
+        if (picked == lastEndlessWave)
+            picked = DrawWeightedWave();
+
+        lastEndlessWave = picked;
+        return picked;
+    }
+
+    private int DrawWeightedWave()
+    {
+        var roll = Random.value * endlessWeightTotal;
+
+        for (var i = 0; i < endlessCandidates.Count; i++)
+        {
+            roll -= endlessWeights[i];
+
+            if (roll <= 0f)
+                return endlessCandidates[i];
+        }
+
+        // Float accumulation can leave a sliver at the top of the range.
+        return endlessCandidates[endlessCandidates.Count - 1];
     }
 
     // the index is looped
@@ -526,14 +679,15 @@ public class EnemySpawner : TimeCompute
 
             if (currentActiveWave > Profile.Waves.Count - 1)
             {
-                currentActiveWave = 0;
                 IsDefaultWave = false;
                 Profile = UnendingProfile;
+                RebuildEndlessCandidates();
+                currentActiveWave = PickEndlessWave();
             }
         }
         else
         {
-            currentActiveWave = Random.Range(0, Profile.Waves.Count);
+            currentActiveWave = PickEndlessWave();
         }
 
         return currentActiveWave;

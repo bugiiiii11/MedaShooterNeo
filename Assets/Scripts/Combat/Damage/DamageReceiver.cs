@@ -69,7 +69,9 @@ public class DamageReceiver : MonoBehaviour
 
         currentHitPoints -= damage.DamageValue;
 
-        if (currentHitPoints <= 0)
+        var killed = currentHitPoints <= 0;
+
+        if (killed)
         {
             currentHitPoints = 0;
             OnDied();
@@ -80,18 +82,59 @@ public class DamageReceiver : MonoBehaviour
             HitPointsBar.SetPercentage(currentHitPoints, maxValue: HitPoints);
         }
 
-        if (FlashOnHit && !isInstaKill)
+        // Flash only a survivor. On the killing blow OnDied has already started the death fade
+        // (BasicEnemy.Kill -> TweenAlpha to alpha 0) and a flash would be a second writer of
+        // SpriteRenderer.color fighting it back to opaque. The kill gets its own, louder
+        // feedback from the burst in BasicEnemy.Kill.
+        if (FlashOnHit && !isInstaKill && !killed)
         {
-            var avatar = GetComponent<F3DCharacterAvatar>();
-            if (avatar)
-            {
-                avatar.TweenColor(new Color32(255, 160, 160, 255), 0.07f); 
-            }
-            else
-            {
-
-            }
+            PlayHitFlash();
         }
+
+        // Hit-stop is deliberately rare: kills and crits only, never every bullet. It is the
+        // difference between weight and stutter, and every millisecond of it has to be handed
+        // back to the anti-cheat duration accounting (see JuiceRuntime.StolenSeconds).
+        if (killed || isInstaKill)
+        {
+            JuiceRuntime.RequestHitStop(JuiceSettings.HitStopKillSeconds, JuiceSettings.HitStopScale);
+        }
+        else if (damage.IsCritical)
+        {
+            JuiceRuntime.RequestHitStop(JuiceSettings.HitStopCritSeconds, JuiceSettings.HitStopScale);
+        }
+    }
+
+    private HitFlash _hitFlash;
+    private bool _hitFlashResolved;
+
+    /// <summary>
+    /// Runs the per-enemy flash, attaching the component on first use. Same runtime-attachment
+    /// pattern this class already uses for DamageOverTimeHandler in ActivateDot.
+    /// </summary>
+    private void PlayHitFlash()
+    {
+        if (!JuiceSettings.HitFlashEnabled)
+            return;
+
+        if (!_hitFlashResolved)
+        {
+            _hitFlashResolved = true;
+
+            // Flail.prefab has a BossAddDamageReceiver but no avatar, so it stays unflashed --
+            // exactly as it was before Phase 1.
+            if (GetComponent<F3DCharacterAvatar>() != null && !TryGetComponent(out _hitFlash))
+                _hitFlash = gameObject.AddComponent<HitFlash>();
+        }
+
+        if (_hitFlash != null)
+            _hitFlash.Play();
+    }
+
+    /// <summary>Stops any flash in flight so it cannot fight a death fade.</summary>
+    public void StopHitFlash()
+    {
+        if (_hitFlash != null)
+            _hitFlash.Stop();
     }
 
     protected virtual void OnDied()

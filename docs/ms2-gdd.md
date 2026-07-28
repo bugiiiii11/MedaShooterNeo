@@ -42,8 +42,9 @@ MedaShooter was the community's most-loved game. MS 2.0 keeps its soul -- a hard
 |--------|-------------------|-----------|
 | Empty waves / dead air | **CONFIRMED + FIXED IN SOURCE S201 (unbuilt).** See 2.2.1 -- the hypothesis was right about `KillAllEnemies` and **wrong about Snap** | Done: `ClearEnemy()` is the single accounting path for sweeps |
 | Waves silently skipped | 15s `CheckForMissingEnemies` watchdog masked the leak by force-advancing waves (`EnemySpawner.cs:113-129`) | **S201: watchdog now resyncs the counter from the live field before advancing** -- see the deviation note in 3.1 |
-| Thin endless waves | Endless picks next wave uniformly at random incl. silent/low-content waves (`EnemySpawner.cs:476`) | Weighted selection; silent waves excluded or budgeted. **STILL OPEN** |
-| Perceived dated graphics | No hit feedback, minimal VFX, no post-processing | Juice pass (3.2) before any art decision |
+| Thin endless waves | **CONFIRMED WORSE THAN DESCRIBED + FIXED S202 (unbuilt).** Not merely thin -- the endless profile shipped a wave with no spawnable enemy at all. See 2.2.2 | Done: weighted selection over playable waves + density floor + spawn-site guard + the dead wave deleted from the asset |
+| Projectiles never despawn | Nothing destroys a projectile that MISSES: no lifetime, no kill plane, no off-screen despawn. `Weapon.SpawnMultiProjectileDelayed` computed a lifetime from `ProjectileLifeTime` and discarded the value | **FIXED S202:** `SpriteProjectile.Awake` applies a hard ceiling, `SetMaxLifetime` narrows it to the weapon's authored 3-4s. Found while scoping the trail work in 3.2 |
+| Perceived dated graphics | No hit feedback, minimal VFX, no post-processing | Juice pass (3.2) before any art decision. **Items 1-5 landed S202** |
 
 #### 2.2.1 Empty waves: the confirmed mechanism (S201)
 
@@ -74,6 +75,41 @@ Two corrections to the original hypothesis, both from reading the call graph:
   under-count minibosses and over-spawn -- there is a comment in the file warning against exactly
   that. The residual +1 per full boss is absorbed by the new resync instead.
 
+#### 2.2.2 The endless dead wave (S202)
+
+`UnendingWavesProfile.asset` held **seven** waves. The seventh (`Index: 0`, `EnemyQuantity: 30`,
+`SpawnCooldownRange {0,0}`) had **both** of its `Enemies` entries at `Prefab: {fileID: 0}` with
+`ProbabilityInWave: 0` -- an empty inspector row someone left behind. Endless picked uniformly with
+`Random.Range(0, Waves.Count)`, so it came up **once every seven wave transitions**.
+
+When it did: `GetEnemyRandomByProbability` took its `sum == 0` branch and returned `Enemies[0]`, an
+`Enemy` whose `Prefab` is null, so `EnemySpawner` reached `Instantiate(null)` and **threw**. The
+throw happens *before* `currentEnemyCount++`, *before* `spawnedEnemiesCount++` and *before*
+`lastSpawnTime` is refreshed, which has three consequences:
+
+- the wave-advance test `spawnedEnemiesCount >= EnemyQuantity` is permanently `0 >= 30`, so the
+  wave can never end itself;
+- the spawn gate reopens every frame (`SpawnCooldownRange {0,0}` means a cooldown of 0), so the
+  exception repeats at frame rate -- of the order of a **thousand IL2CPP stack traces** per
+  occurrence, in the browser console, each with real reconstruction cost;
+- only the 15s `CheckForMissingEnemies` watchdog breaks the deadlock, so the player gets **15-20
+  seconds of an empty screen**, and can draw the same wave again immediately (1-in-49 for
+  back-to-back).
+
+The wave still fired a non-silent `NextWaveEvent`, so it granted the per-wave stat upgrade and
+ratcheted `DifficultyScaling` while delivering nothing. And because the HUD renders
+`NextWave.Index + 1` and this wave's `Index` was 0, **the on-screen wave counter dropped to 1** for
+the duration.
+
+Fixed at three layers, deliberately redundant because the data is hand-authored and a stray '+'
+click in the inspector will happen again: the asset entry is deleted; `IsWavePlayable` excludes any
+wave with no spawnable enemy from selection; and a guard at the spawn site rerolls the wave instead
+of throwing.
+
+Separately, the HUD wave number in endless is *still* meaningless -- endless waves carry `Index`
+6-11 and are now drawn at random, so the display cycles in 7-12 forever instead of climbing. Not
+fixed here; it wants a run-scoped counter, which belongs with the Phase 3 level work.
+
 ### 2.3 Anti-cheat today
 
 | Layer | Mechanism | Gap |
@@ -92,7 +128,46 @@ Determinism (3.3) is the structural fix: a seeded spawn schedule the server can 
 - ~~Single enemy-removal accounting path~~ **DONE S201 (source, unbuilt).** Every path already
   decremented except the two `KillAllEnemies` sweeps; both now go through `ClearEnemy()`, which
   skips already-dead enemies so it cannot double-subtract and clamps at 0. Root cause: 2.2.1.
-- Endless wave selection: weighted-random over non-silent waves with a density floor (min enemies/minute); silent waves only as scripted breathers, never random. **Still open.**
+- ~~Endless wave selection: weighted-random over non-silent waves with a density floor.~~
+  **DONE S202 (source, unbuilt).** Three parts:
+  1. **Eligibility.** A wave enters the endless rotation only if it is not silent and holds at
+     least one enemy with a real prefab *and* a probability above zero. Checking either condition
+     alone misses a case, which is how the dead wave survived.
+  2. **Weighting.** Selection is proportional to expected enemies-per-minute
+     (`60 / mean(SpawnCooldownRange)`, clamped to 1-60 so a `{0,0}` range cannot compute to
+     infinity and win every draw). Baselines: five endless waves sit at 20-25/min, the Index-9
+     wave at 10.8/min, so it now comes up about half as often instead of equally often. One
+     redraw prevents back-to-back repeats.
+  3. **Density floor.** The endless spawn gap is clamped to at most 3.0s at wave 10, tightening
+     to 1.8s by wave 30. Deliberately endless-only: the campaign profile's pacing is hand-authored
+     and its long early gaps are intentional, whereas endless just replays six waves forever and
+     the Index-9 wave's range topped out at 9.16s.
+  **Balance note for the founder:** the floor raises endless enemy throughput, and score is
+  `RewardPoints` per kill, so late-endless scores will run higher than historical ones on the
+  cumulative leaderboard. That is the intended direction (pillar 3) but it is a real comparability
+  break -- worth watching the first week of leaderboard entries.
+
+  **FOUNDER DECISION OWED -- the backend auto-blacklist gets closer, and it is permanent.**
+  `submit_medashooter_score` (`backend/app/routes/api_routes.py:858`) inserts the wallet into
+  `medashooter_blacklist` whenever `game_duration * 100 < calculated_score`, returns HTTP success
+  anyway, and silently rejects every future submission from that address. The player sees a normal
+  game-over and never learns.
+
+  The real driver is pre-existing and quadratic, not this change: `MinibossBase.Kill` awards
+  `((waveNumber + 1) - 10) / 5 * 1000`, a reward that grows linearly on a fixed five-wave cadence,
+  so cumulative score grows quadratically against a linear duration and eventually crosses any
+  fixed score-per-second ceiling. Raising endless density moves that crossing **earlier** -- a
+  review estimate puts it around wave 84 instead of wave 90, i.e. deep runs by strong players.
+  Note the other heuristic, `enemies_spawned * 250 < calculated_score`, is unaffected: more
+  density raises both sides. Hit-stop is also safe here, because its stolen time is added back to
+  the duration, which only makes the ratio safer.
+
+  Three options, none of which should be taken unilaterally because they touch the live anti-cheat
+  path: (a) accept and watch `medashooter_blacklist` after the playtest; (b) clamp `minibossIndex`
+  so the ladder stops compounding; (c) replace the ratio heuristic with the Phase 2 envelope bound,
+  which is what it is there to do. **Whatever is chosen, the founder playtest should run past wave
+  85 and the blacklist table should be checked afterwards** -- a false positive is permanent and
+  invisible.
 - ~~Watchdog stays as telemetry, no longer gameplay-corrective.~~ **DEVIATION, founder call owed.**
   It now calls `ResyncEnemyCount()` -- recomputing the count from enemies actually on the field --
   and then still advances the wave. Rationale: demoting it to telemetry-only means any *future*
@@ -116,19 +191,67 @@ Levels = new `EnemyWavesProfile` assets + backdrop swaps, NOT engine work. Score
 
 ### 3.2 Juice pass (graphics, without new art)
 
-Priority-ordered; all in-source, no new art assets:
+Priority-ordered; all in-source, no new art assets. **Items 1-5 shipped S202 (source, unbuilt).**
 
-| # | Item | Notes |
-|---|------|-------|
-| 1 | Hit feedback: enemy flash + hit-stop (2-3 frames) + damage-number pop already exists (`DamageTextSpawner`) -- tune | Biggest perceived-quality lever |
-| 2 | Screen shake on kills/explosions/ability casts (amplitude-capped, toggleable) | |
-| 3 | Kill VFX upgrade: reuse FORGE3D effects already in project (`Assets/FORGE3D/`) | Zero new assets |
-| 4 | Post-processing: bloom + vignette + subtle chromatic aberration on damage | URP/built-in PP stack, check WebGL perf budget |
-| 5 | Muzzle flash + projectile trails per weapon type | |
-| 6 | Parallax background layers + ambient particles per level | Pairs with campaign backdrops |
-| 7 | UI polish: score ticker easing, perk-pickup toast, ability-ready pulse | |
+| # | Item | Status |
+|---|------|--------|
+| 1 | Hit feedback: enemy flash + hit-stop + damage-number pop | **DONE.** New `HitFlash` component; hit-stop in `JuiceRuntime`; crit damage numbers finally scale |
+| 2 | Screen shake on kills/explosions/ability casts (amplitude-capped, toggleable) | **DONE.** `CameraShake` rewritten in place -- it already existed, wired to exactly one call site |
+| 3 | Kill VFX upgrade: reuse FORGE3D effects already in project | **DONE.** `GameEffectsPool.SpawnKillBurst` / `SpawnBossKillBurst`, zero new assets |
+| 4 | Post-processing: bloom + vignette + chromatic aberration | **DEVIATION -- delivered differently. See below.** |
+| 5 | Muzzle flash + projectile trails per weapon type | **DONE.** FORGE3D muzzle prefabs by `Resources.Load`; trails tinted by `WeaponType` |
+| 6 | Parallax background layers + ambient particles per level | Phase 3, pairs with campaign backdrops |
+| 7 | UI polish: score ticker easing, perk-pickup toast, ability-ready pulse | Open |
 
-Perf gate: WebGL build must hold 60fps on a mid laptop; every PP effect individually toggleable. Mobile (touch UI exists) gets a reduced preset.
+**What was already there, contrary to this document's assumptions.** Item 1's flash and item 2's
+shake both existed. The flash (`DamageReceiver` -> `F3DCharacterAvatar.TweenColor`) had a real bug:
+it captured the rest colour *after* a flash had already started, so a second bullet landing mid-flash
+made the pink permanent -- constant under auto-fire -- and it cost 36 AddComponent/Destroy calls per
+hit across nine renderers. The shake existed on the camera but was fired from exactly one line in the
+whole game (the player surviving damage), decayed in scaled time so a pause left the camera
+juddering forever, and shook on Z, which does nothing on an orthographic camera.
+
+#### Item 4: why there is no post-processing stack
+
+Rejected after assessment, and the substitute is `Assets/Scripts/UI/ScreenFxOverlay.cs`. Three
+independent reasons, any one of which would be enough:
+
+| Obstacle | Detail |
+|----------|--------|
+| Gamma colour space | `m_ActiveColorSpace: 0`. Bloom thresholding is non-physical here -- the dead PPv2 profile still in the repo needed `intensity: 9` at `threshold: 0.98` to look acceptable, which is the signature of fighting the colour space. Switching to Linear would re-tone all four shipped scenes and 93 materials |
+| WebGL 1.0 still live | `m_BuildTargetGraphicsAPIs` has no WebGL entry, so API selection is Automatic and WebGL 1 remains a fallback. A bloom mip chain degrades silently there |
+| Zero fill cost today | The gameplay camera renders straight to the backbuffer (`m_ForceIntoRT: 0`, `m_TargetTexture: 0`, `m_AllowMSAA: 0`). Any post effect forces an intermediate render target plus a blit chain -- a pure fill-rate tax on a 2D side-scroller whose first-class perf target is mobile WebGL |
+
+What ships instead: a runtime-built overlay canvas with a **procedural vignette** (128x128 gradient
+generated in code, so no new asset, no meta file, no import settings) and a **damage tint** that
+washes red when the player is hit, at half strength when armour absorbed it. "Bloom" is delivered
+where it belongs in a 2D game -- as additive glow on the emitters themselves, which is what the
+FORGE3D kill-burst and muzzle-flash particles are. Chromatic aberration is dropped; there is no
+honest shader-free version and it was the weakest item on the list.
+
+If the founder wants real post-processing later, the upgrade path is `com.unity.postprocessing`
+3.4.0 plus a runtime `PostProcessLayer` -- still no scene edit and no pipeline migration -- but pin
+WebGL to 2.0 only first and re-tune from scratch rather than trusting the resurrected profile.
+
+**Perf gate.** Every effect is individually toggleable through `JuiceSettings` (PlayerPrefs keys,
+lowerCamelCase + `Enabled`, matching the existing `UISettings` convention). Quality is a code-side
+two-rung preset, **not** Unity quality levels -- the project has exactly one level ("Fantastic")
+shared by every platform, so `SetQualityLevel` can never do anything and adding levels would change
+shadows/AA/textures everywhere. `JuiceRuntime` also runs a frame-time watchdog that demotes High to
+Low after 3 sustained seconds above a 40fps budget.
+
+**Tuning knob to revisit after the playtest, deliberately not churned into this build:**
+`JuiceSettings.KillBurstSeconds` is 1.1s, but the longest ParticleSystem in `Enemy_Explode` is
+authored at 1.81s, so the tail of the debris fade is cut when the effect returns to the pool.
+Everything else finishes inside the window (FORGE3D sparks 0.56s, energy burst 1.0s). Whether that
+reads as "snappy" or "clipped" is a judgement call the playtest should settle -- raising the
+constant costs pool residency at high kill rates, so it is not free either. Per-effect hold times
+would be the proper fix if the flat constant proves wrong.
+
+**Still owed for item 4 and the perf gate:** there is no in-game UI for the toggles. Adding rows to
+the EscMenu settings panel is the one part of this that genuinely needs a scene edit, so it was left
+out rather than bundled into an already large source-only change. Until then the toggles are
+reachable only via PlayerPrefs and the automatic preset.
 
 ### 3.3 Determinism (the keystone)
 
@@ -219,7 +342,7 @@ Verdict: a bigger project than the whole MW revival, for one mode. Revisit only 
 | Phase | Name | Contents | Ships when |
 |-------|------|----------|-----------|
 | 0 | Pre-coding | Parity rebuild from source, port v4 binary patches into source, baseline metrics, founder decisions. Full runbook: `ms2-pre-coding-checklist.md` | Fresh source build == live game on dev |
-| 1 | Fix + Juice | 3.1 fixes (counter leak, weighted endless), 3.2 juice pass items 1-5 | Founder playtest sign-off on dev |
+| 1 | Fix + Juice | 3.1 fixes (counter leak, weighted endless), 3.2 juice pass items 1-5 | Founder playtest sign-off on dev. **Code complete S202; awaiting the playtest** |
 | 2 | Determinism | Seeded schedule RNG + Python mirror + envelope validation on submit (shadow mode first: log-only, no rejects) | Mirror matches client schedule on N test seeds; shadow-mode false-positive rate ~0 |
 | 3 | Levels + Daily | Campaign profiles + backdrops + juice item 6; daily challenge (needs Phase 2) | Founder playtest; daily runs on dev for a full week |
 | 4 | Pilot Level | Ladder + unlocks + backend tables + Vault/profile surface | Founder signs unlock table + ladder tuning |
@@ -260,6 +383,6 @@ The UnityPy binary-patch pipeline (`data.v4`) RETIRES after Phase 0 -- all chang
 | 3 | XP/gas caps for MS 2.0 (raise 500 XP once envelope validation lands?) | Founder | Phase 2+ |
 | 4 | Duel rake % + wager bounds + per-day duel cap | Founder | Phase 5 |
 | 5 | Ability loadout (choose 2 of 4) -- confirm it does not gut Snap-dependent high-wave play | Playtest | Phase 4 |
-| 6 | WebGL post-processing perf on low-end -- may need preset tiers | Phase 1 perf gate | Phase 1 |
+| 6 | ~~WebGL post-processing perf on low-end~~ **CLOSED S202: no post-processing stack is being added.** Rationale + substitute in 3.2 item 4. Preset tiers exist, code-side, in `JuiceSettings` | Decided | -- |
 | 7 | Endless unlock: gated behind campaign clear or always open | Founder | Phase 3 |
-| 8 | Mobile: touch UI exists -- is mobile a first-class target for juice/perf gates? | Founder | Phase 1 |
+| 8 | Mobile juice/perf gate. **Correction S202: the premise was wrong -- "touch UI exists" is not true of the shipped scene.** There is no SimpleInput joystick or any touch component in any scene or prefab; game code only calls `SimpleInput.GetAxis`, which falls through to keyboard/gamepad. Mobile is currently a *rendering* target, not a playable one. Phase 1 therefore treats mobile as a perf tier only (auto-demote + watchdog); making it playable is a separate piece of work | Founder | Not Phase 1 |

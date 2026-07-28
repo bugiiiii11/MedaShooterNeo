@@ -46,9 +46,32 @@ public class Weapon : MonoBehaviour
 
     private float _dir;
 
-    private void Awake() 
+    // ---------------------------------------------------------------------
+    // Muzzle flash (GDD 3.2 item 5)
+    //
+    // The effects come from Assets/FORGE3D/2D Sci-Fi Platformer/Resources/Effects/MuzzleFlash/,
+    // which is a Resources root -- so they load by path with no serialized reference, no prefab
+    // edit and no scene edit. They already ship inside the WebGL build (Resources folders are
+    // always included) and nothing has ever spawned them: F3DGenericWeapon's SpawnMuzzleFlash
+    // call sits inside a commented-out block, and this Weapon class, which replaced it, never had
+    // a muzzle-flash field at all. They also draw on a dedicated "MuzzleFlash" sorting layer that
+    // still exists in TagManager, so they need no sorting configuration.
+    // ---------------------------------------------------------------------
+
+    private const string MuzzleFlashResourceRoot = "Effects/MuzzleFlash/MuzzleFlash_";
+
+    private static GameObject[] _muzzleFlashCache;
+    private static bool[] _muzzleFlashResolved;
+
+    private bool _isEnemyWeapon;
+
+    private void Awake()
     {
         _colliders = transform.root.GetComponentsInChildren<Collider2D>();
+
+        // EnemyWeaponController derives from WeaponController and drives the same Fire methods,
+        // so without this every enemy would emit muzzle flashes at the same cost as the player.
+        _isEnemyWeapon = GetComponentInParent<EnemyWeaponController>() != null;
 
         // try to solve weapon type if unknown
         if (TypeOfWeapon == WeaponType.Unknown)
@@ -83,6 +106,90 @@ public class Weapon : MonoBehaviour
         Animator.SetBool("Fire", false);
     }
 
+    /// <summary>
+    /// Resolves (and caches) the flash prefab for a weapon type. Indexed by the enum value rather
+    /// than held in a Dictionary so the lookup is allocation-free on the hot fire path.
+    /// </summary>
+    private static GameObject GetMuzzleFlashPrefab(WeaponType type)
+    {
+        if (_muzzleFlashCache == null)
+        {
+            // Enum.GetValues is reflection and allocates -- it must run once, not on every shot.
+            var count = System.Enum.GetValues(typeof(WeaponType)).Length;
+            _muzzleFlashCache = new GameObject[count];
+            _muzzleFlashResolved = new bool[count];
+        }
+
+        var index = (int)type;
+
+        if (index < 0 || index >= _muzzleFlashCache.Length)
+            return null;
+
+        if (_muzzleFlashResolved[index])
+            return _muzzleFlashCache[index];
+
+        _muzzleFlashResolved[index] = true;
+
+        string variant;
+        switch (type)
+        {
+            case WeaponType.Pistol: variant = "Pistol"; break;
+            case WeaponType.Assault: variant = "Assault"; break;
+            case WeaponType.AssaultPlasma: variant = "AssaultPlasma"; break;
+            case WeaponType.AssaultLaser: variant = "AssaultLaser"; break;
+            case WeaponType.ShotgunLaser: variant = "Shotgun"; break;
+
+            // The FORGE3D library has no sniper flash; the machinegun one is the closest read.
+            case WeaponType.Sniper: variant = "Machinegun"; break;
+
+            // Swords and unresolved types get nothing.
+            default: variant = null; break;
+        }
+
+        _muzzleFlashCache[index] = variant == null
+            ? null
+            : Resources.Load<GameObject>(MuzzleFlashResourceRoot + variant);
+
+        return _muzzleFlashCache[index];
+    }
+
+    /// <summary>
+    /// Spawns a muzzle flash at the barrel. Parented to FXSocket so it rides the weapon's recoil
+    /// animation, which is the whole reason it reads as a gunshot rather than a decal.
+    ///
+    /// Called from Fire/TripleFire/RoundFire/MissileFire rather than from the shared
+    /// SpawnMultiProjectileDelayed tail, because that tail runs once per PROJECTILE -- it would
+    /// fire three flashes for a shotgun volley and four for a round-fire enemy.
+    /// MeleeWeapon overrides all four of those methods with empty bodies, so swords are excluded
+    /// for free.
+    /// </summary>
+    protected void SpawnMuzzleFlash()
+    {
+        if (!JuiceSettings.MuzzleFlashEnabled || FXSocket == null || FXSocket.parent == null)
+            return;
+
+        if (_isEnemyWeapon && !JuiceSettings.IsHigh)
+            return;
+
+        var prefab = GetMuzzleFlashPrefab(TypeOfWeapon);
+        if (prefab == null)
+            return;
+
+        // Same direction/rotation maths the projectile spawn paths use: FXSocket's parent carries
+        // a negative lossyScale.x when the character faces left, and the flash has to be flipped
+        // with it.
+        var dir = Mathf.Sign(FXSocket.parent.lossyScale.x);
+        var position = FXSocket.position + FXSocket.right * ProjectileOffset.x * dir;
+        var rotation = FXSocket.rotation;
+
+        if (dir < 0)
+            rotation *= Quaternion.Euler(0, 0, 180);
+
+        // These prefabs have stopAction None, so they never clean themselves up.
+        var flash = Instantiate(prefab, position, rotation, FXSocket);
+        Destroy(flash, JuiceSettings.MuzzleFlashSeconds);
+    }
+
     public virtual void TripleFire(int baseOffset = 600)
     {
         // Check before firing
@@ -90,6 +197,7 @@ public class Weapon : MonoBehaviour
 
         Animator.SetTrigger("FireTrigger");
         Animator.SetBool("Fire", true);
+        SpawnMuzzleFlash();
 
         if(!AnimationFireEvent)
         {
@@ -104,6 +212,7 @@ public class Weapon : MonoBehaviour
 
         Animator.SetTrigger("FireTrigger");
         Animator.SetBool("Fire", true);
+        SpawnMuzzleFlash();
 
         if (!AnimationFireEvent)
         {
@@ -119,6 +228,8 @@ public class Weapon : MonoBehaviour
         // Trigger shot animator
         Animator.SetTrigger("FireTrigger");
         Animator.SetBool("Fire", true);
+        SpawnMuzzleFlash();
+
         if (!AnimationFireEvent)
         {
             SpawnMissile(missilePrefab, damageModifier);
@@ -159,6 +270,8 @@ public class Weapon : MonoBehaviour
         // Trigger shot animator
         Animator.SetTrigger("FireTrigger");
         Animator.SetBool("Fire", true);
+        SpawnMuzzleFlash();
+
         if (!AnimationFireEvent)
             OnFire();
     }
@@ -232,6 +345,11 @@ public class Weapon : MonoBehaviour
         projectileObject.FiredType = TypeOfWeapon;
         projectileObject.SelfPrefab = projectilePrefab.gameObject;
         projectileObject.Force = ProjectileForce;
+
+        // The lifetime above was computed and then discarded for as long as this class has
+        // existed, which is why a projectile that missed never despawned. SpriteProjectile
+        // already applies a hard ceiling; this narrows it to what the weapon actually authored.
+        projectileObject.SetMaxLifetime(lifeTime);
 
         if (!IgnorePlayerAttributes)
         {

@@ -25,6 +25,7 @@ public class RealtimeDurationChecker : MonoBehaviour
             startTime = Time.time;
         });
         additiveDuration = 0;
+        JuiceRuntime.ResetStolenSeconds();
         GameManager.instance.EventManager.AddListener<PlayerDiedEvent>(OnGameOver);
         GameManager.instance.EventManager.AddListener<GamePauseEvent>( (obj) =>
         {
@@ -71,7 +72,15 @@ public class RealtimeDurationChecker : MonoBehaviour
         {
             realEndTime = dateTime;
             endTime = Time.time;
-            OnGameOverTimestampReceived.Invoke( endTime - startTime + additiveDuration, (float) realEndTime.Subtract(realStartTime).Duration().TotalSeconds, code);
+
+            // The hit-stop in JuiceRuntime slows Time.timeScale, and this duration is measured
+            // in SCALED time while the value it is compared against server-side is real elapsed
+            // time. Without adding the shortfall back, a long run drifts steadily toward
+            // "finished faster than physically possible" -- the exact shape of a speed hack.
+            // The existing additiveDuration does the same job for pauses.
+            var unityDuration = endTime - startTime + additiveDuration + JuiceRuntime.StolenSeconds;
+
+            OnGameOverTimestampReceived.Invoke( unityDuration, (float) realEndTime.Subtract(realStartTime).Duration().TotalSeconds, code);
         });
     }
 

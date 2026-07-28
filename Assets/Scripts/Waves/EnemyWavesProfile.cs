@@ -91,33 +91,58 @@ public class EnemyWave
     public List<Enemy> Enemies;
 
 
+    /// <summary>
+    /// Picks an enemy for one spawn, weighted by ProbabilityInWave.
+    ///
+    /// Every path now ignores entries with no prefab and every failure path returns something
+    /// spawnable or null -- never a half-authored entry. The old version had two ways to hand
+    /// back an unusable Enemy: the sum==0 branch returned Enemies[0] outright, and the weighted
+    /// loop could fall through when the probabilities did not sum cleanly. Both landed on
+    /// Instantiate(null) in EnemySpawner, which throws roughly sixty times a second for as long
+    /// as the wave lasts. Empty inspector rows left behind by a stray '+' click are common enough
+    /// in this project's wave assets that the data cannot be assumed clean.
+    /// </summary>
     public Enemy GetEnemyRandomByProbability()
     {
+        if (Enemies == null || Enemies.Count == 0)
+            return null;
+
         float sum = 0;
         foreach(var enemy in Enemies)
         {
+            if (enemy == null || enemy.Prefab == null)
+                continue;
+
             sum += enemy.ProbabilityInWave;
         }
 
-        if(sum == 0)
+        if(sum <= 0)
         {
-            return Enemies[0];
+            return FirstSpawnable();
         }
 
-        float randomWeight = 0;
-        do
-        {
-            if(sum == 0)
-                return null;
-            randomWeight = Random.Range(0, sum);
-        }
-        while(randomWeight == sum);
+        var randomWeight = Random.Range(0, sum);
 
         foreach(var enemy in Enemies)
         {
+            if (enemy == null || enemy.Prefab == null)
+                continue;
+
             if(randomWeight < enemy.ProbabilityInWave)
                 return enemy;
+
             randomWeight -= enemy.ProbabilityInWave;
+        }
+
+        return FirstSpawnable();
+    }
+
+    private Enemy FirstSpawnable()
+    {
+        for (var i = 0; i < Enemies.Count; i++)
+        {
+            if (Enemies[i] != null && Enemies[i].Prefab != null)
+                return Enemies[i];
         }
 
         return null;

@@ -43,7 +43,7 @@ public class MinibossBase : BasicBoss
 
     public void Kill()
     {
-        GameEffectsPool.SpawnNormalExplosion(_transform.position, 1.5f);
+        GameEffectsPool.SpawnBossKillBurst(_transform.position, 1.5f);
 
         // Calculate points based on wave number:
         // Wave 15 = 1000, Wave 20 = 2000, Wave 25 = 3000, etc.

@@ -138,7 +138,7 @@ public class BasicEnemy : TimeCompute, ILocalizable
         OnSendKilledDataToSpawner?.Invoke(this);
 
         if(withEffects)
-            GameEffectsPool.SpawnNormalExplosion(_transform.position, 1.5f);
+            GameEffectsPool.SpawnKillBurst(_transform.position, 1.5f);
 
         // set event driven behaviour
         if (enemyScriptableObject != null)
@@ -170,6 +170,11 @@ public class BasicEnemy : TimeCompute, ILocalizable
         var shadow = transform.GetChild(0).Find("Shadow");
         if (shadow)
             shadow.gameObject.SetActive(false);
+
+        // Retire any hit flash before the fade starts: both write SpriteRenderer.color, and a
+        // flash still in flight would pull the corpse back to opaque mid-fade.
+        if (TryGetComponent<DamageReceiver>(out var damageReceiver))
+            damageReceiver.StopHitFlash();
 
         GetComponent<F3DCharacterAvatar>().TweenAlpha(0.3f, 0, 1, 0.5f);
 

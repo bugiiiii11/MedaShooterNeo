@@ -16,12 +16,11 @@ public class Projectile : SpriteProjectile
 
     protected override void OnCollisionEnter2D(Collision2D other)
     {
-        var contacts = new ContactPoint2D[2];
-        var contactsLength = other.GetContacts(contacts);
+        var contactsLength = other.GetContacts(ContactBuffer);
 
         if (contactsLength > 0)
         {
-            var contact = other.contacts[0];
+            var contact = ContactBuffer[0];
 
             base.SpawnProjectileHit(other, contact);
 

@@ -37,6 +37,16 @@ public class GameManager : Singleton<GameManager>
     void Start()
     {
         Application.targetFrameRate = 60;
+
+        // Built here rather than placed in develop_overhaul.unity so the effect ships without a
+        // scene edit, and destroyed with this scene so the vignette never follows the player on.
+        //
+        // Gated on EnemySpawner because GameManager is NOT gameplay-exclusive: inventory.unity
+        // carries a second active instance on its "Settings" object. Without the gate, the
+        // vignette darkened the NFT/hero selection screen -- a visual change to a shipping scene
+        // that nothing about this feature intended, on the path every player takes before a run.
+        if (EnemySpawner != null)
+            ScreenFxOverlay.Create();
     }
 
    

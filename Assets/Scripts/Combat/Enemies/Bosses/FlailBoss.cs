@@ -442,13 +442,14 @@ public class FlailBoss : BasicBoss
                 IsImmuneToDamage = false;
                 ReceiveDamage(new DamageInfo( Mathf.FloorToInt(HitPoints * 0.25f), false));
                 GameEffectsPool.SpawnElectricExplosion(_transform.position, 1.5f);
+                CameraShake.Shake(JuiceSettings.ShakeExplosionDuration, JuiceSettings.ShakeExplosionAmount);
             }
         }
     }
 
     public void Kill()
     {
-        GameEffectsPool.SpawnNormalExplosion(_transform.position, 1.5f);
+        GameEffectsPool.SpawnBossKillBurst(_transform.position, 1.5f);
 
         // add score but ignore multiplier..so we wont get values like 250 * 3
         var scoreEvent = new RewardScoreEvent(enemyScriptableObject.RewardPoints);

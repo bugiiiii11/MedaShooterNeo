@@ -13,6 +13,7 @@ public class SnapAbility : AbilityConfig
         currentCooldown = ComputedCooldown;
 
         OneShotAudioPool.SpawnOneShot(activate, 1f);
+        CameraShake.Shake(JuiceSettings.ShakeAbilityDuration, JuiceSettings.ShakeAbilityAmount);
 
         Owner.GetComponent<CanvasGroup>().interactable = false;
         CountingText.gameObject.SetActive(true);

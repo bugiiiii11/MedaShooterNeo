@@ -224,9 +224,63 @@ along with the first Phase 1 build.
    '/unity-builds/medashooter/StreamingAssets'` and **no such folder exists** -- and did not before
    v5 either. Pre-existing dead config, not a regression; left alone rather than touch the live boot
    path for zero gain.
-5. **The next build is a prod promote, and it needs TWO builds, not one** (see
-   `dev-to-prod-merge.md`): a `-msEnv dev` build for dev, then a separate `-msEnv prod` build from
-   `main` after the URL swap. Budget ~20 min each. Bump `-msVersion` on both -- v5 is spent.
+5. ~~The next build is a prod promote~~ **SUPERSEDED S202: the next build is Phase 1 (v7) on dev.**
+   The prod promote still needs TWO builds when it comes (`dev-to-prod-merge.md`): the dev build
+   that exists, then a separate `-msEnv prod` build from `main` after the URL swap. Budget ~20 min
+   each, and bump `-msVersion` every time -- v5 and v6 are both spent.
+
+## J. Phase 1 (S202) -- what shipped, and what it means for the build
+
+Phase 0 is closed; this section only records the build-facing consequences. Design detail lives in
+`ms2-gdd.md` 2.2.2, 3.1 and 3.2.
+
+- **Nineteen files changed, five new scripts, one asset edited. Zero scene edits, zero prefab
+  edits.** That was a hard constraint, not an accident: `develop_overhaul.unity` is 62k lines of
+  YAML and every hand-edit to it is merge-hostile. Everything that would normally want an
+  Inspector reference goes through `Resources.Load` (an established pattern here) or through
+  components attached at runtime (the pattern `DamageReceiver.ActivateDot` already used).
+- **The FORGE3D effects cost nothing to add.** `Assets/FORGE3D/2D Sci-Fi Platformer/Resources/` is
+  a Resources root, so its 38 effect prefabs were already inside every WebGL build we have ever
+  shipped, referenced by nothing that runs. Kill bursts and muzzle flashes just start using them.
+  Expect no meaningful `medashooter.data` size change from the juice pass.
+- **Two pre-existing leaks were closed while in the area**, both of which grow over a run and
+  therefore hit long sessions hardest: projectiles that missed were never destroyed (unbounded
+  Rigidbody2D + looping particles + a per-frame trail-material recolour, forever), and every
+  pooled explosion allocated a coroutine plus a `WaitForSeconds` and waited in *scaled* time, so
+  anything spawned near a pause was stranded in the pool permanently.
+- **Anti-cheat coupling, deliberate and worth re-reading before touching hit-stop.** Hit-stop
+  slows `Time.timeScale`, and `RealtimeDurationChecker` measures the run in scaled `Time.time` and
+  POSTs that next to a server-measured duration. Stolen time is now accumulated in
+  `JuiceRuntime.StolenSeconds` and added back at game over, mirroring what `additiveDuration`
+  already did for pauses. If anyone adds a second timeScale consumer, it must do the same or long
+  runs will start looking like speed hacks to the backend.
+- **Still owed:** the in-game toggle UI for the juice settings. It is the only part of the perf
+  gate that needs a scene edit (rows in the EscMenu settings panel), so it was left out.
+
+### Durable WebGL gotchas learned in the S202 review
+
+Recorded because all three would have shipped, none would have thrown, and none would have shown
+up in the Editor.
+
+- **`SystemInfo.systemMemorySize` on WebGL is the WASM HEAP, not device RAM.** Unity implements it
+  as `JS_SystemInfo_GetMemory: return HEAPU8.length/(1024*1024)`
+  (`<editor>/PlaybackEngines/WebGLSupport/BuildTools/lib/SystemInfo.js`). This project ships
+  `webGLMemorySize: 482`, and a wasm32 heap can never reach 4096 MB, so any `memorySize < 4096`
+  device check is true on **100% of clients**. `SystemInfo.processorCount` is equally untrustworthy
+  with `webGLThreadsSupport: 0`. **`Application.isMobilePlatform` IS implemented properly** on
+  WebGL (a user-agent check) and is the only one of the three worth branching on. The first draft
+  of `JuiceSettings.DetectQuality` used the memory probe and silently disabled three of the five
+  juice features on every shipped client while looking perfect in the Editor, which reports real
+  RAM.
+- **`GameManager` is NOT gameplay-exclusive.** `inventory.unity` carries a second active instance
+  on its "Settings" object. Anything hung off `GameManager.Start()` runs there too. Gate on
+  something that only exists in `develop_overhaul.unity` -- `EnemySpawner != null` is the cheap
+  test, since `GameManager.Awake` resolves it with `FindObjectOfType`.
+- **A `DontDestroyOnLoad` component bootstrapped at `AfterSceneLoad` anchors its timers to APP
+  start, not scene start.** A frame-time watchdog written that way measures the synchronous load
+  of the gameplay scene as if it were a gameplay frame. Subscribe to `SceneManager.sceneLoaded`
+  and re-arm, and discard any sample window containing a frame longer than ~0.25s -- that is a
+  load or a backgrounded tab (`runInBackground` is 0), not a frame-budget miss.
 
 ### Done and committed
 

@@ -156,6 +156,14 @@ public class BackgroundResolver : MonoBehaviour
             if(additions.VerticalPosition == VerticalPlacement.StageBottom)
             {
                 Vector3 stageDimensions = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, 0, 0));
+
+                // This runs mid-gameplay, and the decal it places is then parented to a scrolling
+                // plane -- so a camera caught mid-shake would bake its displacement into the
+                // decal permanently. Subtracting the live shake offset is the only place camera
+                // shake can leak into world state.
+                if (CameraShake.instance != null)
+                    stageDimensions -= CameraShake.instance.CurrentOffset;
+
                 pos.y = stageDimensions.y;
 
                 // it is foreground prefab

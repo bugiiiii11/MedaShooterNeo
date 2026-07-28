@@ -16,21 +16,62 @@ public class SpriteProjectile : MonoBehaviour
     [NonSerialized]
     public ProjectileData Data;
 
+    /// <summary>
+    /// Shared scratch buffer for contact queries. `new ContactPoint2D[2]` on every collision plus
+    /// a second implicit array from reading `other.contacts` was two heap allocations per bullet
+    /// impact, on a WebGL target, at auto-fire rates.
+    /// </summary>
+    protected static readonly ContactPoint2D[] ContactBuffer = new ContactPoint2D[2];
+
     protected virtual void Awake()
     {
         _rBody = GetComponent<Rigidbody2D>();
         _collider = GetComponent<Collider2D>();
         _origin = transform.position;
+
+        // Unconditional ceiling. Projectiles were only ever destroyed on impact
+        // (OnCollisionEnter2D), and nothing in the level acts as a wall on the Projectile layer:
+        // there is no kill plane and no off-screen despawn. Every shot that MISSED therefore
+        // stayed alive for the whole run, still simulating a Rigidbody2D, still running up to
+        // three looping ParticleSystems, and still having its per-instance trail material
+        // recoloured every frame by TrajectoryProjectile.Update. The population only ever grew.
+        // This catches every spawn path, including the chain-gun reflect and the mirror perk,
+        // which create projectiles without going through Weapon at all.
+        ScheduleDespawn(JuiceSettings.ProjectileMaxLifeSeconds);
+    }
+
+    /// <summary>
+    /// Applies the firing weapon's own configured lifetime when it is credible.
+    ///
+    /// Weapon.SpawnMultiProjectileDelayed has always computed this value and then dropped it on
+    /// the floor. Most weapons author 3-4s, which is a sane bullet lifetime; AssaultLaser authors
+    /// 0.03s, which plainly is not one (its PulseProjectile self-destructs at 2s instead), so
+    /// anything below the floor is ignored rather than obeyed.
+    /// </summary>
+    public void SetMaxLifetime(float seconds)
+    {
+        const float credibleFloor = 2f;
+
+        if (seconds < credibleFloor || seconds >= JuiceSettings.ProjectileMaxLifeSeconds)
+            return;
+
+        ScheduleDespawn(seconds);
+    }
+
+    private void ScheduleDespawn(float seconds)
+    {
+        // Unity tolerates several pending Destroy calls on one object; the earliest wins and the
+        // rest are no-ops, which is exactly the semantics wanted for a ceiling plus a refinement.
+        Destroy(gameObject, seconds);
     }
 
     protected virtual void OnCollisionEnter2D(Collision2D other)
     {
-        var contacts = new ContactPoint2D[2];
-        var contactsLength = other.GetContacts(contacts);
+        var contactsLength = other.GetContacts(ContactBuffer);
 
         if (contactsLength > 0)
         {
-            var contact = other.contacts[0];
+            var contact = ContactBuffer[0];
 
             SpawnProjectileHit(other, contact);
 

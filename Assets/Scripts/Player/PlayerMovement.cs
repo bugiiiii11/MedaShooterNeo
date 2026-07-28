@@ -317,7 +317,14 @@ public class PlayerMovement : MonoBehaviour
         if (PlayerStats.TakeDamage(damage, out var isArmorOnly))
         {
             // survived
-            CameraShake.instance.SetShake(0.2f);
+            CameraShake.Shake(0.2f, JuiceSettings.ShakeExplosionAmount);
+
+            // Full-screen red wash. Armor-only hits get a weaker one so the player can read the
+            // difference without looking at the bars.
+            ScreenFxOverlay.Flash(
+                JuiceSettings.DamageTintColor,
+                isArmorOnly ? JuiceSettings.DamageTintAlpha * 0.5f : JuiceSettings.DamageTintAlpha,
+                JuiceSettings.DamageTintSeconds);
 
             //make sound
             OneShotAudioPool.SpawnOneShot(LevelProps.instance.HitShot1, 0.75f, 0.97f, 1);
