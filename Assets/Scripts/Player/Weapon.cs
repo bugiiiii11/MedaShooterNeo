@@ -63,6 +63,9 @@ public class Weapon : MonoBehaviour
     private static GameObject[] _muzzleFlashCache;
     private static bool[] _muzzleFlashResolved;
 
+    /// <summary>Scratch buffer for DampenGlow, so per-shot tuning allocates nothing.</summary>
+    private static readonly List<ParticleSystem> _flashSystems = new List<ParticleSystem>(4);
+
     private bool _isEnemyWeapon;
 
     private void Awake()
@@ -187,7 +190,84 @@ public class Weapon : MonoBehaviour
 
         // These prefabs have stopAction None, so they never clean themselves up.
         var flash = Instantiate(prefab, position, rotation, FXSocket);
+
+        // Safe here and nowhere later: playOnAwake starts the system on Instantiate, but a
+        // ParticleSystem does not emit until its own simulation step, which runs after Update.
+        if (TypeOfWeapon == WeaponType.Pistol)
+            DampenGlow(flash, JuiceSettings.PistolGlowSizeScale, JuiceSettings.PistolGlowAlphaScale);
+
         Destroy(flash, JuiceSettings.MuzzleFlashSeconds);
+    }
+
+    /// <summary>
+    /// Shrinks and dims the wide additive halo inside a muzzle flash, leaving the sharp flash
+    /// sprite untouched (GDD 3.2, S203).
+    ///
+    /// Matched by name because every FORGE3D flash names that child MuzzleFlashGlow_* -- and
+    /// Instantiate renames only the ROOT to "(Clone)", so children keep their authored names.
+    /// Tuned per instance rather than on the prefab: Resources.Load hands back the shared asset,
+    /// and mutating that would dirty the real file in the Editor.
+    /// </summary>
+    private static void DampenGlow(GameObject flash, float sizeScale, float alphaScale)
+    {
+        // Non-allocating overload against a reused list -- this runs on the fire path.
+        flash.GetComponentsInChildren(true, _flashSystems);
+
+        for (var i = 0; i < _flashSystems.Count; i++)
+        {
+            var ps = _flashSystems[i];
+
+            if (ps.name.IndexOf("Glow", StringComparison.Ordinal) < 0)
+                continue;
+
+            var main = ps.main;
+
+            var size = main.startSize;
+            switch (size.mode)
+            {
+                case ParticleSystemCurveMode.Constant:
+                    size.constant *= sizeScale;
+                    break;
+                case ParticleSystemCurveMode.TwoConstants:
+                    size.constantMin *= sizeScale;
+                    size.constantMax *= sizeScale;
+                    break;
+                default:
+                    // Curve modes scale through the multiplier, not the keyframes.
+                    size.curveMultiplier *= sizeScale;
+                    break;
+            }
+            main.startSize = size;
+
+            var color = main.startColor;
+            switch (color.mode)
+            {
+                case ParticleSystemGradientMode.Color:
+                    color.color = Fade(color.color, alphaScale);
+                    break;
+                case ParticleSystemGradientMode.TwoColors:
+                    color.colorMin = Fade(color.colorMin, alphaScale);
+                    color.colorMax = Fade(color.colorMax, alphaScale);
+                    break;
+                // Gradient modes hold alpha in gradient keys, which this struct cannot scale. No
+                // FORGE3D glow uses one, and the size cut still lands if that ever changes.
+            }
+            main.startColor = color;
+        }
+
+        // The list is static: leaving it populated would keep the last flash's (soon destroyed)
+        // components referenced until the next shot.
+        _flashSystems.Clear();
+    }
+
+    /// <summary>
+    /// The glow materials are on the built-in additive particle shader, where alpha scales how
+    /// much light the particle adds -- so this dims rather than fades.
+    /// </summary>
+    private static Color Fade(Color color, float alphaScale)
+    {
+        color.a *= alphaScale;
+        return color;
     }
 
     public virtual void TripleFire(int baseOffset = 600)

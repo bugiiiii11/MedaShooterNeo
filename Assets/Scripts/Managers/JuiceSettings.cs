@@ -120,7 +120,19 @@ public static class JuiceSettings
     // Kill VFX (Juice 3)
     // ---------------------------------------------------------------------
 
-    public const float KillBurstSeconds = 1.1f;
+    /// <summary>
+    /// How long a kill's pooled particle effects stay alive before being released back to the
+    /// pool. Sized from the assets rather than guessed.
+    ///
+    /// Every system in Enemy_Explode and in the three FORGE3D effects reused here emits a single
+    /// burst at t=0 with rateOverTime 0, so the visible duration is the longest particle LIFETIME,
+    /// not the system's lengthInSec. Longest is Enemy_Explode's second system at 1.41s (its 1.81s
+    /// lengthInSec never mattered -- nothing is emitted after t=0), then 1.16s, then the 0.4-1.0s
+    /// hit and smoke effects. 1.1s therefore released the two biggest systems mid-fade and the
+    /// particles vanished rather than faded; 1.5s clears every one of them with slack, and costs
+    /// one extra pooled instance per kill for 0.4s.
+    /// </summary>
+    public const float KillBurstSeconds = 1.5f;
 
     // ---------------------------------------------------------------------
     // Screen FX overlay (Juice 4)
@@ -136,6 +148,24 @@ public static class JuiceSettings
     // ---------------------------------------------------------------------
 
     public const float MuzzleFlashSeconds = 0.32f;
+
+    /// <summary>
+    /// Multipliers applied to the GLOW child of a muzzle flash -- the wide additive halo, not the
+    /// small sharp flash sprite that actually sells the gunshot.
+    ///
+    /// FORGE3D authored these for a slow-firing shooter. The pistol's halo is a 3-6 world-unit
+    /// white pop against a ~13-unit tall camera, on a renderer whose m_MaxParticleSize of 1 lets a
+    /// single particle cover the full viewport height, and it lives only 0.05-0.08s. The pistol is
+    /// the starting weapon and auto-fires on a 0.65s cooldown that per-wave upgrades and NFT
+    /// boosts drive down toward 0.1s, so the halo reads as a strobe -- and worsens the longer the
+    /// run goes, which is exactly how the founder described it (S203 playtest, ~8-9k points).
+    ///
+    /// Pistol-only on purpose. The bigger halos (machinegun 6-7 units, shotgun 5-7) belong to
+    /// weapons that fire slowly enough for a heavy flash to land as impact instead of noise, and
+    /// those were reported as looking good.
+    /// </summary>
+    public const float PistolGlowSizeScale = 0.4f;
+    public const float PistolGlowAlphaScale = 0.45f;
 
     /// <summary>
     /// Cap on a single projectile's lifetime. Weapon.SpawnMultiProjectileDelayed has always

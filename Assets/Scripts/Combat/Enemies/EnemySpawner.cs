@@ -198,7 +198,7 @@ public class EnemySpawner : TimeCompute
             //{
             //    GameManager.instance.EventManager.Dispatch(new NextWaveEvent(Profile.Waves[currentActiveWave]));
             //}
-            waveNumber++;
+            AdvanceWaveNumber();
             ScaleActiveEnemiesNumberCount(waveNumber);
 
             var isSilent = Profile.Waves[currentActiveWave].IsSilent;
@@ -405,7 +405,7 @@ public class EnemySpawner : TimeCompute
 
             SpawnMiniboss();
 
-            waveNumber++;
+            AdvanceWaveNumber();
         }
         else
         {
@@ -418,11 +418,28 @@ public class EnemySpawner : TimeCompute
             //    GameManager.instance.EventManager.Dispatch(new NextWaveEvent(Profile.Waves[currentActiveWave]));
             var isSilent = Profile.Waves[currentActiveWave].IsSilent;
             GameManager.instance.EventManager.Dispatch(new NextWaveEvent(Profile.Waves[currentActiveWave], isSilent));
-            waveNumber++;
+            AdvanceWaveNumber();
 
             // if above certain wave, start increasing number of enemies
             ScaleActiveEnemiesNumberCount(waveNumber);
         }
+    }
+
+    /// <summary>
+    /// The single place the run's wave counter moves, so the HUD can never drift from the number
+    /// the miniboss ladder, the difficulty curve and the spawn-gap floor all read (S203).
+    ///
+    /// The HUD used to display the wave ASSET's index instead. In the campaign that happens to be
+    /// the wave number because the profile plays in order; in endless it is whichever of the six
+    /// entries was drawn, so the counter jittered between 1 and 6 forever and a run that had
+    /// reached wave 40 could show "2".
+    /// </summary>
+    private void AdvanceWaveNumber()
+    {
+        waveNumber++;
+
+        if (GameManager.instance != null)
+            GameManager.instance.EventManager.Dispatch(new RunWaveChangedEvent(waveNumber));
     }
 
     private List<Enemy> spawnedBosses = new List<Enemy>();

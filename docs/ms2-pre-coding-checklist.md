@@ -332,3 +332,47 @@ up in the Editor.
 4. Baseline metrics recorded in this doc (append section I).
 5. Founder decisions 1-2 made; 3-7 logged with defaults.
 6. `dev-to-prod-merge.md` updated: new build command, v5+ rename contract, retire note for binary patching.
+
+## K. Phase 1 tuning (S203) -- first playtest feedback, build v8
+
+Founder played the v7 dev build to **8032 points** (dev scoreboard rank 1, 2026-07-28 04:17 UTC,
+loadout with `score_multiplier: 20` and `fire_rate_bonus: 30`). Verdict: plays well, **no empty
+waves seen**, weapon effects good -- with one complaint and it was a real defect.
+
+- **The pistol's muzzle halo strobed.** Only the glow child, not the flash sprite. FORGE3D authored
+  `MuzzleFlashGlow_Pistol` at **3-6 world units** against a ~13-unit tall camera, on a renderer
+  whose `m_MaxParticleSize: 1` lets one particle cover the full viewport height, with a 0.05-0.08s
+  lifetime. The pistol is the starting weapon, auto-fires, and its 0.65s cooldown is driven toward
+  0.1s by per-wave upgrades and NFT fire-rate bonuses -- so the halo repeats faster the longer the
+  run lasts, which is exactly how the founder described it ("distracting after a while"). Now
+  scaled to 0.4x size / 0.45x alpha, **pistol only**: the 6-7 unit machinegun and 5-7 unit shotgun
+  halos belong to weapons slow enough for a heavy flash to read as impact.
+  Tuning lives in `JuiceSettings.PistolGlowSizeScale` / `PistolGlowAlphaScale` -- two numbers.
+- **Applied per instance, never on the prefab.** `Resources.Load` returns the shared asset; mutating
+  it would dirty the real file in the Editor. `Weapon.DampenGlow` matches children by name (only the
+  ROOT gets renamed "(Clone)"), handles every `MinMaxCurve`/`MinMaxGradient` mode, and uses the
+  list overload of `GetComponentsInChildren` so the fire path still allocates nothing. Safe right
+  after `Instantiate` because `playOnAwake` starts the system but emission waits for the particle
+  simulation step, which runs after `Update`.
+- **`KillBurstSeconds` 1.1s -> 1.5s.** The S202 note said 1.1s clipped `Enemy_Explode`'s "1.81s
+  tail"; the 1.81s was the system's `lengthInSec` and was never the visible duration. Every system
+  in `Enemy_Explode`, `Pistol_Hit_01`, `AssaultLaser_Hit` and `Sniper_Barrel_Smoke_01` has
+  `rateOverTime` 0 with a single burst at t=0, so what matters is the longest particle LIFETIME:
+  1.41s, then 1.16s, then 0.4-1.0s. 1.1s released the two biggest mid-fade (particles vanished
+  instead of fading). 1.5s clears all of them.
+- **HUD wave number is now the run counter.** `UINumbersHandler` displayed `NextWave.Index + 1` --
+  the wave ASSET's slot in the profile. In the campaign that coincides with the wave number; in
+  endless, waves are drawn at random, so the counter jittered between 1 and 6 forever and a run at
+  wave 40 could read "2". New `RunWaveChangedEvent` carries `EnemySpawner.waveNumber`, which is the
+  same number the miniboss ladder, difficulty curve and spawn-gap floor already use. Deliberately
+  NOT reusing `NextWaveEvent`: that one drives perk rolls, stat upgrades and powerup spawns, and it
+  is not dispatched at all on a miniboss wave -- precisely when the HUD needs to move.
+
+**Blacklist watch (open item 2) -- one data point, not an all-clear.** The 8032 run submitted and
+ranked, so `game_duration * 100 < calculated_score` did not trip: it would have needed the run to
+last under 80s. The ratio only becomes dangerous where the quadratic miniboss ladder outruns the
+clock, around w84 with the Phase 1 density floor. Still needs a deep run to actually exercise.
+
+Build v8: batchmode, exit 0, 537.5s, zero compile errors. Stock `index.html` + `TemplateData/`
+deleted per Section I. Frame + `vercel.json` moved to v8 (JSON re-parsed after editing, per the
+S202 sed hazard). Label `v1.3.0 [DEV]` -> `v1.3.1 [DEV]`.

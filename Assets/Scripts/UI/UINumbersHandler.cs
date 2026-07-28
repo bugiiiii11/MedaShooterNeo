@@ -42,10 +42,13 @@ public class UINumbersHandler : Singleton<UINumbersHandler>
             }
         });
 
+        // The run counter, not the wave asset's index -- see RunWaveChangedEvent (S203). The two
+        // agree in the campaign and diverge immediately in endless, where waves are drawn at
+        // random and the index is not a wave number at all.
         SetWave(1);
-        GameManager.instance.EventManager.AddListener<NextWaveEvent>(ev =>
+        GameManager.instance.EventManager.AddListener<RunWaveChangedEvent>(ev =>
         {
-            SetWave(ev.NextWave.Index + 1);
+            SetWave(ev.WavesCleared + 1);
         });
 
         if (killingSpreeText != null)

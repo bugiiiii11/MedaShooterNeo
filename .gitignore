@@ -79,3 +79,6 @@ WebGLBuilds/
 
 # Unity batchmode logs from BuildWebGLDeploy / one-shot editor methods
 ms2-*.log
+
+# Batchmode build log (written by every -logFile run)
+build.log

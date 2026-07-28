@@ -199,7 +199,7 @@ Priority-ordered; all in-source, no new art assets. **Items 1-5 shipped S202 (so
 | 2 | Screen shake on kills/explosions/ability casts (amplitude-capped, toggleable) | **DONE.** `CameraShake` rewritten in place -- it already existed, wired to exactly one call site |
 | 3 | Kill VFX upgrade: reuse FORGE3D effects already in project | **DONE.** `GameEffectsPool.SpawnKillBurst` / `SpawnBossKillBurst`, zero new assets |
 | 4 | Post-processing: bloom + vignette + chromatic aberration | **DEVIATION -- delivered differently. See below.** |
-| 5 | Muzzle flash + projectile trails per weapon type | **DONE.** FORGE3D muzzle prefabs by `Resources.Load`; trails tinted by `WeaponType` |
+| 5 | Muzzle flash + projectile trails per weapon type | **DONE.** FORGE3D muzzle prefabs by `Resources.Load`; trails tinted by `WeaponType`. **Tuned S203:** the halo is scaled per weapon (`JuiceSettings.Pistol*Scale`) -- FORGE3D sized these for a slow-firing shooter and the auto-firing starting pistol strobed |
 | 6 | Parallax background layers + ambient particles per level | Phase 3, pairs with campaign backdrops |
 | 7 | UI polish: score ticker easing, perk-pickup toast, ability-ready pulse | Open |
 
