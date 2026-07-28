@@ -175,7 +175,7 @@ public class UICardPreview: MonoBehaviour
     public void Buy()
     {
         var url = OpenLinkButton.MarketplaceUrl;
-        DialogBox.DisplayRedirectDialog("You will be redirected to your browser", url, () =>
+        DialogBox.DisplayRedirectDialog(OpenLinkButton.RedirectMessageFor(url), url, () =>
         {
             Application.OpenURL(url);
         }, () => { });

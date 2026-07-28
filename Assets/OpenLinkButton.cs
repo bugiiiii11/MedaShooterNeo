@@ -15,6 +15,19 @@ public class OpenLinkButton : MonoBehaviour
 
     public string Link;
 
+    // The confirm dialog names its destination (founder call, S201): live prod reads
+    // "You will be redirected to OpenSea" and that stays. Links go to two hosts now,
+    // so the sentence is derived from the URL instead of hardcoded.
+    public static string RedirectMessageFor(string url)
+    {
+        if (url == MarketplaceUrl)
+            return "You will be redirected to OpenSea";
+        if (url == MedaShooterUrl)
+            return "You will be redirected to Swarm Resistance";
+
+        return "You will be redirected to your browser";
+    }
+
     private void Start()
     {
         GetComponent<Button>().onClick.AddListener(OpenLink);
@@ -22,7 +35,7 @@ public class OpenLinkButton : MonoBehaviour
 
     private void OpenLink()
     {
-        DialogBox.DisplayRedirectDialog("You will be redirected to your browser", Link, () =>
+        DialogBox.DisplayRedirectDialog(RedirectMessageFor(Link), Link, () =>
         {
             Application.OpenURL(Link);
         }, () => { });

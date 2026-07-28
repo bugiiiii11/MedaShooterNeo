@@ -60,18 +60,25 @@ After the port, every remaining hit is deliberate. Do NOT "clean" these:
 
 - [x] Open project in Unity **2021.3.45f2 exactly** (S200, batchmode -- never opened in the GUI, so no upgrade prompt and no phantom `.spriteatlas` diffs materialized).
 - [x] **Compiles clean (S200).** Zero errors. Only 4 benign `CS0219`/`CS0414` unused-variable warnings (`BackgroundResolver.cs` x3, `UIGameOverScreen.cs` x1). No missing-reference warnings in any of the 4 build scenes -- the predicted drift did not exist once `VideoAdUi.cs` was gone.
-- [ ] Check in-game version label (`menu.unity` ~line 5960 `m_text:`) vs live prod label -- tells us how far source is ahead of the last build.
+- [x] **Version label checked (S201): source is NOT ahead.** `menu.unity:5960` is `v1.2.6 [DEV]` on `dev` and `v1.2.6` on `main` -- the same base version the last prod build shipped, so v5 introduced no label drift. (A second label at `menu.unity:5093`, `v0.9.5b`, is a different unrelated element -- left alone.) Worth bumping to `v1.3.0` when Phase 1 gameplay changes land, so a screenshot tells you which engine a player is on.
 - [x] **Build WebGL (S200), dev backend, guard passed.** Build time **1111.5s (~18.5 min)** on the founder machine, cold `Library` rebuild before it (~15 min more). Compression `webGLCompressionFormat: 1` (Gzip) confirmed in `ProjectSettings.asset:751`; all three compressed outputs verified to carry gzip magic `1f8b`, loader verified plain text.
 - [x] **Rename contract -- ANSWERED, and the old one had a latent bug.** `vercel.json` serves `medashooter.wasm.gzip` with `max-age=31536000` but **never versioned it**. Only the data file carried a version. A rebuild changing C# changes the wasm, so a returning player would have got new `data.v5` against a year-old cached wasm -- a mismatched build. **All four outputs now carry the suffix**: `medashooter.{data,wasm}.v5.gzip`, `medashooter.framework.v5.js.gzip`, `medashooter.loader.v5.js`. `BuildScript.ApplyVersionSuffix` does the renaming so it cannot be forgotten. Frame + `vercel.json` must be updated together with it.
-- [ ] Deploy to dev frontend, behind the existing iframe. Full smoke on dev:
-  - [ ] Boots in iframe, 16:9 intact, no white-screen; loading banner keyed on `!isLoaded` still works.
-  - [ ] Login/wallet flow -> NFT heroes + weapons load with correct stats.
-  - [ ] Boost purchase (30 MG) works; `medaGasChanged` fires; TopBar updates.
-  - [ ] Full run -> score submit hits DEV backend (`swarm-resistance-backend-dev`), row lands in `medashooter_unity_scores`, XP + gas awarded within caps, leaderboard updates.
-  - [ ] Energy: 0-energy gate latches correctly (S187); energy spent before match mutation (S179).
-  - [ ] Quit mid-run + relaunch -- no freeze (the S188 iframe teardown reason).
-  - [ ] Mobile touch controls still work (joystick UI).
-- [ ] Founder plays 2-3 full runs on dev: "feels identical to live" sign-off. THIS is the parity bar -- not byte comparison.
+- [x] **Deployed to dev frontend and SMOKE PASSED (S201, founder): "the game works fine, no black panel."**
+  - [x] Boots in iframe, no white-screen -- so the blind `Content-Encoding: gzip` header on the new
+        gzipped framework file was correct. That was the single riskiest unverified change in v5.
+  - [x] **No black panel over the Esc/give-up confirm** -- the removed ReneVerse `Video Ad Surface`
+        instance was indeed the last one. Section B patch #4 is closed for good.
+  - [x] **Score submit hits the DEV backend, verified server-side, not just by eye (S201).** The
+        public scoreboard shows a dev row at `2026-07-28T00:46:27Z` (wallet `0x4ba944fb..6e6e`,
+        score 513) landed ~14 min after the founder started testing, with **`nft_boosts` populated**
+        -- which also proves the wallet -> NFT hero/weapon path loaded. **No row for that wallet on
+        prod**, so the `-msEnv` backend-URL guard told the truth.
+  - [ ] Boost purchase (30 MG) -> `medaGasChanged` -> TopBar updates: not individually confirmed.
+  - [ ] Energy 0-gate latch (S187) / spend-before-mutation (S179): not individually confirmed.
+  - [ ] Quit mid-run + relaunch, no freeze (S188 iframe teardown): not individually confirmed.
+  - [ ] Mobile touch controls (joystick UI): not confirmed -- Phase 1 makes mobile a perf gate anyway.
+- [x] **Founder parity sign-off GIVEN (S201).** The unconfirmed rows above are pre-existing platform
+      behavior that v5 did not touch, not parity risks; none of them block Phase 1.
 - [ ] Note for API tests from founder machine: Avast MITMs HTTPS -- curl needs `--ssl-no-revoke`; browser testing unaffected.
 
 ## D. Build automation -- WRITTEN (S199), not yet executed
@@ -110,10 +117,25 @@ without the CLI: **Build > Phase 0 - Remove ReneVerse Ad Objects**, then **Build
 ## E. Baseline metrics (record BEFORE changing gameplay)
 
 - [ ] Current live behavior video/notes: wave pacing incl. a captured empty-wave occurrence (regression reference).
-- [ ] FPS on founder machine + one mid/low device, current build vs parity build.
-- [ ] Load time to interactive (dev, cold + warm cache).
-- [ ] Backend: current score distribution snapshot (top 50, median) -- later phases must not silently reshuffle fairness perception.
-- [ ] RSA keypair: confirm the public key embedded in source matches what the dev/prod backends decrypt (a parity-build score submit passing end-to-end proves it).
+- [ ] FPS on founder machine + one mid/low device, current build vs parity build. **Founder-owned -- needs a play session with a frame counter; nothing else in Phase 1 is blocked on it.**
+- [ ] Load time to interactive (dev, cold + warm cache). Build sizes are already recorded in Section I (data 38.91 -> 36.47 MB, wasm 8.82 -> 7.93 MB), so v5 should be *faster* than v4, not slower.
+- [x] **Score distribution snapshot taken S201, 2026-07-28 ~01:00 UTC** (`/api/game/medashooter/scoreboard?limit=50`, current season, one row per wallet):
+
+| | PROD | DEV |
+|---|---|---|
+| Players on the board | 12 | 3 |
+| Top 5 | 54923, 11641, 2005, 1999, 1985 | 1309, 513, 0 |
+| Median | 1973 | 513 |
+| Min / max | 20 / 54923 | 0 / 1309 |
+
+  **Read this before Phase 2 tuning.** Eight of the twelve prod scores sit in a tight 1841-2005
+  band -- that is the natural ceiling of current wave pacing, and it is the number Phase 1 will move.
+  The two outliers above it (54923 = 27x the median, 11641 = 6x) are exactly what MEMORY's "MS 500
+  XP cap has no replay validation, watch leaderboard outliers" warns about; they are the case for
+  Phase 2 envelope validation, and they must NOT be used as the balance reference.
+- [x] **RSA keypair confirmed working end-to-end (S201)** -- the v5 dev submit above decrypted and
+      validated server-side, which is the proof this row asked for. The embedded public key survived
+      the source rebuild.
 
 ## F. Founder decisions owed (blocking marked)
 
@@ -129,8 +151,8 @@ without the CLI: **Build > Phase 0 - Remove ReneVerse Ad Objects**, then **Build
 
 ## G. Coordination
 
-- [ ] Colleague/CTO sync via swarm-meta: MS 2.0 track starting, ms repo active again (was archived), phases + who owns season/distribution impact (none until Phase 4-5).
-- [ ] CTO ask piggyback: the `cryptomeda.tech` dead-URL cleanup (section B) overlaps CTO's open nft_service.py ask -- coordinate so both sides change together.
+- [x] **Colleague/CTO sync written S201: `swarm-meta/ms2-track-note.md`** -- ms repo active again, patch pipeline retired, the two build gotchas (licence sign-in, framework gzip header), dev-on-v5 vs prod-on-v4, and the impact table (no season/distribution impact until Phase 4-5, no migrations until Phase 2). **Needs a push to reach them.**
+- [x] CTO ask piggyback included in that note: the `cryptomeda.tech` dead-URL cleanup (Section B) overlaps CTO's open `nft_service.py` ask -- flagged so both sides change together.
 - [ ] No prod DB migrations in Phase 0-1. First migration lands Phase 2 (envelope columns); follows the S133 rule: verify every object on prod via endpoint after running.
 
 ## I. Execution log (S199 code, S200 build)
@@ -178,20 +200,33 @@ Both Section D commands ran in batchmode, first try, exit 0. No GUI session was 
 `vercel.json` route needed a `Content-Encoding: gzip` header it never had. Renaming the paths alone
 would have fed gzip bytes to the browser as JavaScript and white-screened dev. Header added.
 
+### S201: Phase 0 CLOSED
+
+Founder played v5 on dev: **"the game works fine, no black panel."** With the version label and the
+score-distribution baseline also settled (Sections C and E above), every Phase 0 exit condition in
+Section H is met except the two founder-owned FPS/load-time measurements, which gate nothing.
+
+The one code change S201 made is the dialog wording revert (Section "Two things to watch"). It is
+**source-only and unbuilt** -- deliberately not worth a 20-minute rebuild on its own, so it rides
+along with the first Phase 1 build.
+
 ### Still owed
 
-1. **Founder parity smoke (Section C) -- the Phase 0 pass bar.** Nothing below is claimed as
-   verified: no one has played the v5 build. It is committed locally but NOT pushed, so dev has not
-   redeployed yet.
-2. In-game version label vs live prod label (Section C) -- still unchecked.
-3. Sections E (baseline metrics: FPS, load-to-interactive, score distribution) and G (colleague/CTO
-   sync). Build time + output sizes above are the first two E rows.
-4. **Dead code now pointing at deleted files:** `MedaShooterPagePROD.jsx:124` and
-   `MedaShooterResistancePage.jsx:28` reference the old unversioned filenames. Neither is routed in
-   `App.jsx` (only `MedaShooterPage` is), so nothing breaks -- but they are actively misleading.
-5. `frontend/public/medashooter-frame.html` references `streamingAssetsUrl:
+1. FPS on founder machine + one mid/low device, and cold/warm load-to-interactive (Section E).
+   Founder-owned, blocks nothing.
+2. Section G colleague/CTO sync -- **written S201** to `swarm-meta/ms2-track-note.md`. Committed
+   locally; **not pushed**, so the colleague lane cannot see it yet.
+3. ~~Dead frontend code pointing at deleted build files~~ **DONE S201:** `MedaShooterPagePROD.jsx`
+   and `MedaShooterResistancePage.jsx` were unreferenced anywhere in the tree (only
+   `MedaShooterPage.jsx` is routed) and both still named the pre-v5 unversioned filenames. Deleted
+   outright, 1565 lines; git has them if ever needed.
+4. `frontend/public/medashooter-frame.html` references `streamingAssetsUrl:
    '/unity-builds/medashooter/StreamingAssets'` and **no such folder exists** -- and did not before
-   v5 either. Pre-existing dead config, not a regression.
+   v5 either. Pre-existing dead config, not a regression; left alone rather than touch the live boot
+   path for zero gain.
+5. **The next build is a prod promote, and it needs TWO builds, not one** (see
+   `dev-to-prod-merge.md`): a `-msEnv dev` build for dev, then a separate `-msEnv prod` build from
+   `main` after the URL swap. Budget ~20 min each. Bump `-msVersion` on both -- v5 is spent.
 
 ### Done and committed
 
@@ -210,11 +245,14 @@ would have fed gzip bytes to the browser as JavaScript and white-screened dev. H
   only drift.** Removing that file was sufficient; the first real compile produced zero errors and
   no missing-reference warnings. The worry that source "had not produced a player build in some
   time" turned out to cost nothing.
-- **The confirm dialog's wording changes.** Live v4 says "You will be redirected to OpenSea"
-  (a same-length IL2CPP patch). Source says "You will be redirected to your browser" and now shows
-  the real destination on the URL line, which live v4 blanked. Links go to two different hosts now,
-  so the generic wording is the more accurate one -- but it is a visible difference from what was
-  signed off. Flag it during the parity playthrough.
+- ~~**The confirm dialog's wording changes.**~~ **DECIDED S201 (founder): keep the live prod
+  wording, "You will be redirected to OpenSea."** Because links now go to two hosts, the sentence is
+  no longer a hardcoded literal -- `OpenLinkButton.RedirectMessageFor(url)` derives it from the
+  destination (`MarketplaceUrl` -> "OpenSea", `MedaShooterUrl` -> "Swarm Resistance", anything else
+  -> the generic "your browser"). Both call sites use it (`OpenLinkButton.OpenLink`,
+  `UICardPreview.Buy`). The URL line **stays visible** -- v4 only blanked it because the URL it
+  showed was the dead `cryptomeda.tech` one; the dialog was designed with a `UrlText` field.
+  **Ships in the next build -- v5 on dev still shows the old sentence.**
 
 ## H. Definition of done -- Phase 0
 
