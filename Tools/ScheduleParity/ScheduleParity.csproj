@@ -1,0 +1,35 @@
+<!--
+  Standalone harness that compiles the two mirror files OUTSIDE Unity and emits
+  golden vectors for the Python twin to check against.
+
+  This project lives outside Assets/ on purpose: Unity compiles every .cs under
+  Assets/, and a console Main would collide with the player build. It links the
+  mirror sources rather than copying them, so the harness can only ever test the
+  exact files that ship.
+
+  Run it from the MedaShooterNeo folder:
+    dotnet run [dashdash]project Tools/ScheduleParity [output.json]
+  See backend/tests/test_ms_schedule_parity.py for the checking half.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>ScheduleParity</AssemblyName>
+    <RootNamespace>ScheduleParity</RootNamespace>
+    <!-- The mirror files must never need anything Unity shaped. If one of them
+         grows a `using UnityEngine`, this project stops compiling, which is the
+         point. That is the guard rail, not the inconvenience. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="../../Assets/Scripts/Determinism/MsRng.cs" Link="Mirror/MsRng.cs" />
+    <Compile Include="../../Assets/Scripts/Determinism/MsSchedule.cs" Link="Mirror/MsSchedule.cs" />
+  </ItemGroup>
+
+</Project>

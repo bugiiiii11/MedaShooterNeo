@@ -82,3 +82,15 @@ ms2-*.log
 
 # Batchmode build log (written by every -logFile run)
 build.log
+
+# Schedule parity harness build output (Tools/ScheduleParity).
+# The generated vectors ARE committed -- backend/tests/fixtures/ms_schedule_vectors.json
+# is the golden fixture the Python mirror test checks against -- but the
+# intermediate build artefacts are not.
+Tools/**/bin/
+Tools/**/obj/
+Tools/ScheduleParity/csharp_vectors.json
+# ...but the harness project itself must survive a clone. The blanket *.csproj
+# rule above exists for Unity's generated projects; this one is hand-written and
+# is the only way to prove the C#/Python schedule mirror without a WebGL build.
+!Tools/**/*.csproj

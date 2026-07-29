@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Determinism;
 using UnityEngine;
 
 public class EnemySpawner : TimeCompute
@@ -46,6 +47,16 @@ public class EnemySpawner : TimeCompute
         currentEnemyCount = 0;
         spawnedEnemiesCount = 0;
 
+        // Time.time is seconds since APP start, not since this scene loaded, and
+        // lastSpawnTime defaults to 0 -- so a player who came through
+        // loading -> menu -> inventory arrives here with Time.time already in the
+        // minutes. CheckForMissingEnemies fires its first tick 5s from now and
+        // compares Time.time - lastSpawnTime against 15, which without this line
+        // is trivially true and force-advances wave 1 before it has played. Today
+        // that is masked only by the 0.5s initial SpawnCooldown getting a spawn in
+        // first -- a 4.5s accident, not a guarantee.
+        lastSpawnTime = Time.time;
+
         // Check for Level 2 and swap profile if needed
         if (PlayerPrefs.GetInt("IsLevel2", 0) == 1)
         {
@@ -59,6 +70,15 @@ public class EnemySpawner : TimeCompute
             PlayerPrefs.SetInt("IsLevel2", 0);
             PlayerPrefs.Save();
         }
+
+        // Seeded from here rather than GameManager.Start: GameManager also lives
+        // in inventory.unity, where there is no run to seed. This runs once per
+        // gameplay run, in the gameplay scene, after the Level 2 profile swap so
+        // the campaign length is the one actually about to play.
+        campaignWaveCount = Profile != null && Profile.Waves != null ? Profile.Waves.Count : 0;
+        MsRunSeed.BeginRun();
+        scheduleOrdinal = 0;
+        msState = MsScheduleState.New();
 
         InvokeRepeating(nameof(CheckForMissingEnemies), 5, 5);
 
@@ -569,11 +589,53 @@ public class EnemySpawner : TimeCompute
     private const float EndlessMaxGapEarly = 3.0f;
     private const float EndlessMaxGapLate = 1.8f;
 
-    private readonly List<int> endlessCandidates = new List<int>();
-    private readonly List<float> endlessWeights = new List<float>();
-    private float endlessWeightTotal;
-    private int lastEndlessWave = -1;
-    private bool endlessCandidatesBuilt;
+    // ---------------------------------------------------------------------
+    // SEEDED since Phase 2 (S206). The endless draw used to be
+    // `Random.value * endlessWeightTotal` against a float weight list held here;
+    // it now runs through Determinism/MsSchedule, which has a line-for-line
+    // Python mirror in the backend and a parity harness that proves the two
+    // agree bit for bit.
+    //
+    // The float weight machinery was REMOVED rather than left alongside: two
+    // sources of truth for the same selection is exactly how a mirror drifts
+    // without anyone noticing. Weight derivation now lives in
+    // MsScheduleBuilder, which is the single place float wave data becomes the
+    // integer weights that both sides consume.
+    //
+    // WHAT THIS DOES NOT SEED, and why it is the right line to stop at: enemy
+    // type per spawn, spawn position, spawn cooldown, HP rolls, perk offers,
+    // drops, powerups and mines all still use UnityEngine.Random and are
+    // untouched. Everything the founder tuned over v7-v10 therefore behaves
+    // identically. Those decisions are also not server-reconstructible even in
+    // principle -- they are indexed by the SPAWN ordinal, and the campaign boss
+    // wave emits one spawn against an authored EnemyQuantity of 2 while the
+    // SpawnEnemyForHackers branch adds a spawn on a live-score probability, so
+    // spawn counts per wave are ambiguous and the ambiguity compounds.
+    //
+    // The wave-TRANSITION ordinal has no such problem, which is why the schedule
+    // is indexed by it. See MsSchedule.cs for the full argument.
+    // ---------------------------------------------------------------------
+
+    private MsScheduleProfile msProfile;
+    private MsScheduleState msState = MsScheduleState.New();
+    private bool msProfileBuilt;
+
+    /// <summary>
+    /// Number of wave transitions so far. Increments once per
+    /// GetIndexForNextWave call, which is paired 1:1 with a NextWaveEvent
+    /// dispatch -- and PlayerMovement.OnNextWaveSpawned increments
+    /// GameStats.WavesCount on every one of those, before its IsSilent
+    /// early-return. So this equals WavesCount, which ships as parameter3, which
+    /// is how the server reconstructs the same draw indices.
+    /// </summary>
+    private uint scheduleOrdinal;
+
+    /// <summary>
+    /// Entries in the CAMPAIGN profile, captured in Start before any swap to the
+    /// endless profile. This is the transition at which the schedule leaves the
+    /// hand-authored waves, and the server needs the same number to line up.
+    /// </summary>
+    private int campaignWaveCount;
 
     /// <summary>Longest tolerable silence between spawns, tightening from wave 10 to wave 30.</summary>
     private float EndlessMaxSpawnGap()
@@ -582,114 +644,29 @@ public class EnemySpawner : TimeCompute
         return Mathf.Lerp(EndlessMaxGapEarly, EndlessMaxGapLate, t);
     }
 
-    /// <summary>
-    /// A wave is playable only if it can actually put an enemy on the field. Checking the
-    /// probability alone is not enough (a wave can hold a real prefab at probability 0) and
-    /// checking the prefab alone is not enough either (GetEnemyRandomByProbability short-circuits
-    /// to Enemies[0] when every probability is 0).
-    /// </summary>
-    private static bool IsWavePlayable(EnemyWave wave)
-    {
-        if (wave == null || wave.Enemies == null || wave.Enemies.Count == 0)
-            return false;
-
-        for (var i = 0; i < wave.Enemies.Count; i++)
-        {
-            var enemy = wave.Enemies[i];
-
-            if (enemy != null && enemy.Prefab != null && enemy.ProbabilityInWave > 0f)
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Expected enemies per minute at SpawnRateFactor 1, used as the selection weight.
-    ///
-    /// The zero-cooldown guard is not cosmetic: a wave authored with SpawnCooldownRange {0,0}
-    /// yields 60/0 = infinity, and an infinite weight would make that one wave win every single
-    /// draw. Treating it as the fastest allowed cadence keeps it finite and honest.
-    /// </summary>
-    private static float WaveDensityPerMinute(EnemyWave wave)
-    {
-        var meanCooldown = (wave.SpawnCooldownRange.x + wave.SpawnCooldownRange.y) * 0.5f;
-        meanCooldown = Mathf.Max(meanCooldown, MinSpawnGapSeconds);
-
-        return Mathf.Clamp(60f / meanCooldown, 1f, 60f);
-    }
-
     private void RebuildEndlessCandidates()
     {
-        endlessCandidates.Clear();
-        endlessWeights.Clear();
-        endlessWeightTotal = 0f;
-        endlessCandidatesBuilt = true;
+        msProfile = MsScheduleBuilder.Build(Profile, campaignWaveCount);
+        msProfileBuilt = true;
 
-        if (Profile == null || Profile.Waves == null)
-            return;
-
-        for (var i = 0; i < Profile.Waves.Count; i++)
-        {
-            var wave = Profile.Waves[i];
-
-            // Silent waves are scripted breathers -- they suppress the per-wave stat upgrade and
-            // the difficulty tick -- so they must never come up in a random rotation. The endless
-            // profile happens to have none today; this keeps that true if one is ever authored.
-            if (wave == null || wave.IsSilent || !IsWavePlayable(wave))
-                continue;
-
-            var weight = WaveDensityPerMinute(wave);
-            endlessCandidates.Add(i);
-            endlessWeights.Add(weight);
-            endlessWeightTotal += weight;
-        }
-
-        if (endlessCandidates.Count == 0)
-            Debug.LogError("[EnemySpawner] The endless profile has no playable waves; falling back to index 0.");
+        Debug.Log($"[MsSchedule] seed={MsRunSeed.Seed} v{MsSchedule.ScheduleVersion} {MsScheduleBuilder.Describe(msProfile)}");
     }
 
     private int PickEndlessWave()
     {
-        if (!endlessCandidatesBuilt)
+        if (!msProfileBuilt)
             RebuildEndlessCandidates();
 
-        if (endlessCandidates.Count == 0)
-            return 0;
-
-        if (endlessCandidates.Count == 1)
-            return endlessCandidates[0];
-
-        var picked = DrawWeightedWave();
-
-        // One redraw is enough to break back-to-back repeats without skewing the distribution
-        // the way a reject-until-different loop would.
-        if (picked == lastEndlessWave)
-            picked = DrawWeightedWave();
-
-        lastEndlessWave = picked;
-        return picked;
-    }
-
-    private int DrawWeightedWave()
-    {
-        var roll = Random.value * endlessWeightTotal;
-
-        for (var i = 0; i < endlessCandidates.Count; i++)
-        {
-            roll -= endlessWeights[i];
-
-            if (roll <= 0f)
-                return endlessCandidates[i];
-        }
-
-        // Float accumulation can leave a sliver at the top of the range.
-        return endlessCandidates[endlessCandidates.Count - 1];
+        return MsSchedule.Step(MsRunSeed.Seed, msProfile, ref msState, scheduleOrdinal);
     }
 
     // the index is looped
     private int GetIndexForNextWave()
     {
+        // Bumped first, so the value used for this transition's draw is the same
+        // one WavesCount will hold once the paired NextWaveEvent lands.
+        unchecked { scheduleOrdinal++; }
+
         if (IsDefaultWave)
         {
             currentActiveWave++;
