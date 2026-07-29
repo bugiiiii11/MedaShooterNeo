@@ -1,15 +1,22 @@
-using Cryptomeda.Minigames.BackendComs;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+#if UNITY_EDITOR
+using Cryptomeda.Minigames.BackendComs;
+#endif
 
 public class DebuggingTools : MonoBehaviour
 {
+    // Serialized fields stay in all builds so scene data keeps resolving.
     public TextMeshProUGUI WaveSliderText;
-    private int currentWaveSkip = 0;
-
     public TMP_Dropdown actionDropown, skinDropdown;
+
+#if !UNITY_EDITOR
+    private void Awake()
+    {
+        Destroy(gameObject);
+    }
+#else
+    private int currentWaveSkip = 0;
 
     public void OnWaveSliderChanged(float value)
     {
@@ -66,7 +73,7 @@ public class DebuggingTools : MonoBehaviour
     {
         //var index = actionDropown.value;
         var text = actionDropown.options[index].text;
-        
+
         if(text == "Spawn Assault Rifle")
         {
             var powerupSpawner = FindObjectOfType<PowerupSpawner>();
@@ -133,4 +140,5 @@ public class DebuggingTools : MonoBehaviour
         var toGive = allPerks.Find(x => string.Equals(x.Title, perkName, System.StringComparison.OrdinalIgnoreCase));
         UIPerkManager.instance.ApplyPerk(toGive);
     }
+#endif
 }
