@@ -34,9 +34,20 @@ public class MinibossBase : BasicBoss
 
     public override void ReceiveDamage(DamageInfo damage)
     {
+        // See BasicBoss.IsDead. Without this the killing blow was re-run by every other
+        // projectile that landed in the same frame, which meant another SpawnBossKillBurst
+        // (five stacked particle systems, a shake and a hit-stop each time -- the visible
+        // "pulsing"), another RewardScoreEvent worth the full miniboss bonus, and, through
+        // BasicBoss.OnDied -> EnemySpawner.OnEnemyKilled(BasicBoss), another wave advance
+        // and another NextWaveEvent.
+        if (IsDead)
+            return;
+
         base.ReceiveDamage(damage);
+
         if (currentHitPoints <= 0)
         {
+            IsDead = true;
             Kill();
         }
     }

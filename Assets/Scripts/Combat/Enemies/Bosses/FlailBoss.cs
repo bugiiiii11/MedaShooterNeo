@@ -80,12 +80,17 @@ public class FlailBoss : BasicBoss
 
     public override void ReceiveDamage(DamageInfo damage)
     {
+        // See BasicBoss.IsDead -- same defect as MinibossBase, same frame window.
+        if (IsDead)
+            return;
+
         if (!IsImmuneToDamage)
         {
             base.ReceiveDamage(damage);
 
             if(currentHitPoints <= 0)
             {
+                IsDead = true;
                 Kill();
             }
         }
