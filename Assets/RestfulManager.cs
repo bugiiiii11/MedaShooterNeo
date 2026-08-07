@@ -61,7 +61,7 @@ namespace Cryptomeda.Minigames.BackendComs
 
         private void ForceUpdateEndpointsToRailway()
         {
-            string railwayBase = "https://swarm-resistance-backend-dev-production.up.railway.app";
+            string railwayBase = "https://swarm-resistance-backend-production.up.railway.app";
 
             for (int i = 0; i < Endpoints.Count; i++)
             {
@@ -150,7 +150,7 @@ namespace Cryptomeda.Minigames.BackendComs
         private static string ConstructEnvUrl(string url)
         {
             // If URL already points to Railway, return as-is
-            if (url.Contains("swarm-resistance-backend-dev-production.up.railway.app"))
+            if (url.Contains("swarm-resistance-backend-production.up.railway.app"))
             {
                 Debug.Log($"🚀 Using Railway URL: {url}");
                 return url;
