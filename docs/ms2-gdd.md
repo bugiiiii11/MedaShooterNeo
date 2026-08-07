@@ -273,6 +273,43 @@ reachable only via PlayerPrefs and the automatic preset.
 
 Server issues the seed at `/match/start` (duels, daily) or accepts a client seed it records (casual runs). Score submits carry `seed + stats`; server validates against the mirror's envelope.
 
+**S206 corrections to the above (the review that demolished half of this section):** (a) the pure
+function is indexed by the WAVE-TRANSITION ordinal, not `(seed, elapsed_time)` -- spawning is
+player-reactive, elapsed time is not reconstructible; (b) scope is the wave SEQUENCE only -- spawn
+ordinals are ambiguous in principle (boss emits 1 spawn against authored quantity 2; the hacker
+branch keys off live score); (c) **the max-score envelope is REFUTED** -- every input to the bound
+is a client-chosen integer and MS RSA is encrypt-only, so the formula constrains nobody. Full
+mechanism: checklist section on S206.
+
+#### 3.3b Phase 2b -- server-anchored runs (SHIPPED S223, shadow mode)
+
+What replaces the envelope is not a tighter formula but a COST. `POST /run/start` issues
+`{run_id, seed, token}` per run; the token is an HMAC only the server can mint; the seed anchors
+the (already shipped) schedule. Submits echo `run_id + run_token + seed` as plain fields next to
+the legacy RSA params. The server then has, for the first time, facts the client cannot choose:
+
+| Check | Verdict on failure | Class |
+|-------|--------------------|-------|
+| token is OUR mint, for THIS wallet | `bad_token` / `bad_run_id` | integrity |
+| run exists / not already submitted | `unknown_run` / `replayed` | integrity |
+| wallet matches the issued run | `wallet_mismatch` | integrity |
+| claimed duration fits inside server wall-clock (issue -> submit) | `duration_exceeds_wall` | integrity |
+| waves/perks per minute plausible | flags in `checks` JSON only | soft signal |
+
+The wall-clock check is the load-bearing one: forging a 30-minute-grade score now costs 30 real
+minutes per attempt per single-use token, instead of zero. Every failure is FAIL-OPEN for the
+player: no anchor -> the run plays on its local seed and submits as `unanchored`; legacy builds
+(prod data.v4) submit as `legacy` forever-until-promote.
+
+**SHADOW MODE: no verdict rejects anything.** Verdicts accumulate in
+`medashooter_run_validations`; enforcement (`MS_RUN_VALIDATION_ENFORCE`) is a separate later
+decision taken from that data (target: ~zero false positives over 2 weeks, per founder decision
+F6). The ratio heuristics + wrap guard stay until then. Env: `MS_RUN_TOKEN_SECRET` (absent =
+anchoring off, everything degrades to pre-2b), `MS_RUN_START_HOURLY_CAP` (default 40).
+
+This endpoint is also Phase 3's daily-challenge seed issuer and Phase 5's duel fairness anchor --
+one mechanism, three phases.
+
 ### 3.4 Progression: Pilot Level
 
 Bounded-power progression per pillar 1. MW ladder pattern, MS-specific.

@@ -17,6 +17,7 @@ namespace Cryptomeda.Minigames.BackendComs
         Staking = 60477,
         UserWeapons = 15300,
         BoostPackages = 95464,
+        RunStart = 73315,
     }
 
     public enum Devenv
@@ -90,6 +91,9 @@ namespace Cryptomeda.Minigames.BackendComs
                     case RestfulEndpoint.BoostPackages:
                         newUrl = $"{railwayBase}/api/boosts/active/";
                         break;
+                    case RestfulEndpoint.RunStart:
+                        newUrl = $"{railwayBase}/api/v1/minigames/medashooter/run/start/";
+                        break;
                     default:
                         continue; // Skip unknown endpoints
                 }
@@ -108,6 +112,20 @@ namespace Cryptomeda.Minigames.BackendComs
                     // Update the list
                     Endpoints[i] = updatedEndpoint;
                 }
+            }
+
+            // The serialized scene list predates Phase 2b, so RunStart is not
+            // in it -- the loop above only UPDATES entries. Add it in code so
+            // no scene surgery is needed (Find on a missing entry returns a
+            // default struct with a null Url and Post would throw).
+            if (Endpoints.FindIndex(x => x.Endpoint == RestfulEndpoint.RunStart) < 0)
+            {
+                Endpoints.Add(new EndpointData
+                {
+                    Endpoint = RestfulEndpoint.RunStart,
+                    Url = $"{railwayBase}/api/v1/minigames/medashooter/run/start/"
+                });
+                Debug.Log("➕ Endpoint added: RunStart");
             }
 
             Debug.Log("✅ All endpoints updated to Railway deployment");

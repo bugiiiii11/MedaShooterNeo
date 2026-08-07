@@ -56,6 +56,21 @@ public static class JsonBuilder
         sb.Append("\"parameter14\":\"").Append(parameter14).Append("\",");
         sb.Append("\"parameter15\":\"").Append(parameter15).Append('\"');
 
+        // Phase 2b run-anchoring fields. Deliberately PLAIN, not RSA: the RSA
+        // layer is encrypt-only and proves nothing (any client can encrypt
+        // with the public key); the run token is an HMAC only the server can
+        // mint, so it needs no hiding. The seed always ships -- for anchored
+        // runs the server checks it against what it issued, for unanchored
+        // runs it is recorded as the client's claim.
+        sb.Append(",\"seed\":\"").Append(Determinism.MsRunSeed.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append("\",");
+        sb.Append("\"schedule_version\":").Append(Determinism.MsSchedule.ScheduleVersion);
+
+        if (Determinism.MsRunAnchor.TryGetForSubmission(out var runId, out var runToken))
+        {
+            sb.Append(",\"run_id\":\"").Append(runId).Append("\",");
+            sb.Append("\"run_token\":\"").Append(runToken).Append('\"');
+        }
+
         sb.Append("}");
 
         return sb.ToString();

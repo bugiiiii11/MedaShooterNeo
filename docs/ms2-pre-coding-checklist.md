@@ -560,3 +560,44 @@ errors -- **exactly** the S201 baseline, no new ones.
 **v10 is unplayed.** Smoke list: kills leave the camera dead still; a wave-36-length run still feels
 smooth under heavy fire (the muzzle-flash change is the thing being tested); the wave chip reads
 cleanly under Score with a full perk row; pistol halo and fullscreen focus unregressed.
+
+## N. Phase 2b (S223) -- server-anchored runs, shadow mode. UNBUILT
+
+The envelope's replacement (design + full mechanism: GDD 3.3b). Client + backend code landed
+S223 (2026-08-07); **no Unity build yet** -- v12 is still the newest build and does NOT send run
+fields, which is fine: the backend records such submissions as `legacy`.
+
+### What shipped where
+
+| Side | Piece |
+|------|-------|
+| BE | `app/services/ms_run_guard.py` -- pure logic (HMAC token mint/verify, shadow verdict ladder, plausibility flags), dependency-free per the ms_wrap_guard pattern, 28 tests |
+| BE | `POST /api/v1/minigames/medashooter/run/start/` -- issues `{run_id, seed, token}`; 503 when `MS_RUN_TOKEN_SECRET` unset; per-wallet hourly cap (`MS_RUN_START_HOURLY_CAP`, default 40) |
+| BE | `_ms_shadow_validate` in the submit path -- runs after decryption for EVERY submission (including ones the anti-cheat branch swallows), never rejects, never raises; verdict rows in `medashooter_run_validations`, `unity_score_id` backfilled on stored scores |
+| BE | `migration_ms_run_anchoring.sql` -- `medashooter_runs` + `medashooter_run_validations`. NOT yet run on dev Supabase |
+| ms | `Determinism/MsRunAnchor.cs` (+ hand-minted .meta) -- fires run/start at scene start, generation-stamped response handling, refuses cross-version seeds, fail-open everywhere |
+| ms | `RestfulManager` -- `RunStart = 73315` enum + code-side endpoint ADD (the serialized scene list predates it; Find on a missing entry returns a null Url) |
+| ms | `EnemySpawner.Start` -- `MsRunAnchor.RequestAnchor(gen)` right after `MsRunSeed.BeginRun()` |
+| ms | `JsonBuilder.BuildScore` -- always appends plain `seed` + `schedule_version`; appends `run_id` + `run_token` only when `MsRunAnchor.TryGetForSubmission` says the anchor belongs to THIS run. UIGameOverScreen unchanged |
+
+### Deliberate choices worth not re-litigating
+
+- Run fields are PLAIN JSON, not RSA -- the RSA layer proves nothing (encrypt-only, public key
+  ships in the client); the HMAC token is the thing that cannot be forged, and it needs no hiding.
+- `medashooter_runs.run_id`/`seed` are TEXT, not UUID/BIGINT -- asyncpg type friction and signed
+  uint64 overflow are not worth the prettier schema; nothing computes on either column in SQL.
+- Marking a run used happens even for submissions the anti-cheat branch swallows -- single-use
+  means single-use.
+- `unanchored` is a separate verdict from `legacy`: a rising unanchored rate is an ops signal
+  (run/start down or rate-limited), a rising legacy rate after the prod promote is stale caches.
+
+### Before this phase can be called DONE
+
+1. Founder runs `migration_ms_run_anchoring.sql` on dev Supabase (no BEGIN block).
+2. `MS_RUN_TOKEN_SECRET` set on Railway dev (any long random string; rotating it orphans
+   outstanding runs, which is harmless -- their submissions land as `bad_token` and still count).
+3. Build v13 (`-msEnv dev`), deploy, play one run: expect `[MsRunAnchor] run anchored` in the
+   console and an `ok` verdict row with `wall_seconds` in `medashooter_run_validations`.
+4. Kill the env var, play again: expect `unanchored` verdict, game unaffected -- the fail-open
+   path is the one that must not regress.
+5. Let shadow data accumulate ~2 weeks post-promote before ANY enforcement talk (founder F6).

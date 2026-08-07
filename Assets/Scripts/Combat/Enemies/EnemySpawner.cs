@@ -76,7 +76,10 @@ public class EnemySpawner : TimeCompute
         // gameplay run, in the gameplay scene, after the Level 2 profile swap so
         // the campaign length is the one actually about to play.
         campaignWaveCount = Profile != null && Profile.Waves != null ? Profile.Waves.Count : 0;
-        MsRunSeed.BeginRun();
+        var runGeneration = MsRunSeed.BeginRun();
+        // Phase 2b: ask the server to anchor this run (token + seed). Fire and
+        // forget -- an unanchored run plays identically on its local seed.
+        MsRunAnchor.RequestAnchor(runGeneration);
         scheduleOrdinal = 0;
         msState = MsScheduleState.New();
 
