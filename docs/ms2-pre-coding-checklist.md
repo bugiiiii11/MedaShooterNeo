@@ -593,11 +593,32 @@ fields, which is fine: the backend records such submissions as `legacy`.
 
 ### Before this phase can be called DONE
 
-1. Founder runs `migration_ms_run_anchoring.sql` on dev Supabase (no BEGIN block).
-2. `MS_RUN_TOKEN_SECRET` set on Railway dev (any long random string; rotating it orphans
-   outstanding runs, which is harmless -- their submissions land as `bad_token` and still count).
-3. Build v13 (`-msEnv dev`), deploy, play one run: expect `[MsRunAnchor] run anchored` in the
-   console and an `ok` verdict row with `wall_seconds` in `medashooter_run_validations`.
-4. Kill the env var, play again: expect `unanchored` verdict, game unaffected -- the fail-open
-   path is the one that must not regress.
-5. Let shadow data accumulate ~2 weeks post-promote before ANY enforcement talk (founder F6).
+1. [x] Founder ran `migration_ms_run_anchoring.sql` on dev Supabase (no BEGIN block) -- S224.
+2. [x] `MS_RUN_TOKEN_SECRET` set on Railway dev -- S224. Any long random string; rotating it
+   orphans outstanding runs, which is harmless: their submissions land as `bad_token` and still
+   count. Dev and prod MUST hold different values.
+3. [x] **Anchored path VERIFIED (S224).** v13 built `-msEnv dev`, deployed, three runs played:
+   `[MsRunAnchor] run anchored: <uuid>` in console and three `ok` rows, each with `wall_seconds`
+   tracking `claimed_duration` to within a second (46.4/46, 56.8/56, 36.2/36) and
+   `seed_mismatch: false` -- the client played the seed the server issued.
+4. [x] **Fail-open path VERIFIED (S224) -- but NOT the way this step used to describe it.**
+   The old text said "kill `MS_RUN_TOKEN_SECRET`, expect `unanchored`". **That is wrong and
+   would read as a failure.** With no secret the server never reaches `shadow_verdict` at all --
+   it takes the `if not secret:` branch and records `legacy` (or `unconfigured` when the fields
+   are somehow present). `unanchored` lives INSIDE `shadow_verdict`, so it requires the secret to
+   be SET and `/run/start` to have failed for some other reason.
+   **Correct test, the one that was actually run:** leave the secret in place, set
+   `MS_RUN_START_HOURLY_CAP=0` so every `/run/start` 429s, play a run. Observed exactly as
+   intended: `[MsRunAnchor] run/start returned 429 -- run stays unanchored`, a normal game, and an
+   `unanchored` row with `run_id` NULL and no `wall_seconds` (no run row to measure against).
+   Variable deleted afterwards -- absent and `40` are identical, so absent leaves no stale config.
+   Note `MsRunAnchor` treats every non-200 identically, so the 429 path also proves the 503 one.
+5. [ ] Let shadow data accumulate ~2 weeks post-promote before ANY enforcement talk (founder F6).
+
+**KNOWN GAP, flagged S224, fix deferred by founder.** The `if not secret:` branch ignores
+`client_seed`, so a v13 client running against a secret-less server lands in the same `legacy`
+bucket as a genuine pre-2b v12 client. `shadow_verdict` already separates these correctly via
+`client_seed`; only this branch does not. **Ops consequence:** the documented reading of "a rising
+`legacy` rate after the prod promote is stale caches" is not safe on its own -- if the prod secret
+ever goes missing, the same spike appears. Until this is fixed, confirm `MS_RUN_TOKEN_SECRET` is
+actually set before attributing a `legacy` spike to caching.

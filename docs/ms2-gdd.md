@@ -301,6 +301,14 @@ minutes per attempt per single-use token, instead of zero. Every failure is FAIL
 player: no anchor -> the run plays on its local seed and submits as `unanchored`; legacy builds
 (prod data.v4) submit as `legacy` forever-until-promote.
 
+**`unanchored` requires the secret to be SET.** It is produced inside `shadow_verdict`, which the
+`if not secret:` branch never reaches -- so a secret-less server records `legacy`, not
+`unanchored`, even for a v13 client. Verified S224 by forcing `/run/start` to 429 via
+`MS_RUN_START_HOURLY_CAP=0` while leaving the secret in place. Corollary, and a known gap: that
+branch ignores `client_seed`, so a v13-against-secret-less-server is indistinguishable from a
+genuine pre-2b client in the data. Do not read a `legacy` spike as stale caches without first
+confirming `MS_RUN_TOKEN_SECRET` is set. Fix deferred by founder (S224).
+
 **SHADOW MODE: no verdict rejects anything.** Verdicts accumulate in
 `medashooter_run_validations`; enforcement (`MS_RUN_VALIDATION_ENFORCE`) is a separate later
 decision taken from that data (target: ~zero false positives over 2 weeks, per founder decision
