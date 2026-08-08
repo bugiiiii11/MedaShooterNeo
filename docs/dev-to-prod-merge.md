@@ -129,10 +129,48 @@ Builds before v5 were hand-patched with UnityPy (`ms_data_v4_patch.py`) to blank
 see `ms2-pre-coding-checklist.md` Section B. Do not resurrect the patch pipeline; if a dead link
 reappears, fix it in the scene or in `OpenLinkButton`'s URL constants and rebuild.
 
+## The frontend merge always conflicts -- resolve it this way (S225)
+
+`fe` `main` and `dev` each carry a *different version* of the same four build artifacts, so
+`git merge dev` on `fe` reports rename/rename conflicts on every one plus content conflicts on
+`medashooter-frame.html` and `vercel.json`. This is expected, not a sign anything is wrong.
+
+Do NOT hand-resolve the binaries. They are all about to be deleted anyway -- `BuildWebGLDeploy`
+clears `Build/` before it writes:
+
+```bash
+git -C fe checkout dev -- public/medashooter-frame.html vercel.json   # dev is a strict superset
+git -C fe rm -f --ignore-unmatch "public/unity-builds/medashooter/Build/*"
+# bump v<N> -> v<N+1> in both text files, THEN run the build, THEN commit
+```
+
+**Commit the merge and the new build together, as one commit.** Committing the merge first leaves
+a revision on `main` with no game assets at all; push that by accident and Vercel deploys a broken
+MedaShooter.
+
+Two traps worth naming:
+
+- **Never `sed 's/\.v13\./.v14./g'` over `vercel.json`.** The `src` fields hold JSON-escaped regex
+  (`medashooter\\.data\\.v13\\.gzip$`), and that pattern eats the escapes, silently yielding
+  `\.v14..gzip` -- a route that still matches enough to look fine in review but is wrong. Use
+  `sed 's/v13/v14/g'`; the bare version token appears nowhere else in the file.
+- **Dev and prod must never share a version suffix.** They are different bytes (different baked
+  backend host) under a one-year immutable cache. v13 = dev, v14 = prod.
+
+Sanity check after building: the prod data file should differ from the dev one by only a handful of
+bytes, and `wasm`/`framework`/`loader` should be identical in size. Same game, different hostname.
+A large divergence means the build picked up something else.
+
 ## Verification
 
 - Check version label in-game at cryptomeda.tech
 - Open browser console, verify API calls go to `swarm-resistance-backend-production`
+- Black-box probe needing no auth: `POST /api/v1/minigames/medashooter/run/start/` with `{}`.
+  `400 Invalid address` = route deployed AND `MS_RUN_TOKEN_SECRET` set (the secret gate runs
+  first). `503` = secret missing. `404` = deploy has not landed.
+- Confirm the served assets are byte-identical to the local build, not merely HTTP 200 -- compare
+  `curl -w %{size_download}` against `ls -l`. A 200 of the right size can still be the SPA
+  `index.html` fallback if the file did not deploy; check `Content-Type` too.
 
 ## Known Issues / Gotchas
 

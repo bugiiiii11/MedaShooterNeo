@@ -613,7 +613,17 @@ fields, which is fine: the backend records such submissions as `legacy`.
    `unanchored` row with `run_id` NULL and no `wall_seconds` (no run row to measure against).
    Variable deleted afterwards -- absent and `40` are identical, so absent leaves no stale config.
    Note `MsRunAnchor` treats every non-200 identically, so the 429 path also proves the 503 one.
-5. [ ] Let shadow data accumulate ~2 weeks post-promote before ANY enforcement talk (founder F6).
+5. [x] **PROMOTED TO PROD 2026-08-08 (S225).** Order was: prod migration -> a SEPARATE prod
+   `MS_RUN_TOKEN_SECRET` -> BE `main` `bc5d2b9` -> ms `main` `2bbf738` (`-msEnv prod`, v1.3.3
+   label) -> `-msVersion v14` build -> FE `main` `120791e`. Verified on prod: `/run/start`
+   answers `400 Invalid address`, and because the secret gate precedes address validation, a 400
+   (not 503, not 404) proves route deployed AND secret set -- a useful black-box probe needing no
+   auth. All four v14 assets byte-identical to the local build. Founder played one run:
+   `ok` / `wall 68.4` / `seed_mismatch false`, and the `run_id` row matched the console UUID
+   exactly.
+6. [ ] Let shadow data accumulate ~2 weeks (to ~2026-08-22) before ANY enforcement talk (founder
+   F6). Watch the two S201 prod outliers specifically (54923 and 11641 against a ~1973 median) --
+   characterizing them is what this data is for.
 
 **KNOWN GAP, flagged S224, fix deferred by founder.** The `if not secret:` branch ignores
 `client_seed`, so a v13 client running against a secret-less server lands in the same `legacy`
