@@ -140,6 +140,18 @@ namespace ScheduleParity
                     EndlessWeights = new uint[] { 21336, 20403, 25229, 10796, 20273, 20675 },
                 },
 
+                // Level 3 (Phase 3): same 11-wave length as level 2, same
+                // endless profile -- the campaign CONTENT differs (tuning),
+                // which the schedule never sees. Distinct entry anyway so a
+                // future length retune fails the parity test instead of
+                // silently validating against the wrong transition point.
+                ["level3"] = new MsScheduleProfile
+                {
+                    CampaignWaveCount = 11,
+                    EndlessIndices = new uint[] { 0, 1, 2, 3, 4, 5 },
+                    EndlessWeights = new uint[] { 21336, 20403, 25229, 10796, 20273, 20675 },
+                },
+
                 // Degenerate shapes. These exist because the shipped spawner has
                 // explicit guards for them and the mirror must agree on what the
                 // guards do, not just on the happy path.

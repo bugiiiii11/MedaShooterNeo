@@ -43,15 +43,117 @@ public class BackgroundResolver : MonoBehaviour
 
     private int currentWaveIndex = 0;
 
+    // Per-level layer tints (Phase 3). Runtime state, deliberately NOT
+    // serialized -- the scene component predates them and they always come
+    // from the BackdropProfile (white when no profile loads).
+    private Color mainTint = Color.white;
+    private Color foregroundTint = Color.white;
+    private Color backgroundTint = Color.white;
+
     private void Start()
     {
+        // Phase 3: per-level backdrop. Before Randomize, so the first three
+        // planes of each layer already draw the level's variant set.
+        ApplyBackdropProfile();
+
         NormalSpeed = MainPlanes[0].Speed;
-        Randomize(MainPlanes, MainPlaneVariants, MainPlaneAdditions);
-        Randomize(ForegroundPlanes, ForegroundVariants, ForegroundAdditions);
-        Randomize(BackgroundPlanes, BackgroundVariants, null);
+        Randomize(MainPlanes, MainPlaneVariants, MainPlaneAdditions, mainTint);
+        Randomize(ForegroundPlanes, ForegroundVariants, ForegroundAdditions, foregroundTint);
+        Randomize(BackgroundPlanes, BackgroundVariants, null, backgroundTint);
 
         // listen to scavenge hunt events
         GameManager.instance.EventManager.AddListener<NextWaveEvent>(OnNextWave);
+    }
+
+    /// <summary>
+    /// Swaps this scene's backdrop data for the current level's profile
+    /// (Phase 3). Consults the same MsLevelSelect resolve as EnemySpawner --
+    /// their Start order is undefined, and the single cached resolve is what
+    /// keeps spawner and backdrop agreeing on the level. A missing profile
+    /// (no asset, bad path) leaves the scene-serialized arrays untouched, so
+    /// the game can never lose its backdrop to a data mistake.
+    /// </summary>
+    private void ApplyBackdropProfile()
+    {
+        var level = Determinism.MsLevelSelect.EffectiveLevel;
+        var profile = Resources.Load<BackdropProfile>($"Backdrops/Level{level}");
+        if (profile == null)
+        {
+            if (level != 1)
+                Debug.LogWarning($"[BackgroundResolver] no backdrop profile for level {level}; keeping the default backdrop");
+            return;
+        }
+
+        if (profile.MainPlaneVariants != null && profile.MainPlaneVariants.Length > 0)
+            MainPlaneVariants = profile.MainPlaneVariants;
+        if (profile.ForegroundVariants != null && profile.ForegroundVariants.Length > 0)
+            ForegroundVariants = profile.ForegroundVariants;
+        if (profile.BackgroundVariants != null && profile.BackgroundVariants.Length > 0)
+            BackgroundVariants = profile.BackgroundVariants;
+
+        mainTint = profile.MainPlaneTint;
+        foregroundTint = profile.ForegroundTint;
+        backgroundTint = profile.BackgroundTint;
+
+        if (profile.OverrideDecals)
+        {
+            MainPlaneAdditions = profile.MainPlaneAdditions;
+            ForegroundAdditions = profile.ForegroundAdditions;
+        }
+
+        SpawnAmbientParticles(profile);
+    }
+
+    /// <summary>
+    /// Instantiates the profile's ambient particle prefab across the visible
+    /// width. The FORGE3D prefabs are one-shot burst effects, so looping and
+    /// the profile's emission/lifetime/tint/scale are forced through the
+    /// ParticleSystem API here instead of duplicating prefab YAML.
+    /// </summary>
+    private void SpawnAmbientParticles(BackdropProfile profile)
+    {
+        if (profile.AmbientParticlePrefab == null)
+            return;
+
+        var cam = Camera.main;
+        if (cam == null)
+            return;
+
+        var lowerLeft = cam.ViewportToWorldPoint(new Vector3(0f, 0f, 0f));
+        var upperRight = cam.ViewportToWorldPoint(new Vector3(1f, 1f, 0f));
+        var width = upperRight.x - lowerLeft.x;
+        var midY = (lowerLeft.y + upperRight.y) / 2f;
+
+        var count = Mathf.Max(1, profile.AmbientInstanceCount);
+        for (var i = 0; i < count; i++)
+        {
+            var x = lowerLeft.x + width * (i + 0.5f) / count;
+            var go = Instantiate(profile.AmbientParticlePrefab, new Vector3(x, midY, 0f), Quaternion.identity, transform);
+            go.transform.localScale *= Mathf.Max(0.01f, profile.AmbientScale);
+
+            foreach (var ps in go.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                var main = ps.main;
+                main.loop = true;
+                main.startLifetime = profile.AmbientStartLifetime;
+                main.startColor = profile.AmbientTint;
+
+                var emission = ps.emission;
+                emission.rateOverTime = profile.AmbientEmissionRate;
+                // one-shot prefabs often drive everything through bursts
+                emission.SetBursts(new ParticleSystem.Burst[0]);
+
+                var psRenderer = ps.GetComponent<ParticleSystemRenderer>();
+                if (psRenderer != null && !string.IsNullOrEmpty(profile.AmbientSortingLayer))
+                {
+                    psRenderer.sortingLayerName = profile.AmbientSortingLayer;
+                    psRenderer.sortingOrder = profile.AmbientSortingOrder;
+                }
+
+                ps.Clear();
+                ps.Play();
+            }
+        }
     }
 
     private void OnNextWave(NextWaveEvent obj)
@@ -77,9 +179,9 @@ public class BackgroundResolver : MonoBehaviour
         if (IsPaused)
             return;
 
-        Resolve(MainPlanes, MainPlaneVariants, MainPlaneAdditions, middlePlanePrefab);
-        Resolve(ForegroundPlanes, ForegroundVariants, ForegroundAdditions, foregroundPrefab);
-        Resolve(BackgroundPlanes, BackgroundVariants, null, backgroundPrefab);
+        Resolve(MainPlanes, MainPlaneVariants, MainPlaneAdditions, middlePlanePrefab, mainTint);
+        Resolve(ForegroundPlanes, ForegroundVariants, ForegroundAdditions, foregroundPrefab, foregroundTint);
+        Resolve(BackgroundPlanes, BackgroundVariants, null, backgroundPrefab, backgroundTint);
     }
 
     internal static void Pause(bool pause)
@@ -88,7 +190,7 @@ public class BackgroundResolver : MonoBehaviour
     }
 
 
-    public void Resolve(List<ParallaxHolder> parallaxes, Sprite[] variants, DecalsProfile additions, GameObject prefab)
+    public void Resolve(List<ParallaxHolder> parallaxes, Sprite[] variants, DecalsProfile additions, GameObject prefab, Color tint)
     {
         if (GameManager.instance.IsGamePaused)
             return;
@@ -113,6 +215,7 @@ public class BackgroundResolver : MonoBehaviour
 
             // Choose random sprite
             ph.Renderer.sprite = variants.Random();
+            ph.Renderer.color = tint;
 
             parallaxes.Add(ph);
             parallaxes.RemoveAt(0);
@@ -127,11 +230,12 @@ public class BackgroundResolver : MonoBehaviour
         }
     }
 
-    public void Randomize(List<ParallaxHolder> parallaxes, Sprite[] variants, DecalsProfile additions = null)
+    public void Randomize(List<ParallaxHolder> parallaxes, Sprite[] variants, DecalsProfile additions = null, Color? tint = null)
     {
         foreach(var ph in parallaxes)
         {
             ph.Renderer.sprite = variants.Random();
+            ph.Renderer.color = tint ?? Color.white;
 
             if(additions != null)
                 CreateDecals(ph, additions);

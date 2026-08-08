@@ -8,7 +8,12 @@ public class EnemySpawner : TimeCompute
 {
     public EnemyWavesProfile Profile;
     public EnemyWavesProfile UnendingProfile;
-    public EnemyWavesProfile Level2Profile;
+
+    // Campaign profile per level, index = level - 1 (Phase 3; replaced the
+    // single Level2Profile field). Profile above stays assigned to Level 1 in
+    // the prefab and is the fallback when this list is missing an entry --
+    // a bad GUID in hand-edited YAML must degrade to L1, not to a null run.
+    public List<EnemyWavesProfile> CampaignProfiles;
 
     public Transform BossSpawnPoint, MinesHolder;
     public List<Transform> SpawnPositions => LevelInfo.instance.SpawnPositions;
@@ -57,29 +62,30 @@ public class EnemySpawner : TimeCompute
         // first -- a 4.5s accident, not a guarantee.
         lastSpawnTime = Time.time;
 
-        // Check for Level 2 and swap profile if needed
-        if (PlayerPrefs.GetInt("IsLevel2", 0) == 1)
-        {
-            if (Level2Profile != null)
-            {
-                Profile = Level2Profile;
-                Debug.Log("🎮 Level 2 activated - using Level2Profile");
-            }
-
-            // Clear the flag after reading
-            PlayerPrefs.SetInt("IsLevel2", 0);
-            PlayerPrefs.Save();
-        }
+        // Phase 3: resolve mode + level (replaces the one-shot IsLevel2
+        // protocol). MsLevelSelect is the single resolver -- BackgroundResolver
+        // consults the same cached answer, so spawner and backdrop can never
+        // disagree on which level this run plays.
+        var level = MsLevelSelect.EffectiveLevel;
+        var levelProfile = CampaignProfiles != null && CampaignProfiles.Count >= level
+            ? CampaignProfiles[level - 1]
+            : null;
+        if (levelProfile != null)
+            Profile = levelProfile;
+        else if (level != 1)
+            Debug.LogWarning($"[EnemySpawner] no campaign profile for level {level}; falling back to the default profile");
 
         // Seeded from here rather than GameManager.Start: GameManager also lives
         // in inventory.unity, where there is no run to seed. This runs once per
-        // gameplay run, in the gameplay scene, after the Level 2 profile swap so
+        // gameplay run, in the gameplay scene, after the level profile swap so
         // the campaign length is the one actually about to play.
         campaignWaveCount = Profile != null && Profile.Waves != null ? Profile.Waves.Count : 0;
         var runGeneration = MsRunSeed.BeginRun();
         // Phase 2b: ask the server to anchor this run (token + seed). Fire and
         // forget -- an unanchored run plays identically on its local seed.
-        MsRunAnchor.RequestAnchor(runGeneration);
+        // Phase 3: the request carries mode + level; a daily 409 (attempt
+        // already burned) degrades to an unanchored normal run of this level.
+        MsRunAnchor.RequestAnchor(runGeneration, MsLevelSelect.Mode, level);
         scheduleOrdinal = 0;
         msState = MsScheduleState.New();
 
@@ -228,7 +234,7 @@ public class EnemySpawner : TimeCompute
             GameManager.instance.EventManager.Dispatch(new NextWaveEvent(Profile.Waves[currentActiveWave], isSilent));
         }
 
-        if((index % 5) == 0 && waveNumber > 10)
+        if((index % 5) == 0 && waveNumber > 10 && HasMinibosses())
         {
             SpawnMiniboss();
         }
@@ -413,8 +419,12 @@ public class EnemySpawner : TimeCompute
     private void NextWave(EnemyWave currentWave)
     {
         spawnedEnemiesCount = 0;
-        // check if we should spawn miniboss
-        if (waveNumber > 10 && (waveNumber + 1) % 5 == 0)
+        // check if we should spawn miniboss. HasMinibosses() is checked BEFORE
+        // the mines are detonated: if the miniboss pool is unavailable the
+        // wave must fall through to the normal advance with the field intact,
+        // never set isMinibossSpawned without a boss actually coming (that
+        // would stall Update() forever).
+        if (waveNumber > 10 && (waveNumber + 1) % 5 == 0 && HasMinibosses())
         {
             // spawn miniboss
             // destroy mines
@@ -466,9 +476,29 @@ public class EnemySpawner : TimeCompute
     }
 
     private List<Enemy> spawnedBosses = new List<Enemy>();
+
+    /// <summary>
+    /// Whether a miniboss can actually be produced. The pool lives on the
+    /// ENDLESS profile: the old code cast the ACTIVE Profile instead, which
+    /// was safe only because the first miniboss (wave 14) always landed after
+    /// a &lt;= 11-wave campaign had swapped Profile to the endless one -- a
+    /// campaign of 14+ waves would have thrown InvalidCastException (Phase 3
+    /// landmine, fixed with the level work).
+    /// </summary>
+    private bool HasMinibosses()
+    {
+        var unendingProfile = UnendingProfile as UnendingWavesProfile;
+        if (unendingProfile == null || unendingProfile.Minibosses == null || unendingProfile.Minibosses.Count == 0)
+        {
+            Debug.LogWarning("[EnemySpawner] no miniboss pool on the endless profile; skipping miniboss wave");
+            return false;
+        }
+        return true;
+    }
+
     private void SpawnMiniboss()
     {
-        var unendingProfile = (UnendingWavesProfile)Profile;
+        var unendingProfile = (UnendingWavesProfile)UnendingProfile;
         var chooseMinibosses = unendingProfile.Minibosses;
 
         //if(lastBoss)

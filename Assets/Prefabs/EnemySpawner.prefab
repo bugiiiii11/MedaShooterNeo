@@ -163,8 +163,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Profile: {fileID: 11400000, guid: 78a855a0eb472fe47b913571fdd442cf, type: 2}
-  UnendingProfile: {fileID: 0}
-  Level2Profile: {fileID: 11400000, guid: 6efc8f84f0f3d824cba266615dc9230b, type: 2}
+  UnendingProfile: {fileID: 11400000, guid: 51054eedc0fcd0b48843216174ef6477, type: 2}
+  CampaignProfiles:
+  - {fileID: 11400000, guid: 78a855a0eb472fe47b913571fdd442cf, type: 2}
+  - {fileID: 11400000, guid: 6efc8f84f0f3d824cba266615dc9230b, type: 2}
+  - {fileID: 11400000, guid: 4f9a34b2ccd9429cba7c0dc570f9660c, type: 2}
   BossSpawnPoint: {fileID: 0}
   MinesHolder: {fileID: 0}
   MostLeftEnemyKiller: {fileID: 92336882167285201}

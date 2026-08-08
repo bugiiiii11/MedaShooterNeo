@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9e967394094573bdc528dc25f27f0b, type: 3}
+  m_Name: Level2
+  m_EditorClassIdentifier:
+  MainPlaneVariants: []
+  ForegroundVariants: []
+  BackgroundVariants:
+  - {fileID: 21300000, guid: 3fd0533ba45a3e44195834fb6f66996e, type: 3}
+  - {fileID: 21300000, guid: e0cef9d9afba86d459a64bcdb714686e, type: 3}
+  - {fileID: 21300000, guid: 98ecc15e8db7dd545be117c398defe3b, type: 3}
+  MainPlaneTint: {r: 0.85, g: 0.93, b: 1, a: 1}
+  ForegroundTint: {r: 0.8, g: 0.9, b: 1, a: 1}
+  BackgroundTint: {r: 0.85, g: 0.92, b: 1, a: 1}
+  OverrideDecals: 0
+  MainPlaneAdditions:
+    AmountRange: {x: 0, y: 0}
+    Sprites: []
+    Prefab: {fileID: 0}
+    VerticalPosition: 0
+    SpawnProbability: 0
+  ForegroundAdditions:
+    AmountRange: {x: 0, y: 0}
+    Sprites: []
+    Prefab: {fileID: 0}
+    VerticalPosition: 0
+    SpawnProbability: 0
+  AmbientParticlePrefab: {fileID: 1000010444040614, guid: 244b4da1298feeb4cabd2d2b90efb991, type: 3}
+  AmbientInstanceCount: 2
+  AmbientEmissionRate: 3
+  AmbientStartLifetime: 8
+  AmbientScale: 4
+  AmbientTint: {r: 0.6, g: 0.8, b: 1, a: 0.25}
+  AmbientSortingLayer:
+  AmbientSortingOrder: 0

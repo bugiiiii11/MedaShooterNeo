@@ -65,6 +65,16 @@ public static class JsonBuilder
         sb.Append(",\"seed\":\"").Append(Determinism.MsRunSeed.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append("\",");
         sb.Append("\"schedule_version\":").Append(Determinism.MsSchedule.ScheduleVersion);
 
+        // Phase 3 claims, plain for the same reason as seed. This is the only
+        // way an UNANCHORED run ever reports its level, and for anchored runs
+        // the server compares against the run row (level_mismatch soft flag --
+        // expected occasionally around UTC midnight, when the client resolved
+        // its daily level seconds before the server did). MsLevelSelect's
+        // per-scene-load cache is still valid at game over; Retry reloads the
+        // scene and re-resolves, so the claims stay honest per run.
+        sb.Append(",\"mode\":\"").Append(Determinism.MsLevelSelect.Mode).Append("\",");
+        sb.Append("\"level\":").Append(Determinism.MsLevelSelect.EffectiveLevel);
+
         if (Determinism.MsRunAnchor.TryGetForSubmission(out var runId, out var runToken))
         {
             sb.Append(",\"run_id\":\"").Append(runId).Append("\",");

@@ -18,6 +18,7 @@ namespace Cryptomeda.Minigames.BackendComs
         UserWeapons = 15300,
         BoostPackages = 95464,
         RunStart = 73315,
+        DailyState = 27418,
     }
 
     public enum Devenv
@@ -94,6 +95,9 @@ namespace Cryptomeda.Minigames.BackendComs
                     case RestfulEndpoint.RunStart:
                         newUrl = $"{railwayBase}/api/v1/minigames/medashooter/run/start/";
                         break;
+                    case RestfulEndpoint.DailyState:
+                        newUrl = $"{railwayBase}/api/v1/minigames/medashooter/daily/state/";
+                        break;
                     default:
                         continue; // Skip unknown endpoints
                 }
@@ -126,6 +130,18 @@ namespace Cryptomeda.Minigames.BackendComs
                     Url = $"{railwayBase}/api/v1/minigames/medashooter/run/start/"
                 });
                 Debug.Log("➕ Endpoint added: RunStart");
+            }
+
+            // Same rule for every endpoint newer than the serialized list
+            // (Phase 3): ADD in code, never rely on the scene.
+            if (Endpoints.FindIndex(x => x.Endpoint == RestfulEndpoint.DailyState) < 0)
+            {
+                Endpoints.Add(new EndpointData
+                {
+                    Endpoint = RestfulEndpoint.DailyState,
+                    Url = $"{railwayBase}/api/v1/minigames/medashooter/daily/state/"
+                });
+                Debug.Log("➕ Endpoint added: DailyState");
             }
 
             Debug.Log("✅ All endpoints updated to Railway deployment");

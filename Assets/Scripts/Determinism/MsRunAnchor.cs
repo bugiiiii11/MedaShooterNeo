@@ -41,9 +41,11 @@ namespace Determinism
         /// <summary>
         /// Fires the /run/start request for the run that just began. Call once
         /// per run, right after MsRunSeed.BeginRun, with the generation it
-        /// returned.
+        /// returned. Phase 3: mode ("normal"|"daily") and level (1..3) ride
+        /// along; the server records them on the run row, and for daily runs
+        /// forces its own date-derived level + fixed seed.
         /// </summary>
-        public static void RequestAnchor(uint generation)
+        public static void RequestAnchor(uint generation, string mode, int level)
         {
             // stale anchor data must not outlive its run
             if (anchorGeneration != generation)
@@ -56,13 +58,21 @@ namespace Determinism
             if (string.IsNullOrEmpty(wallet))
                 return; // practice/editor run -- nothing to anchor to
 
-            var json = "{\"address\":\"" + wallet + "\"}";
+            var json = "{\"address\":\"" + wallet + "\",\"mode\":\"" + (mode ?? "normal")
+                + "\",\"level\":" + level.ToString(CultureInfo.InvariantCulture) + "}";
 
             RestfulManager.Post(RestfulEndpoint.RunStart, json, response =>
             {
                 if (response.Code != 200)
                 {
-                    Debug.Log($"[MsRunAnchor] run/start returned {response.Code} -- run stays unanchored");
+                    // 409 = the daily attempt was already burned for this UTC
+                    // day. Same fail-open path as every other non-200 -- the
+                    // run continues unanchored on its local seed and submits
+                    // normally; the inventory button's disabled state is the
+                    // normal-path guard, this is the race/edge fallback.
+                    Debug.Log(response.Code == 409
+                        ? "[MsRunAnchor] daily already attempted -- continuing unanchored"
+                        : $"[MsRunAnchor] run/start returned {response.Code} -- run stays unanchored");
                     return;
                 }
 
