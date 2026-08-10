@@ -36,6 +36,13 @@ public class BackgroundResolver : MonoBehaviour
 
     public static float NormalSpeed;
 
+    // Tiles are butted together by half-width sums rather than by assuming one
+    // shared width: the ground variants are NOT all the same size (Ground_02 is
+    // 1576x1024, Ground_01/03 are 1574x1025). The overlap then swallows the
+    // sub-pixel remainder, because a gap of even a fraction of a unit shows the
+    // layer behind as a vertical seam down the ground.
+    private const float SeamOverlap = 0.02f;
+
     public bool IsPaused = false;
 
     private string scavengeWordToDisplay = "";
@@ -210,12 +217,16 @@ public class BackgroundResolver : MonoBehaviour
             var next = Instantiate(prefab, transform);
             var ph = GenerateParallaxHolder(firstPlane, next.transform);
 
-            // Compute offset
-            ph.Object.position = parallaxes[parallaxes.Count - 1].Object.position + Vector3.right * firstPlane.Renderer.bounds.size.x;
-
-            // Choose random sprite
+            // Choose random sprite BEFORE positioning -- the offset depends on
+            // how wide this tile actually is. Placing it on the OUTGOING tile's
+            // width (the old behaviour) mismatched by up to 2px whenever the
+            // variants differed, leaving the seam.
             ph.Renderer.sprite = variants.Random();
             ph.Renderer.color = tint;
+
+            var lastPlane = parallaxes[parallaxes.Count - 1];
+            ph.Object.position = lastPlane.Object.position
+                + Vector3.right * (Halves(lastPlane, ph) - SeamOverlap);
 
             parallaxes.Add(ph);
             parallaxes.RemoveAt(0);
@@ -240,6 +251,26 @@ public class BackgroundResolver : MonoBehaviour
             if(additions != null)
                 CreateDecals(ph, additions);
         }
+
+        // The scene authors these starting planes at a spacing that assumes one
+        // shared variant width, so a mismatched draw seams the opening seconds
+        // exactly like the scrolling ones did. Re-chain from plane 0 (left where
+        // the scene put it) so every starting seam closes too.
+        for (var i = 1; i < parallaxes.Count; i++)
+        {
+            var previous = parallaxes[i - 1];
+            var current = parallaxes[i];
+            var pos = current.Object.position;
+            pos.x = previous.Object.position.x + Halves(previous, current) - SeamOverlap;
+            current.Object.position = pos;
+        }
+    }
+
+    /// <summary>Centre-to-centre distance that butts two tiles edge to edge.
+    /// World-space bounds, so transform scale is already accounted for.</summary>
+    private static float Halves(ParallaxHolder left, ParallaxHolder right)
+    {
+        return (left.Renderer.bounds.size.x + right.Renderer.bounds.size.x) * 0.5f;
     }
 
     private void CreateDecals(ParallaxHolder ph, DecalsProfile additions)

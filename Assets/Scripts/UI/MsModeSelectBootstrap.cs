@@ -156,6 +156,21 @@ public static class MsModeSelectBootstrap
         // this corner of the inventory.
         rect.SetAsLastSibling();
 
+        // The label child is 656 wide -- wider than the 577 source button, and
+        // far wider than a selector. It is a raycast target by default, so it
+        // kept catching clicks well outside the visible box and handed them to
+        // whichever selector sat on top: a click on L1 selected L2. Only the
+        // clone's own image should be hittable, and it matches what is drawn.
+        foreach (var graphic in clone.GetComponentsInChildren<Graphic>(true))
+        {
+            if (graphic.gameObject != clone)
+                graphic.raycastTarget = false;
+        }
+
+        var rootImage = clone.GetComponent<Image>();
+        if (rootImage != null)
+            rootImage.raycastTarget = true;
+
         // The source pulses to draw the eye to START; the clones must not
         // compete with it.
         var pulsation = clone.GetComponent<Pulsation>();
