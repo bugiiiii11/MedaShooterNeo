@@ -34,15 +34,23 @@ public static class MsModeSelectBootstrap
     private const int GameplaySceneIndex = 3;
 
     // Layout in canvas units, same parent as the source button. The source
-    // sits at (381.6, -506) sized 577x178; the hidden legacy level-2 slot at
-    // (-250, -506) is free space.
+    // sits at (381.6, -506) sized 577x178.
+    //
+    // The selectors live in the column ABOVE Daily, not above START: the
+    // equipped weapon/hero icons occupy the space over START and, being in a
+    // later-drawn hierarchy, swallowed the clicks -- the buttons rendered as
+    // tabs peeking out from under the icons and hit-tested against them.
+    //
+    // Spacing MUST exceed SelectorSize.x. At 150 apart with 170 width the three
+    // overlapped by 20 on each seam, and uGUI gives an overlap to the topmost
+    // sibling -- that is what made a click on L1 select L2.
     private static readonly Vector2[] SelectorPositions =
     {
-        new Vector2(231.6f, -360f),
-        new Vector2(381.6f, -360f),
-        new Vector2(531.6f, -360f),
+        new Vector2(-300f, -360f),
+        new Vector2(-140f, -360f),
+        new Vector2(20f, -360f),
     };
-    private static readonly Vector2 SelectorSize = new Vector2(170f, 70f);
+    private static readonly Vector2 SelectorSize = new Vector2(140f, 70f);
     private static readonly Vector2 DailyPosition = new Vector2(-100f, -506f);
     private static readonly Vector2 DailySize = new Vector2(400f, 150f);
 
@@ -135,9 +143,18 @@ public static class MsModeSelectBootstrap
         clone.name = name;
 
         var rect = clone.GetComponent<RectTransform>();
+        // The source may be anchored to a corner or stretched; pin the clones to
+        // a fixed centre anchor so anchoredPosition/sizeDelta mean literal canvas
+        // units rather than edge offsets against an inherited anchor rect.
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = anchoredPosition;
         rect.sizeDelta = size;
         rect.localScale = Vector3.one;
+
+        // Draw (and therefore hit-test) above the equipped-item icons that share
+        // this corner of the inventory.
+        rect.SetAsLastSibling();
 
         // The source pulses to draw the eye to START; the clones must not
         // compete with it.

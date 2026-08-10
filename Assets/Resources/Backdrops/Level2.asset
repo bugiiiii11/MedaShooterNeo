@@ -14,10 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   MainPlaneVariants: []
   ForegroundVariants: []
-  BackgroundVariants:
-  - {fileID: 21300000, guid: 3fd0533ba45a3e44195834fb6f66996e, type: 3}
-  - {fileID: 21300000, guid: e0cef9d9afba86d459a64bcdb714686e, type: 3}
-  - {fileID: 21300000, guid: 98ecc15e8db7dd545be117c398defe3b, type: 3}
+  BackgroundVariants: []
   MainPlaneTint: {r: 0.85, g: 0.93, b: 1, a: 1}
   ForegroundTint: {r: 0.8, g: 0.9, b: 1, a: 1}
   BackgroundTint: {r: 0.85, g: 0.92, b: 1, a: 1}
