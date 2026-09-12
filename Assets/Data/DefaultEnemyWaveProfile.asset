@@ -133,15 +133,15 @@ MonoBehaviour:
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 22
       ProbabilityInWave: 0.4
-    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+    - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
         type: 3}
-      DamageRange: {x: 30, y: 40}
-      HitPointsRange: {x: 500, y: 550}
+      DamageRange: {x: 55, y: 70}
+      HitPointsRange: {x: 180, y: 220}
       AdditionalAttackData:
         AdditionalData:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
-      RewardPoints: 25
+      RewardPoints: 18
       ProbabilityInWave: 0.6
   - Index: 3
     IsBoss: 0
@@ -163,15 +163,15 @@ MonoBehaviour:
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 20
       ProbabilityInWave: 0.8
-    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+    - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
         type: 3}
-      DamageRange: {x: 30, y: 45}
-      HitPointsRange: {x: 520, y: 580}
+      DamageRange: {x: 60, y: 80}
+      HitPointsRange: {x: 380, y: 420}
       AdditionalAttackData:
         AdditionalData:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
-      RewardPoints: 30
+      RewardPoints: 25
       ProbabilityInWave: 0.2
   - Index: 3
     IsBoss: 1
@@ -233,15 +233,15 @@ MonoBehaviour:
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 30
       ProbabilityInWave: 0.25
-    - Prefab: {fileID: 8966015197849417581, guid: 4d2e48122fd4bd14d8bb983d9f5e4b3e,
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
         type: 3}
-      DamageRange: {x: 200, y: 230}
-      HitPointsRange: {x: 700, y: 800}
+      DamageRange: {x: 130, y: 150}
+      HitPointsRange: {x: 600, y: 700}
       AdditionalAttackData:
         AdditionalData:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
-      RewardPoints: 40
+      RewardPoints: 35
       ProbabilityInWave: 0.5
     - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
         type: 3}
@@ -263,26 +263,16 @@ MonoBehaviour:
     MineSpawnCooldownRange: {x: 0, y: 0}
     SpawnCooldownRange: {x: 0.8103602, y: 4.656889}
     Enemies:
-    - Prefab: {fileID: 8222063298347188164, guid: 36176eb7257e0684a8907b311e8dc8dc,
+    - Prefab: {fileID: 2908123772844757092, guid: c201871d1a2c1014886845e48d7d4a85,
         type: 3}
-      DamageRange: {x: 80, y: 100}
+      DamageRange: {x: 100, y: 120}
       HitPointsRange: {x: 1000, y: 1200}
       AdditionalAttackData:
         AdditionalData:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 40
-      ProbabilityInWave: 0.2
-    - Prefab: {fileID: 8966015197849417581, guid: 4d2e48122fd4bd14d8bb983d9f5e4b3e,
-        type: 3}
-      DamageRange: {x: 150, y: 160}
-      HitPointsRange: {x: 950, y: 1050}
-      AdditionalAttackData:
-        AdditionalData:
-          CriticalChance: 0
-          CricitalChanceBonusDamage: {x: 0, y: 0}
-      RewardPoints: 50
-      ProbabilityInWave: 0.5
+      ProbabilityInWave: 0.4
     - Prefab: {fileID: 8222063298347188164, guid: 820535b75a2135041961d50d5a1d6c35,
         type: 3}
       DamageRange: {x: 60, y: 75}
@@ -292,7 +282,7 @@ MonoBehaviour:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 30
-      ProbabilityInWave: 0.2
+      ProbabilityInWave: 0.3
     - Prefab: {fileID: 1326675274401303958, guid: a30ea3a42bf0f2647be580d9785208d3,
         type: 3}
       DamageRange: {x: 10, y: 20}
@@ -302,4 +292,4 @@ MonoBehaviour:
           CriticalChance: 0
           CricitalChanceBonusDamage: {x: 0, y: 0}
       RewardPoints: 15
-      ProbabilityInWave: 0.1
+      ProbabilityInWave: 0.3
