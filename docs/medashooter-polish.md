@@ -168,6 +168,74 @@ remain **unticked** and are additionally gated on F4's numbers coming back clean
 
 ---
 
+## C1(b) + build v20 (S310, 2026-09-12) -- the level selector leaves Unity
+
+Founder picked the design option the audit left open in C1: move the level and Daily choice to the
+React page rather than retune the Unity coordinates. Both halves are on dev; v20 is the build that
+makes the Unity half real.
+
+**Why the in-scene version could not be made good.** The three buttons were clones of the `startgame`
+button dropped at hand-tuned canvas coordinates, `SelectorSize` 140x70. That box cannot hold "L2" AND
+"COLD FRONT" legibly, which is why the names needed a separate caption strip at `CaptionPosition`, and
+why an earlier spacing slip (150 apart at 170 wide) made a click on L1 select L2. Every position was a
+magic number in C#, so every iteration cost a Unity build.
+
+**The page half** (FE dev `4819043`):
+
+- `src/config/msLevels.js` -- the web's ONE copy of the signed G0 identity, mirror of
+  `MsLevelSelect.cs`. `MedaShooterPage.jsx` had a fourth copy of the names inlined and now imports.
+- `src/components/medashooter/MSMissionSelect.jsx` -- the three levels are **one control with three
+  positions** (`role="radiogroup"`, roving tabindex, arrow keys, equal-width segments), not three
+  cards. Daily is structurally different -- time-boxed, one attempt, level set by the calendar -- so it
+  gets its own row under a rule rather than a fourth look-alike tile. Gold carries the control (it is
+  furniture); cyan is spent only on today's rotation level and the reset countdown, per the two-accent
+  rule in `config/arcadeTheme.js`.
+- It sits **above a mounted frame, not in front of it**. A pre-game gate would make every mission
+  switch cost the 46 MB download again.
+- Fail-open kept: no wallet or a failed daily-state fetch leaves LAUNCH enabled, because `/run/start`'s
+  409 is the real one-attempt gate -- the same rule `MsModeSelectBootstrap` already documented.
+
+**The bridge.** `MS_SET_RUN_MODE` over the existing postMessage channel, held in `pendingRunMode` and
+replayed on instance-ready exactly like `pendingWallet`, so a level picked during the loading bar is
+not lost. Gated on `ReadyToWalletAddress`, **not** `MS_LOADED`: MS_LOADED only says the wasm
+instantiated, and a SendMessage before `JavascriptHook` exists is a silent no-op -- which would have
+looked exactly like "the page selector does nothing".
+
+**The Unity half** (ms dev `26cfd67`):
+
+- `JavascriptHook.SetRunMode(string)` takes `"<level>|<daily>|<launch>"`. One string because
+  SendMessage takes exactly one argument and three calls could interleave with a scene load and apply
+  half a choice.
+- `MsLevelSelect.ExternalSelection` is a **static, deliberately not a pref**. It records who owns the
+  selector in this browser session, not a stored preference, so a build opened without the page
+  wrapper (editor, bare build) still gets the in-scene selector. That is the only reason that code
+  still exists.
+- `MsModeSelectBootstrap.SuppressInSceneSelector()` destroys the clones this class made and Build()
+  then declines to rebuild them. The original `startgame` button is never touched. Two selectors that
+  can disagree is strictly worse than either alone.
+- LAUNCH loads gameplay only from the inventory scene -- the one place the old DAILY button lived.
+  Anywhere else the daily flag is merely ARMED, so the next run started is the daily attempt.
+
+**Build v20** (FE dev `810ab82`): Unity 2021.3.45f2, `-msEnv dev -msVersion v20`, 0 compile errors,
+530.6s, backend URL guard passed for dev. `vercel.json` bumped on **both halves of all four routes**
+and validated as JSON. Suffixes v13-v20 burned; next is **v21**.
+
+**Verification run**: vite build clean; eslint adds no new errors (the 14 in `MedaShooterPage.jsx` are
+pre-existing -- confirmed by linting the HEAD copy); the panel rendered headless at 1180 / 760 / 420
+with zero console errors. Two defects were caught in those screenshots and fixed before commit --
+ragged segment widths, and a filled segment bleeding a square corner past the rail's 8px radius.
+
+**The one check that proves it on dev:** open MedaShooter at v20 and confirm the three cloned L1/L2/L3
+buttons and the DAILY button inside the game are GONE. If they are still there, `SetRunMode` never
+arrived and the page panel is decorative.
+
+**Daily Challenge: KEEP (founder call, 2026-09-12).** It is not a fourth level -- `daily_level()`
+rotates L1->L2->L3 by UTC date, and 09-12 resolved to L3 Scorch, which is why it played like Level 3.
+It adds one attempt per wallet per UTC day, one shared server seed and its own board; it adds no
+reward, since `mode == "daily"` only affects `/run/start`. The reason to keep it is that it is the
+duel mechanic rehearsed with no money on the line, so its fate and F2's are one decision. This retires
+the unconfirmed "we don't need daily" reading carried since S309; **F5 is not mooted**.
+
 ## Sprint 2.1 (S308, 2026-09-12) -- the founder's three v18 findings
 
 First playtest of v18. The founder reported three things; two were mine, one was not.
