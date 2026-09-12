@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Cryptomeda.Minigames.BackendComs;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Determinism
 {
@@ -11,11 +12,22 @@ namespace Determinism
     ///
     /// NOT a mirror file -- Unity-side plumbing, like MsRunSeed.
     ///
-    /// FAIL-OPEN BY DESIGN: any failure here (endpoint down, rate limit, slow
-    /// connection, stale response, version mismatch) leaves the run unanchored
-    /// on its local seed. Unanchored runs play and submit exactly like before;
-    /// the backend just records them as "unanchored" instead of "ok". A
-    /// determinism feature must never be able to stop someone playing.
+    /// FAIL-OPEN BY DESIGN FOR NORMAL RUNS: any failure here (endpoint down,
+    /// rate limit, slow connection, stale response, version mismatch) leaves
+    /// the run unanchored on its local seed. Unanchored runs play and submit
+    /// exactly like before; the backend just records them as "unanchored"
+    /// instead of "ok". A determinism feature must never be able to stop
+    /// someone playing.
+    ///
+    /// DAILY RUNS ARE THE EXCEPTION (F5): the daily challenge is everyone
+    /// playing the SAME server-issued seed, so an unanchored daily run is a
+    /// private run wearing the daily's name -- it cannot reach the daily board
+    /// (that write is keyed on run_id) and its schedule is one nobody else
+    /// played. A daily run is therefore anchored or not played at all: the
+    /// player is returned to inventory with the reason, having burned nothing.
+    /// The attempt is reserved server-side only on a 200
+    /// (`api_routes.py` /run/start, reservation and run row in one
+    /// transaction), so an aborted daily is still playable afterwards.
     ///
     /// Every asynchronous result is generation-stamped (see the MsRunSeed
     /// docstring for why): a response from run N arriving during run N+1 is
@@ -38,6 +50,54 @@ namespace Determinism
         private static string runToken;
         private static uint anchorGeneration;
 
+        // The inventory scene, where the DAILY button lives -- build order is
+        // loading(0), menu(1), inventory(2), gameplay(3). UIGameOverScreen's
+        // Exit goes to 1 (menu) on purpose; an aborted daily goes to 2 so the
+        // player is one click from trying again.
+        private const int InventorySceneIndex = 2;
+
+        // Every malformed-response path says the same thing: the player does
+        // not care which field was missing, only that nothing was spent.
+        private const string BadResponseNotice =
+            "Daily Challenge could not start -- the server sent something we could not read. Your attempt was not used.";
+
+        // Set when a daily run is abandoned, read once by the inventory UI.
+        private static string pendingNotice;
+
+        /// <summary>
+        /// Abandons a daily run that failed to anchor and returns the player to
+        /// inventory with the reason. Returns whether it acted, so a normal run
+        /// can log its own fail-open line instead.
+        /// </summary>
+        private static bool AbortIfDaily(uint generation, bool isDaily, string notice)
+        {
+            if (!isDaily)
+                return false;
+
+            // Generation guard, same contract as TryApplyServerSeed: a late
+            // response from an ABANDONED daily must never yank the run the
+            // player has since started out from under them.
+            if (generation != MsRunSeed.Generation)
+                return false;
+
+            pendingNotice = notice;
+            Debug.Log($"[MsRunAnchor] daily run abandoned: {notice}");
+            SceneManager.LoadScene(InventorySceneIndex);
+            return true;
+        }
+
+        /// <summary>
+        /// The reason the last daily run was abandoned, or null. Reading it
+        /// clears it -- the notice belongs to one return trip, not to every
+        /// later visit to inventory.
+        /// </summary>
+        public static string ConsumeAbortNotice()
+        {
+            var notice = pendingNotice;
+            pendingNotice = null;
+            return notice;
+        }
+
         /// <summary>
         /// Fires the /run/start request for the run that just began. Call once
         /// per run, right after MsRunSeed.BeginRun, with the generation it
@@ -58,6 +118,11 @@ namespace Determinism
             if (string.IsNullOrEmpty(wallet))
                 return; // practice/editor run -- nothing to anchor to
 
+            // F5: daily runs are anchored or not played. Resolved here rather
+            // than inside the callback so a mode string that arrives null is
+            // treated as a normal run, never as a daily one.
+            var isDaily = string.Equals(mode, "daily", StringComparison.Ordinal);
+
             var json = "{\"address\":\"" + wallet + "\",\"mode\":\"" + (mode ?? "normal")
                 + "\",\"level\":" + level.ToString(CultureInfo.InvariantCulture) + "}";
 
@@ -66,13 +131,17 @@ namespace Determinism
                 if (response.Code != 200)
                 {
                     // 409 = the daily attempt was already burned for this UTC
-                    // day. Same fail-open path as every other non-200 -- the
-                    // run continues unanchored on its local seed and submits
-                    // normally; the inventory button's disabled state is the
-                    // normal-path guard, this is the race/edge fallback.
-                    Debug.Log(response.Code == 409
-                        ? "[MsRunAnchor] daily already attempted -- continuing unanchored"
-                        : $"[MsRunAnchor] run/start returned {response.Code} -- run stays unanchored");
+                    // day; every other code is the endpoint being unreachable.
+                    // A NORMAL run shrugs and continues unanchored on its local
+                    // seed. A DAILY run cannot: it would be a private schedule
+                    // submitted as the day's shared one, so it goes back to
+                    // inventory instead (F5). Nothing was reserved -- the
+                    // server writes the attempt row only on a 200.
+                    Debug.Log($"[MsRunAnchor] run/start returned {response.Code}");
+                    if (!AbortIfDaily(generation, isDaily, response.Code == 409
+                            ? "Today's Daily Challenge has already been played. It resets at 00:00 UTC."
+                            : "Daily Challenge could not start -- the server did not answer. Your attempt was not used."))
+                        Debug.Log("[MsRunAnchor] run stays unanchored");
                     return;
                 }
 
@@ -80,7 +149,10 @@ namespace Determinism
                 var text = response.Text;
                 var brace = string.IsNullOrEmpty(text) ? -1 : text.IndexOf('{');
                 if (brace < 0)
+                {
+                    AbortIfDaily(generation, isDaily, BadResponseNotice);
                     return;
+                }
 
                 RunStartResponse parsed;
                 try
@@ -90,22 +162,31 @@ namespace Determinism
                 catch (Exception e)
                 {
                     Debug.Log($"[MsRunAnchor] run/start response unparseable: {e.Message}");
+                    AbortIfDaily(generation, isDaily, BadResponseNotice);
                     return;
                 }
 
                 if (parsed == null || string.IsNullOrEmpty(parsed.run_id) || string.IsNullOrEmpty(parsed.token))
+                {
+                    AbortIfDaily(generation, isDaily, BadResponseNotice);
                     return;
+                }
 
                 if (parsed.schedule_version != MsSchedule.ScheduleVersion)
                 {
                     // the server would refuse to compare this run anyway --
                     // playing the server seed would only mint a false divergence
                     Debug.Log($"[MsRunAnchor] schedule version mismatch (server {parsed.schedule_version}, client {MsSchedule.ScheduleVersion}) -- run stays unanchored");
+                    AbortIfDaily(generation, isDaily,
+                        "Daily Challenge is unavailable for this build -- reload the page to update. Your attempt was not used.");
                     return;
                 }
 
                 if (!ulong.TryParse(parsed.seed, NumberStyles.None, CultureInfo.InvariantCulture, out var seed))
+                {
+                    AbortIfDaily(generation, isDaily, BadResponseNotice);
                     return;
+                }
 
                 // TryApplyServerSeed is the generation gate; only store the
                 // token when the seed actually took

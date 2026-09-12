@@ -71,10 +71,15 @@ public static class MsModeSelectBootstrap
     private static readonly Color SelectedTint = Color.white;
     private static readonly Color UnselectedTint = new Color(0.45f, 0.5f, 0.55f, 0.9f);
 
+    // Amber, for the abandoned-daily notice. Warm enough to read as "something
+    // happened", not red -- nothing went wrong that costs the player anything.
+    private static readonly Color NoticeColor = new Color(1f, 0.78f, 0.35f, 1f);
+
     private static readonly List<Button> selectorButtons = new List<Button>();
     private static Button dailyButton;
     private static TextMeshProUGUI dailyLabel;
     private static TextMeshProUGUI captionLabel;
+    private static Color captionColor = Color.white;
     private static MsModeSelectRunner coroutineRunner;
 
     [Serializable]
@@ -154,6 +159,18 @@ public static class MsModeSelectBootstrap
         });
 
         RefreshSelectorTints();
+
+        // F5: a daily run that could not anchor sent the player back here. The
+        // caption is the one text surface this scene already owns, so the
+        // reason lands there rather than in a toast system that does not exist.
+        // Any selector click calls RefreshSelectorTints and replaces it with
+        // the blurb -- that IS the dismissal.
+        var abortNotice = MsRunAnchor.ConsumeAbortNotice();
+        if (!string.IsNullOrEmpty(abortNotice) && captionLabel != null)
+        {
+            captionLabel.text = abortNotice;
+            captionLabel.color = NoticeColor;
+        }
 
         // A host object for the coroutines; dies with the scene like the clones.
         coroutineRunner = new GameObject("ms_mode_select_runner").AddComponent<MsModeSelectRunner>();
@@ -248,6 +265,10 @@ public static class MsModeSelectBootstrap
             text.enabled = true;
             text.fontSizeMax = 30f;
             text.fontSizeMin = 14f;
+            // Remembered from the clone rather than assumed: the caption
+            // inherits the scene's button styling, and the notice has to be
+            // able to hand that exact colour back.
+            captionColor = text.color;
         }
 
         return text;
@@ -264,7 +285,10 @@ public static class MsModeSelectBootstrap
         }
 
         if (captionLabel != null)
+        {
             captionLabel.text = LevelBlurb(selected);
+            captionLabel.color = captionColor;
+        }
     }
 
     private static IEnumerator FetchDailyStateWhenWalletReady()
