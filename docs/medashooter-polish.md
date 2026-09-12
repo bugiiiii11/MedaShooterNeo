@@ -136,11 +136,16 @@ art**. Five open questions carry a signature block.
 3. **Read table 4 and answer one question:** enforce for `daily` (and later `duel`) only, leaving
    `normal` in shadow -- yes or no? If table 7 shows mixed wallets, enforcement would have hit real
    players and the answer is no until that is explained.
-4. **Sign G0** (`swarm-meta/medashooter-level-identity-sheet.md`) -- names, L3's boss, whether
-   `EnemyWithAllWeapons` belongs in L3, whether L1 gets a particle. Sprint 2 is blocked on the
-   signature, not on code.
+4. ~~Sign G0~~ -- **DONE 2026-09-12, same session.** Accepted as specified, no changes; Sprint 2 is
+   unblocked. The four taste calls stay free to change until the v18 build exists.
 5. **Read the F3 correction** in GDD 3.5 and confirm the copy rule is acceptable, because it constrains
    marketing: duels can never be sold as an identical run.
+
+**The only genuine blocker on this lane is item 1/2: I cannot reach either database.** No
+`DATABASE_URL` is set locally and both Supabase MCP servers are unauthenticated in this session, so the
+F4 numbers need a human once -- a DSN in the environment, an authorized MCP, or a paste of the `--sql`
+output. Everything else in the run proceeds without it, except Sprints 4-5 (duels), which are gated on
+those numbers by design.
 
 No build in this sprint, so nothing to playtest and no new suffix.
 
