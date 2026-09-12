@@ -42,6 +42,20 @@ public class UIGameOverScreen : MonoBehaviour
         EscMenu.SetActive(false);
         CollectedPerks.SetActive(false);
 
+        // C2: the result screen used to show a bare number. Tell the player
+        // WHICH run just ended -- and, after a daily, that Retry is not another
+        // daily attempt. Wrapped because a summary line must never be what
+        // stops a game-over screen from appearing.
+        try
+        {
+            BuildRunSummary();
+            RelabelRetryAfterDaily();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[UIGameOverScreen] run summary skipped: {e.Message}");
+        }
+
         GameManager.instance.EnemySpawner.KillAllEnemies();
 
         // send data to backend but wait for ending duration packet
@@ -133,6 +147,91 @@ public class UIGameOverScreen : MonoBehaviour
         {
             Debug.Log(obj.Text);
             // try again?
+        }
+    }
+
+    /// <summary>
+    /// "L2 COLD FRONT - WAVE 17 - DAILY" under the score. Built by cloning the
+    /// score label at runtime, the same zero-scene-YAML pattern
+    /// MsModeSelectBootstrap uses: nothing new is serialized into the scene, and
+    /// the clone dies with it.
+    /// </summary>
+    private void BuildRunSummary()
+    {
+        if (PointsValueText == null || PointsValueText.textMesh == null)
+            return;
+
+        var source = PointsValueText.textMesh.gameObject;
+        var clone = Instantiate(source, source.transform.parent, false);
+        clone.name = "ms_run_summary";
+
+        // The clone inherits the typewriter component, which would overwrite
+        // the text with an animated number.
+        foreach (var typer in clone.GetComponentsInChildren<UITextVisualInput>(true))
+            typer.enabled = false;
+
+        var sourceRect = source.GetComponent<RectTransform>();
+        var rect = clone.GetComponent<RectTransform>();
+        if (sourceRect != null && rect != null)
+        {
+            rect.anchoredPosition = sourceRect.anchoredPosition + new Vector2(0f, -70f);
+            rect.sizeDelta = new Vector2(Mathf.Max(sourceRect.sizeDelta.x, 600f), 48f);
+        }
+
+        var text = clone.GetComponent<TextMeshProUGUI>();
+        if (text == null)
+            return;
+
+        text.enableAutoSizing = true;
+        text.fontSizeMax = 36f;
+        text.fontSizeMin = 14f;
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+        text.text = RunSummaryLine();
+    }
+
+    private static string RunSummaryLine()
+    {
+        var level = Determinism.MsLevelSelect.EffectiveLevel;
+        var name = Determinism.MsLevelSelect.LevelName(level);
+        var waves = GameManager.instance != null && GameManager.instance.GameStats != null
+            ? GameManager.instance.GameStats.WavesCount
+            : 0;
+
+        var line = string.IsNullOrEmpty(name)
+            ? $"L{level} - WAVE {waves}"
+            : $"L{level} {name} - WAVE {waves}";
+
+        return Determinism.MsLevelSelect.IsDaily ? line + " - DAILY" : line;
+    }
+
+    /// <summary>
+    /// After a daily run, Retry silently plays a NORMAL run of the sticky
+    /// level -- the daily attempt was burned at /run/start, so replaying it as
+    /// a daily would only mint a 409 (MsLevelSelect pref contract). That is
+    /// correct behaviour and was invisible; say it on the button.
+    ///
+    /// The button is found by its serialized call to OnClickRetryButton rather
+    /// than by name, so a renamed GameObject cannot silently break this.
+    /// </summary>
+    private void RelabelRetryAfterDaily()
+    {
+        if (!Determinism.MsLevelSelect.IsDaily)
+            return;
+
+        foreach (var button in GetComponentsInChildren<UnityEngine.UI.Button>(true))
+        {
+            for (var i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentMethodName(i) != nameof(OnClickRetryButton))
+                    continue;
+
+                var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null)
+                    label.text = "PLAY AGAIN (NORMAL RUN)";
+
+                return;
+            }
         }
     }
 

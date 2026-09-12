@@ -54,12 +54,27 @@ public static class MsModeSelectBootstrap
     private static readonly Vector2 DailyPosition = new Vector2(-100f, -506f);
     private static readonly Vector2 DailySize = new Vector2(400f, 150f);
 
+    // The blurb caption sits in the gap between the selector row (bottom edge
+    // -395) and the Daily button (top edge -431). 30 units tall at -412 clears
+    // both; it is display-only and raycasts are stripped, so even if a future
+    // layout change moves it, it can never eat a click.
+    private static readonly Vector2 CaptionPosition = new Vector2(-140f, -412f);
+    private static readonly Vector2 CaptionSize = new Vector2(560f, 30f);
+
+    // Level identity lives on MsLevelSelect -- the selector, the Daily button
+    // and the game-over summary all name a level, and three copies of a name
+    // is how one of them ends up stale.
+    private static string LevelName(int level) => MsLevelSelect.LevelName(level);
+
+    private static string LevelBlurb(int level) => MsLevelSelect.LevelBlurb(level);
+
     private static readonly Color SelectedTint = Color.white;
     private static readonly Color UnselectedTint = new Color(0.45f, 0.5f, 0.55f, 0.9f);
 
     private static readonly List<Button> selectorButtons = new List<Button>();
     private static Button dailyButton;
     private static TextMeshProUGUI dailyLabel;
+    private static TextMeshProUGUI captionLabel;
     private static MsModeSelectRunner coroutineRunner;
 
     [Serializable]
@@ -106,11 +121,13 @@ public static class MsModeSelectBootstrap
         selectorButtons.Clear();
         dailyButton = null;
         dailyLabel = null;
+        captionLabel = null;
 
         for (var i = 0; i < SelectorPositions.Length; i++)
         {
             var level = i + 1;
-            var clone = CloneButton(source, $"ms_level_select_{level}", SelectorPositions[i], SelectorSize, $"L{level}");
+            var clone = CloneButton(source, $"ms_level_select_{level}", SelectorPositions[i], SelectorSize,
+                $"L{level}\n{LevelName(level)}");
             var button = clone.GetComponent<Button>();
             button.onClick.AddListener(() =>
             {
@@ -120,8 +137,14 @@ public static class MsModeSelectBootstrap
             selectorButtons.Add(button);
         }
 
+        // Display-only caption; shows the selected level's theme line. Built as
+        // a disabled button clone so it inherits the scene's font styling
+        // without a single line of scene YAML, same as every other clone here.
+        captionLabel = BuildCaption(source);
+
+        var dailyLevel = MsLevelSelect.DailyRotationLevel(DateTime.UtcNow);
         var daily = CloneButton(source, "ms_daily_challenge", DailyPosition, DailySize,
-            $"DAILY L{MsLevelSelect.DailyRotationLevel(DateTime.UtcNow)}");
+            $"DAILY L{dailyLevel} {LevelName(dailyLevel)}");
         dailyButton = daily.GetComponent<Button>();
         dailyLabel = daily.GetComponentInChildren<TextMeshProUGUI>();
         dailyButton.onClick.AddListener(() =>
@@ -199,6 +222,37 @@ public static class MsModeSelectBootstrap
         return clone;
     }
 
+    /// <summary>The theme-line caption under the selector row. A CloneButton
+    /// with its background and its Button component switched off, so what
+    /// remains is the scene's own text styling and nothing interactive.</summary>
+    private static TextMeshProUGUI BuildCaption(GameObject source)
+    {
+        var clone = CloneButton(source, "ms_level_caption", CaptionPosition, CaptionSize, string.Empty);
+
+        var button = clone.GetComponent<Button>();
+        if (button != null)
+            button.enabled = false;
+
+        // No background and no raycast target anywhere: this is text, not a
+        // control, and it sits between two things that ARE controls.
+        foreach (var graphic in clone.GetComponentsInChildren<Graphic>(true))
+        {
+            graphic.raycastTarget = false;
+            if (graphic is Image)
+                graphic.enabled = false;
+        }
+
+        var text = clone.GetComponentInChildren<TextMeshProUGUI>();
+        if (text != null)
+        {
+            text.enabled = true;
+            text.fontSizeMax = 30f;
+            text.fontSizeMin = 14f;
+        }
+
+        return text;
+    }
+
     private static void RefreshSelectorTints()
     {
         var selected = MsLevelSelect.SelectedLevel;
@@ -208,6 +262,9 @@ public static class MsModeSelectBootstrap
             if (image != null)
                 image.color = (i + 1) == selected ? SelectedTint : UnselectedTint;
         }
+
+        if (captionLabel != null)
+            captionLabel.text = LevelBlurb(selected);
     }
 
     private static IEnumerator FetchDailyStateWhenWalletReady()
@@ -263,7 +320,7 @@ public static class MsModeSelectBootstrap
             return;
 
         if (parsed.level >= MsLevelSelect.MinLevel && parsed.level <= MsLevelSelect.MaxLevel && dailyLabel != null)
-            dailyLabel.text = $"DAILY L{parsed.level}";
+            dailyLabel.text = $"DAILY L{parsed.level} {LevelName(parsed.level)}";
 
         if (parsed.attempted)
         {
@@ -297,7 +354,8 @@ public static class MsModeSelectBootstrap
             {
                 // a new UTC day began while the player sat in the inventory --
                 // fresh attempt available
-                dailyLabel.text = $"DAILY L{MsLevelSelect.DailyRotationLevel(DateTime.UtcNow)}";
+                var freshLevel = MsLevelSelect.DailyRotationLevel(DateTime.UtcNow);
+                dailyLabel.text = $"DAILY L{freshLevel} {LevelName(freshLevel)}";
                 dailyButton.interactable = true;
                 yield break;
             }

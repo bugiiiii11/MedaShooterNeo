@@ -38,6 +38,32 @@ namespace Determinism
         public const int MinLevel = 1;
         public const int MaxLevel = 3;
 
+        // Level identity, from the signed G0 sheet
+        // (swarm-meta/medashooter-level-identity-sheet.md). It lives here
+        // rather than in the UI because three separate surfaces name a level --
+        // the selector buttons, the Daily button and the game-over summary --
+        // and three copies of a name is how one of them ends up stale.
+        private static readonly string[] Names = { "DUST RUN", "COLD FRONT", "SCORCH" };
+        private static readonly string[] Blurbs =
+        {
+            "Open ground. Learn the ship.",
+            "They shoot from where you are going.",
+            "Everything at once.",
+        };
+
+        /// <summary>Display name for a level, empty outside 1..3 -- a label
+        /// must never be the thing that throws.</summary>
+        public static string LevelName(int level)
+        {
+            return level >= MinLevel && level <= MaxLevel ? Names[level - MinLevel] : string.Empty;
+        }
+
+        /// <summary>One-line theme text for a level, empty outside 1..3.</summary>
+        public static string LevelBlurb(int level)
+        {
+            return level >= MinLevel && level <= MaxLevel ? Blurbs[level - MinLevel] : string.Empty;
+        }
+
         private const string LevelPref = "ms_selected_level";
         private const string DailyPref = "ms_daily_mode";
 
