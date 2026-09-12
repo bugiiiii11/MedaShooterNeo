@@ -344,7 +344,20 @@ Open founder decision: veterans' `medashooter_scores_cumulative` stockpile -- st
 
 ### 3.5 Async PvP: Duels
 
-Both players play the IDENTICAL seeded run; higher score wins. Same pattern class as OD's deterministic matches -- proven infra thinking, no netcode.
+Both players play the SAME WAVE SCHEDULE on the same level; higher score wins. Not the same pattern class as OD -- see the correction below before writing any duel code or any duel copy.
+
+**Correction (polish F3, S306): the seed does not reproduce a run.** The original line here read "both players play the IDENTICAL seeded run ... same pattern class as OD's deterministic matches". That premise is false and the design has to be read with this paragraph in front of it:
+
+| What the seed fixes | What it does not fix |
+|---------------------|----------------------|
+| WHICH wave asset plays at each wave transition -- and only that; the module says so itself (`backend/app/services/ms_schedule.py:8-25`) | Enemy type per spawn (`EnemyWavesProfile.cs:124`, `Random.Range(0, sum)` -- unseeded Unity RNG) |
+| For the campaign portion, the order is fixed by the profile anyway, so the seed changes nothing until endless begins | Spawn position (`EnemySpawner.cs:347`), spawn cooldown (`:601`), the score-driven extra-spawn branch (`:311`), plus HP rolls, perk offers, drops, powerups, mines |
+
+Seeding the client with `Random.InitState(seed)` would not close the gap either: the DRAW ORDER depends on frame timing and on what the player does, so two runs diverge on the first spawn. MedaShooter is a real-time shooter, not OD's deterministic sim -- OD replays because the backend re-executes the sim byte-for-byte, and there is no equivalent here.
+
+**What this leaves, which is still a real feature:** async duels are feasible as *same level, same wave schedule, best score* -- fair in expectation, never a replay. Two players face the same sequence of wave types in the same order and the same difficulty curve; the individual spawns inside each wave differ. That is the honest product, and it is enough for a wager.
+
+**Copy rule (binding):** player-facing text says "same conditions" or "same wave schedule". It must NEVER say "identical run", "same run", "mirror match" or anything implying a replay -- the first player to compare two recordings and find different enemies would be right, and a wager settled on that promise is a refund request. This applies to the duel lobby, the challenge card, the result screen, the FAQ and any marketing post.
 
 **Flow:**
 
@@ -360,9 +373,9 @@ Both players play the IDENTICAL seeded run; higher score wins. Same pattern clas
 
 | Threat | Mitigation |
 |--------|-----------|
-| Seed scouting (A tells alt-B the schedule) | Seed revealed only at match start; one attempt; hidden opponent score |
+| Seed scouting (A tells alt-B the schedule) | Seed revealed only at match start; one attempt; hidden opponent score. Note after F3: for the campaign portion the wave order comes from the profile, not the seed, so it is public knowledge already -- scouting only buys anything once the run reaches endless |
 | Wager wash-trading for rake farming | Rake makes wash-trading strictly lossy; per-day duel count cap |
-| Cheated scores | Determinism envelope validation (3.3) + existing blacklist; duels flagged `pending_validation` until server check passes |
+| Cheated scores | NOT the "determinism envelope" (3.3): S206 refuted it -- every input is a client-chosen integer and MS RSA is encrypt-only, so payloads were always forgeable (`ms_run_guard.py` docstring). What exists instead is the anchored-run verdict: a submission must carry a server-issued run token and its claimed duration must fit the server-measured wall clock. Duels stay `pending_validation` until that verdict is `ok`. **Gate: the verdict has NEVER rejected anything (shadow mode), so no wager may settle on it until the F4 readout says the verdicts hold and enforcement is turned on for `duel` -- `backend/scripts/ms_verdict_stats.py`** |
 | Griefing low-levels | Optional: matchmaking bracket by pilot level for OPEN challenges; direct challenges unrestricted |
 
 **Economy:** rake (proposal 10%) is a real Meda Gas sink -- first structural sink beyond upgrades; feeds the gas-sink re-audit owed from MW M0.3. Wager bounds: min 10 / max 500 gas initially.
