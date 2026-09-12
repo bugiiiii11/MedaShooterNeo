@@ -131,8 +131,12 @@ public static class MsModeSelectBootstrap
         for (var i = 0; i < SelectorPositions.Length; i++)
         {
             var level = i + 1;
+            // Number only. A 140x70 box cannot hold "L2" AND "COLD FROST"
+            // legibly, and the name is never lost -- the caption under the
+            // row always names the SELECTED level, which is the one that
+            // matters.
             var clone = CloneButton(source, $"ms_level_select_{level}", SelectorPositions[i], SelectorSize,
-                $"L{level}\n{LevelName(level)}");
+                $"L{level}");
             var button = clone.GetComponent<Button>();
             button.onClick.AddListener(() =>
             {
@@ -227,13 +231,38 @@ public static class MsModeSelectBootstrap
         button.onClick.RemoveAllListeners();
         button.interactable = true;
 
+        // The label child ships 656 wide -- wider than the 577 source button and
+        // 4.7x a 140-wide selector. Stripping its raycast above only stopped it
+        // stealing CLICKS; it still DREW at 656 wide, centred, so on three
+        // selectors 160 apart each name painted straight through its neighbours
+        // ("DUST" / "COLD FROST" / "SCORCH" came out as "DUST BOLD FROSCORCH")
+        // and the caption painted over the Daily and START buttons below it.
+        // Auto-sizing could not save it: TMP fits text to its RECT, and the rect
+        // was the wrong size. Resize the label to the box it labels, and then
+        // auto-sizing shrinks to something that fits.
+        foreach (var childText in clone.GetComponentsInChildren<TextMeshProUGUI>(true))
+        {
+            var textRect = childText.rectTransform;
+            if (textRect == rect)
+                continue;
+
+            textRect.anchorMin = textRect.anchorMax = new Vector2(0.5f, 0.5f);
+            textRect.pivot = new Vector2(0.5f, 0.5f);
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.sizeDelta = size;
+        }
+
         var text = clone.GetComponentInChildren<TextMeshProUGUI>();
         if (text != null)
         {
             text.text = label;
             text.enableAutoSizing = true;
             text.fontSizeMax = 100f;
-            text.fontSizeMin = 20f;
+            text.fontSizeMin = 14f;
+            // One line that shrinks beats two that clip: a selector is 140x70
+            // and the caption carries names as long as "COLD FROST".
+            text.enableWordWrapping = false;
+            text.overflowMode = TextOverflowModes.Ellipsis;
         }
 
         return clone;
@@ -286,7 +315,7 @@ public static class MsModeSelectBootstrap
 
         if (captionLabel != null)
         {
-            captionLabel.text = LevelBlurb(selected);
+            captionLabel.text = $"{LevelName(selected)} -- {LevelBlurb(selected)}";
             captionLabel.color = captionColor;
         }
     }

@@ -168,6 +168,75 @@ remain **unticked** and are additionally gated on F4's numbers coming back clean
 
 ---
 
+## Sprint 2.1 (S308, 2026-09-12) -- the founder's three v18 findings
+
+First playtest of v18. The founder reported three things; two were mine, one was not.
+
+### 1. L2's ground was covered in gold -- MINE, fixed
+
+`Level2.asset` used `Crystal 1.png` and `Crystal 2.png` for its decals, and its ForegroundAdditions
+were *nothing but* those two at 0.7 probability. **Both sprites are flat gold slabs.** They were
+picked in S306 by FILENAME -- the art was never opened. On an ice level tinted blue they read as
+scattered treasure.
+
+L2 now uses neutral rock and ground litter, and every replacement was checked by looking at it:
+
+| Slot | Was | Now |
+|------|-----|-----|
+| MainPlane | Ground stuff 1, Ground stuff 3, **Crystal 1** | Ground stuff 1, 3, **4** |
+| Foreground | **Crystal 1, Crystal 2** | **Rock 4, Rock 2** |
+
+L1 and L3 were checked and carry no gold. Note `Rock 3.png` is a rock with a glowing **lava orb** --
+right for L3 (which has it), wrong anywhere else; it was a candidate for L2 until it was opened.
+Neither Crystal sprite is used as a decal on any level now.
+
+**The rule this cost us twice:** open the asset. S306 did the same thing with
+`FlailBoss_BombrunnerAdd` (a name that says boss, an asset that is an add). A filename is a claim,
+not evidence.
+
+### 2. The level selector overlapped itself -- MINE, fixed
+
+The names collided into `DUST BOLD FROSCORCH`, and the blurb caption drew across the Daily and
+START buttons.
+
+**Root cause, and it was already written down.** `CloneButton`'s own comment records that the label
+child is **656 units wide** -- wider than the 577 source button and 4.7x a 140-wide selector. S306
+read that comment, stripped the label's `raycastTarget` so it could not steal *clicks* (that was a
+real bug, S305: clicking L1 selected L2) -- and then left it **drawing** at 656 wide. Three
+selectors sit 160 apart, so each name painted straight through both neighbours. Auto-sizing was
+already on and could not help: TMP fits text to its RECT, and the rect was the wrong size.
+
+Fixes, smallest first:
+- **`CloneButton` now resizes every label child to the button it labels** (centre anchor, zero
+  offset, `sizeDelta = size`). This is the root cause and it fixes the caption overlap too.
+- Selector buttons carry **`L1` / `L2` / `L3` only**. A 140x70 box cannot hold `L2` and `COLD FRONT`
+  legibly, and the name is not lost -- the caption names the SELECTED level, which is the one that
+  matters.
+- The caption reads `NAME -- blurb`, one line, ellipsis rather than wrap.
+
+### 3. The brown line at the bottom of the screen -- NOT mine, not fixed, diagnosed
+
+It is the bottom edge of **`Foreground 1.png` itself**: the scene's foreground ground strip has a
+dark brown band painted into the bottom of the source art. Sprint 2 never touched the foreground
+plane -- all three profiles carry `ForegroundVariants: []` and only their *decals* were edited -- so
+this predates the polish work and is on prod today. It shows because the plane's base edge lands
+inside the visible area at the founder's aspect ratio.
+
+Ruled out on the way: `BoundaryBottom` in the scene (Transform only, no renderer -- an invisible
+collider marker) and the decal prefabs (discrete sprites, not a full-width band).
+
+**Not fixed deliberately.** The remedy is to move the foreground plane down so its painted base sits
+below the camera, or to re-cut the art -- and a blind offset risks unsticking the ground the player
+walks on. It needs one look in the editor, and it is cosmetic and pre-existing, so it is not worth
+gambling a shipped build on. Filed for the next pass.
+
+### Also answered this session
+
+**Does a level end after its boss? No.** Each campaign profile (L1 10 waves, L2 and L3 11, one boss
+wave each) plays out, then `EnemySpawner` swaps `Profile = UnendingProfile` and runs forever, with
+minibosses from wave 15 every five waves. Sprint 2 changed only which enemies appear in campaign
+waves, never the handoff -- endless is exactly as it is on prod.
+
 ## Build v18 (S308, 2026-09-12) -- the build that makes sprints 2 and 3 testable
 
 Dev had served **v17** since S307, so every C# item in sprints 2 and 3 existed only as source. This
