@@ -168,6 +168,144 @@ remain **unticked** and are additionally gated on F4's numbers coming back clean
 
 ---
 
+## Sprint 2 (S306, 2026-09-12) -- level identity: rosters, art pass, selector, result screen
+
+Picked in S305, unblocked by the G0 signature the same day: G1(a), G1(b), G2(a), G5, C1(a), C2.
+**No Unity build was made -- every item below is `code done, unverified` until v18 exists.**
+
+### What changed
+
+**G1(a) -- roster split per level.** `Data/DefaultEnemyWaveProfile.asset`,
+`Data/Level2WaveProfile.asset`, `Data/Level3WaveProfile.asset`. The three levels drew from one
+five-prefab roster and L2 waves 2-3 were byte copies of L1. Each level now has its own roster from the
+signed sheet, and the three prefabs that had never appeared in a campaign are in play:
+
+| | Roster after | Gone from this level |
+|---|---|---|
+| L1 Dust Run | BasicEnemy, TripleShoot, SpeedrunnerBasic | RoundShoot, SniperEnemy |
+| L2 Cold Front | BasicEnemy, RoundShoot, SniperEnemy, **SnipingBasicEnemy** | TripleShoot, both speedrunners |
+| L3 Scorch | BasicEnemy, RoundShoot, SniperEnemy, SpeedrunnerQuick, **SnipingTripleEnemy**, **EnemyWithAllWeapons** (w8-w10 only) | TripleShoot, SpeedrunnerBasic |
+
+Wave COUNTS untouched (10/11/11), so the four-place mirror needed no edit. Stat ranges were carried
+across each prefab swap rather than re-rolled, with two deliberate shape changes: L1 w4 trades a
+500-HP round-shooter for a speedrunner (the tutorial should teach movement, not tanking), and L2 w8
+stops being a 30-enemy speedrunner rush -- it is a ranged set-piece now at Qty 14 / Max 6, because 30
+snipers is a different game. L3 w8 keeps a rush but mixes in `EnemyWithAllWeapons` at Qty 20 / Max 10.
+
+**G1(b) -- BLOCKED, and the audit row was factually wrong.** The audit said
+`FlailBoss_BombrunnerAdd.prefab` was "still a `BasicBoss`, so the win path holds". It is not. Its root
+script is `FlailBombRunnerEnemy : SpeedrunnerEnemy`, and the prefab contains **zero** references to
+`BasicBoss` or `FlailBoss` -- it is an ADD the FlailBoss fight spawns. `EnemySpawner.cs:299` does
+`obj.GetComponentInChildren<BasicBoss>()` and immediately `bossEnemy.Initialize(this)`, so the swap
+would have thrown an NRE and left a boss wave with no exit (`OnEnemyKilled(BasicBoss)` is the only
+one). The swap was authored, caught in verification, and reverted; L3 ends on `FlailBoss` like the
+others. **`FlailBoss.prefab` is the only `BasicBoss` prefab in the project** -- the one other subclass,
+`MinibossBase`, is barred from campaign waves by the audit's own Do-not list -- so a distinct per-level
+boss is new content, not a data edit. Audit row, sheet row and taste call 2 all corrected.
+
+**G2(a) -- per-level backdrop, zero new art.** `Resources/Backdrops/Level{1,2,3}.asset`:
+`OverrideDecals` flipped to 1 on all three, each with its own `MainPlaneAdditions` /
+`ForegroundAdditions`. L1 gets ground litter only at the lowest density (0-3 at p0.7 / 0-2 at p0.4),
+L2 takes the crystals, L3 takes all four rocks at the highest density (2-6 at p1.0 / 2-4 at p0.85).
+L1 also finally has an ambient particle: `Sniper_Barrel_Smoke_01`, the thinnest of the four FORGE3D
+smokes the other two levels already repurpose, tinted to dust at alpha 0.15. Tints left exactly as the
+signed sheet records them.
+
+An earlier correction of mine was wrong and is fixed in both docs: the Rock and Crystal sprites are
+NOT unused. The scene already feeds Ground-stuff to the main plane and Rock+Crystal to the foreground
+(`develop_overhaul.unity:11404-11427`) -- identically for every level. The real gap was never missing
+art, it was ONE shared decal set applied to all three levels. G2(a) splits it.
+
+The trap here: `BackgroundResolver.CreateDecals` calls `Instantiate(additions.Prefab)` and
+`additions.Sprites.Random()` unguarded. A profile with `OverrideDecals: 1`, a null Prefab and an empty
+Sprites list would throw the moment a decal rolled -- which is exactly what the existing all-zero
+blocks would have become if the flag alone were flipped. Every block written carries the scene's real
+decal holder prefab and a non-empty sprite list.
+
+**G5 -- stale indices on L2/L3.** Reproduced `CalculateIndices()` exactly
+(`EnemyWavesProfile.cs:34-51`): `WaveDifficulty` = array position, `Index` = running count of
+non-silent waves, silent waves take `index - 1`. L2/L3 had two waves both at `Index 1 / Diff 3` and
+then `Diff 6` before `Diff 5`; both are monotone now (Idx 0,0,0,1,2,3,4,4,4,5,6 / Diff 0-10). L1 was
+already correct. **The row's caveat about the last wave's `WaveDifficulty` is moot**: both fields are
+editor-only bookkeeping -- nothing reads either at runtime (`GetIndexForWave` walks the list live and
+its only caller sits inside `#if UNITY_EDITOR`), and the endless chain seeds off `PreviousProfile` =
+`DefaultEnemyWaveProfile`, which was already right. The last `WaveDifficulty` moved 9 to 10 and shifts
+no difficulty.
+
+**C1(a) -- the selector has names.** `Scripts/UI/MsModeSelectBootstrap.cs`. The buttons are 140x70
+canvas units, too small for a name and a blurb, so the name goes on the button (`L2` / `COLD FRONT`,
+two lines) and the theme line into a new display-only caption in the 36-unit gap between the selector
+row and the Daily button. The Daily button reads `DAILY L2 COLD FRONT` at all three places that write
+it. Level identity moved to `MsLevelSelect.LevelName` / `LevelBlurb` because three surfaces name a
+level and three copies is how one goes stale. The web Daily card
+(`frontend/src/pages/MedaShooterPage.jsx`) shows the name too -- without it the names would exist only
+inside the Unity build, which is held.
+
+**C2 -- the result screen says which run ended.** `Scripts/UI/UIGameOverScreen.cs`. A summary line
+under the score (`L2 COLD FRONT - WAVE 17 - DAILY`), built by cloning the score label at runtime --
+the same zero-scene-YAML pattern the rest of Phase 3 uses -- with the inherited typewriter component
+disabled so it does not animate the text away. After a daily run the Retry button relabels to
+`PLAY AGAIN (NORMAL RUN)`, because Retry has always silently played a normal run of the sticky level
+(the daily attempt is burned at `/run/start`) and nothing said so. The button is found by its
+serialized call to `OnClickRetryButton`, not by GameObject name, so a rename cannot break it silently.
+Both are wrapped in a try/catch: a summary line must never be what stops a game-over screen appearing.
+
+### Verified -- automated
+
+- 45 MS backend tests pass (`test_ms_schedule_parity.py`, `test_ms_run_guard.py`,
+  `test_ms_wrap_guard.py`). Parity is the one that matters: it proves the wave-count mirror is intact.
+- Wave and backdrop data re-parsed after writing and asserted against the signed sheet: counts
+  10/11/11, rosters exactly as specified, `EnemyWithAllWeapons` only in L3's last three waves, indices
+  monotone, one boss prefab guid per level.
+- Frontend `npm run build` clean. ESLint on the touched file went 20 to 14 errors: the edit added two
+  `react/prop-types` errors, so `DailyChallengeCard.propTypes` was added, which also cleared six
+  pre-existing ones.
+- C# brace/paren/bracket balance unchanged against the HEAD versions; cross-file members
+  (`MsLevelSelect.LevelName` / `LevelBlurb` / `IsDaily` / `EffectiveLevel`) confirmed present.
+- **Not verified: anything that needs Unity.** No compile, no play. See the checklist.
+
+### Checks that need a real device / a human
+
+1. **Build v18** (Unity 2021.3.45f2, never reuse a suffix) and push it to dev. The C# compiles or it
+   does not -- that is the first thing v18 tells us, and three C# files changed.
+2. **Play L1, L2, L3 to the boss and 5 waves into endless each.** Each level should feel like a
+   different roster (no triple-shooters or speedrunners in L2, no snipers in L1), and three
+   never-shipped prefabs are on screen for the first time: `SnipingBasicEnemy` in L2,
+   `SnipingTripleEnemy` + `EnemyWithAllWeapons` in L3. **Balance is the open question**: L1 should feel
+   easier than before, L2 w8 is a new kind of wave, and L3 w8-w10 have an enemy nobody has ever fought.
+3. **Look at the backdrops.** L1 sparser than before, L2 with crystals, L3 cluttered with rock. L1
+   should have a faint dust drift where it previously had nothing. If L3 reads as too busy, the fix is
+   one `AmountRange` / `SpawnProbability` edit.
+4. **The level-select screen.** Names on the three buttons, the theme line under them. The caption
+   position is the single most likely thing to need a nudge -- it was placed by arithmetic against the
+   other two rows, not by eye. It cannot eat a click (raycasts stripped), so worst case is cosmetic.
+5. **Finish a daily run.** The result line should end in `- DAILY` and Retry should read
+   `PLAY AGAIN (NORMAL RUN)`. Then check the web Daily card names today's level.
+6. `medashooter_blacklist` unchanged after the playtest.
+
+### Tooling gotchas
+
+- Unity prefab references use the ROOT GameObject fileID plus the prefab's own guid, and **prefab
+  variants share their parent's root fileID** (`SniperEnemy`, `SnipingBasicEnemy` and
+  `SnipingTripleEnemy` are all `8966015197849417581`). Deriving it from the file -- the Transform whose
+  `m_Father` is `{fileID: 0}`, then its `m_GameObject` -- reproduced the existing references exactly,
+  which is what made authoring new prefab references safe without Unity.
+- A prefab's name is not its type. The only reliable check is grepping the prefab for the component
+  guid the consuming code actually requires.
+- `git stash` / `git stash pop` around a lint run is the cheapest way to prove an error count is
+  pre-existing rather than newly introduced.
+- A large Python file with mixed quoting still does not survive a Bash heredoc here (second time) --
+  write it to the scratchpad with the Write tool and run it.
+
+### Not in this sprint
+
+Sprint 3 (C6(a), G4(a), F5 daily) has no dependency on this one. Sprints 4-5 (F2 duels, Risk H) are
+still unticked and still gated on the F4 numbers, which remain unread. **New for the Later pool: a
+distinct per-level boss needs new content** -- it was the one signed item that turned out to be
+impossible, and it is now the largest remaining gap in level identity.
+
+---
+
 ## Do not (cumulative)
 
 - Do not settle a wager on a shadow verdict. As of S306 the verdict has never rejected a submission;
@@ -181,3 +319,10 @@ remain **unticked** and are additionally gated on F4's numbers coming back clean
   spawn position), and do not set a boss wave's prefab to anything that is not a `BasicBoss`.
 - Do not add a write to `ms_verdict_stats.py`. It is read-only by design and is run against prod.
 - Do not `git merge dev` on frontend `main` -- it silently keeps the MS hold. Do not reuse a build suffix.
+- Do not set a backdrop profile `OverrideDecals: 1` without filling BOTH Additions blocks with a real
+  holder Prefab and a non-empty Sprites list -- `BackgroundResolver.CreateDecals` instantiates and
+  indexes them unguarded.
+- Do not trust a prefab NAME for its type. `FlailBoss_BombrunnerAdd` is an add, not a boss; grep the
+  prefab for the component guid the consuming code requires.
+- Do not treat a wave `Index` / `WaveDifficulty` as runtime data -- both are editor bookkeeping, and
+  the only consumer of the stored values is `UnendingWavesProfile.CalculateIndices`, an editor button.
