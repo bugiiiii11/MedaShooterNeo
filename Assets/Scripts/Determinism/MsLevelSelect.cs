@@ -67,6 +67,24 @@ namespace Determinism
         private const string LevelPref = "ms_selected_level";
         private const string DailyPref = "ms_daily_mode";
 
+        /// <summary>
+        /// True once the WEB PAGE has pushed a mission choice in through
+        /// JavascriptHook.SetRunMode (polish C1(b), S310).
+        ///
+        /// Deliberately a static field and NOT a pref: it describes who owns
+        /// the selector in THIS browser session, not a stored preference. A
+        /// player who opens the build somewhere without the page wrapper --
+        /// the editor, a bare build -- gets the in-scene selector back, which
+        /// is the only reason that code still exists.
+        /// </summary>
+        public static bool ExternalSelection { get; private set; }
+
+        /// <summary>Called by JavascriptHook when the page sends a choice.</summary>
+        public static void MarkExternalSelection()
+        {
+            ExternalSelection = true;
+        }
+
         private static bool resolved;
         private static bool resolvedDaily;
         private static int resolvedLevel;

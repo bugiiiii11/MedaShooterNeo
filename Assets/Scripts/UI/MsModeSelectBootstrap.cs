@@ -31,7 +31,18 @@ public static class MsModeSelectBootstrap
 {
     private const string InventorySceneName = "inventory";
     private const string SourceButtonName = "startgame";
-    private const int GameplaySceneIndex = 3;
+
+    /// <summary>Build index of the gameplay scene. Public since S310 so
+    /// JavascriptHook can launch a page-initiated daily run without keeping a
+    /// second copy of the number.</summary>
+    public const int GameplaySceneIndex = 3;
+
+    /// <summary>True while the inventory scene is the active one -- the only
+    /// scene a page-initiated LAUNCH may act from (S310).</summary>
+    public static bool IsInventoryScene
+    {
+        get { return SceneManager.GetActiveScene().name == InventorySceneName; }
+    }
 
     // Layout in canvas units, same parent as the source button. The source
     // sits at (381.6, -506) sized 577x178.
@@ -114,8 +125,58 @@ public static class MsModeSelectBootstrap
         }
     }
 
+    /// <summary>
+    /// Polish C1(b), S310 -- remove the in-scene selector because the WEB PAGE
+    /// is now the level chooser (`MSMissionSelect.jsx`).
+    ///
+    /// Called from JavascriptHook.SetRunMode. Two selectors that can disagree
+    /// is strictly worse than either one alone, so the first choice arriving
+    /// from the page retires these clones for the session; Build() then
+    /// declines to rebuild them on later visits to the inventory scene.
+    ///
+    /// The ORIGINAL startgame button is untouched and still launches the run --
+    /// only the clones this class made are destroyed.
+    /// </summary>
+    public static void SuppressInSceneSelector()
+    {
+        try
+        {
+            foreach (var button in selectorButtons)
+            {
+                if (button != null)
+                    UnityEngine.Object.Destroy(button.gameObject);
+            }
+            selectorButtons.Clear();
+
+            if (dailyButton != null)
+                UnityEngine.Object.Destroy(dailyButton.gameObject);
+            if (captionLabel != null)
+                UnityEngine.Object.Destroy(captionLabel.gameObject);
+            if (coroutineRunner != null)
+                UnityEngine.Object.Destroy(coroutineRunner.gameObject);
+
+            dailyButton = null;
+            dailyLabel = null;
+            captionLabel = null;
+            coroutineRunner = null;
+        }
+        catch (Exception e)
+        {
+            // Same fail-open rule as Build: a UI nicety never breaks the scene.
+            Debug.LogWarning($"[MsModeSelect] suppress failed (harmless): {e.Message}");
+        }
+    }
+
     private static void Build()
     {
+        // The page owns the choice this session -- do not put a second,
+        // disagreeing selector on screen.
+        if (MsLevelSelect.ExternalSelection)
+        {
+            Debug.Log("[MsModeSelect] page owns level select; in-scene selector skipped");
+            return;
+        }
+
         var source = GameObject.Find(SourceButtonName);
         if (source == null || source.GetComponent<Button>() == null)
         {
