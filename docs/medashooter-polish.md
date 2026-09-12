@@ -306,6 +306,172 @@ impossible, and it is now the largest remaining gap in level identity.
 
 ---
 
+## Sprint 3 (S307, 2026-09-12) -- per-level boards, daily runs that mean it, and the phone gate
+
+Picked rows: **G4(a)**, **F5 (daily half)**, **C6(a)**. 3 pt. No dependency on Sprint 2, so this ran
+without waiting for build v18. Mobile-visible item last, per the audit's ordering.
+
+Commits: BE `f91c459`, MSNeo `33adba8`, FE `3a1fbfc` -- one per item, all on `dev` and pushed.
+
+### What changed
+
+**G4(a) -- level + mode on the score rows.** `backend/migration_ms_score_level_mode.sql` (new) adds
+two nullable columns to `medashooter_scores` and `medashooter_scores_all`, backfills them from two
+independent sources, and adds a partial index for the board read. The write path fills them going
+forward: `_ms_shadow_validate` now returns a third value, an `anchor` dict from the server-issued run
+row (`api_routes.py:1074-1082`), and all three score writes carry it -- the `scores_all` insert
+(`api_routes.py:1382-1420`), the PB update (`:1466-1500`) and the first-timer insert (`:1503-1536`).
+
+The design decision worth keeping: **NULL means "we do not know", never "Level 1".** Only a
+server-anchored run row sets these columns. The client's `level` field is an unsigned claim
+(`JsonBuilder.cs:68-76`) and stays where its provenance is unambiguous -- `checks.client_level` on
+`medashooter_run_validations`. The alternative, writing the claim and adding a third provenance
+column, would have put an unverified number on a board row and then asked every future reader to
+remember to filter it. G4(b), the per-level multiplier, must read these columns and never the claim;
+the audit's "Do not apply a level multiplier for unanchored runs" is what this shape enforces
+structurally rather than by convention.
+
+Backfill has two sources because the two link paths cover different rows: the verdict row
+(`medashooter_run_validations.unity_score_id` -> `run_id` -> `medashooter_runs`) covers anchored
+normal runs, and `medashooter_daily_attempts` covers daily runs whose score id never reached a
+verdict row. Both join on `unity_score_id::text` on both sides -- there is no DDL for
+`medashooter_scores_all` anywhere in the repo (it predates the migrations), so the cast makes the
+join work whether that column is UUID or TEXT on a given environment.
+
+**The read path: `GET /api/game/medashooter/scoreboard/by-level`** (`api_routes.py:1871-1985`).
+`level` (validated against `MS_PROFILES`, not a literal -- the level count already has four mirrors
+and this is not becoming a fifth), optional `mode`, `limit`, optional `player_address` for the
+outside-the-top-N self row. Reads `scores_all`, so it spans seasons unlike the season board.
+
+It returns a **`coverage` block** (`rows_total`, `rows_with_level`, `rows_this_level`). That is the
+instrument for this item: without it an empty board is unreadable -- nobody has played Level 3, or no
+rows carry a level yet? On an environment where no anchored run has submitted since the
+daily-challenge migration, `rows_with_level` is legitimately 0 and climbs from the next submission.
+
+**F5 (daily) -- a daily run is anchored or not played.** The daily challenge is everyone playing the
+SAME server-issued seed. An unanchored daily run was a private schedule wearing the daily's name: it
+could never reach the daily board (that write is keyed on `run_id`) and nobody else played its waves
+-- but it still cost the player a whole run, silently. `MsRunAnchor.cs` now aborts the run back to
+inventory on every anchor failure when `mode == "daily"`: non-200, the 409 already-attempted case,
+unparseable body, missing fields, schedule-version mismatch, unparseable seed. Normal runs are
+untouched and stay fail-open on their local seed -- the fail-open contract in the class docstring now
+says exactly which runs it covers.
+
+Three details that make it safe. **Nothing is burned by an abort**: `/run/start` writes the attempt
+reservation and the run row in one transaction, on a 200 only, so the player still holds today's
+attempt. **The abort is generation-guarded** exactly like `TryApplyServerSeed` -- a late response from
+an abandoned daily must never yank the run the player has since started. **The reason is carried, not
+dropped**: `MsRunAnchor.ConsumeAbortNotice()` is read once by `MsModeSelectBootstrap` on the next
+inventory load and rendered in the level caption in amber. That reuses the one text surface the scene
+already owns rather than inventing a toast system in a scene that has none; clicking any level
+selector calls `RefreshSelectorTints` and replaces the notice with the blurb, which is the dismissal.
+
+The server half of F5 ("settlement requires `verdict = 'ok'`") is duel-specific and belongs to
+Sprint 5. It is deliberately NOT here: for daily, refusing to record a score on a non-`ok` verdict
+would be flipping enforcement, which the audit gates on the F4 numbers that are still unread.
+
+**C6(a) -- keyboard gate.** MedaShooter has no touch input: movement and fire read
+`SimpleInput.GetAxis` (keyboard/gamepad only) and `WebGLInputMobile.jslib` is a text-field helper. A
+phone that mounted the iframe downloaded ~46.6 MB to reach a ship it could not move.
+`MedaShooterPage.jsx` gains `useHasFinePointer()` and `MSKeyboardGate`.
+
+The test is **"is there no fine pointer anywhere"** (`any-pointer: fine`), not "is this a touch
+device": a touchscreen laptop, or a tablet with a trackpad or mouse attached, reports a fine pointer
+and stays playable. It listens for changes, so pairing a mouse opens the game without a reload, and
+it fails OPEN where `matchMedia` is missing.
+
+Two placements, deliberately. The gate replaces the **SIGN IN & PLAY** button, so a phone visitor is
+told before connecting a wallet -- making someone log in and press a play button only to learn the
+game cannot be flown here is the worse half of the same problem. It stands in front of the **iframe**
+again as the hard stop, which is what actually guarantees the build is never fetched.
+
+Two additions beyond the audit row, both flagged rather than assumed. (1) An **override link** ("I
+have a keyboard -- load it anyway"): a false negative in pointer detection would otherwise lock a
+real player out entirely, while being wrong the other way costs only a download they chose to make.
+(2) The row said "render keyboard required **+ the leaderboard**"; the per-game leaderboard tab is
+hidden on purpose (S283 -- `/rankings` is the one board that pays), so the panel links to the **War
+Rankings** instead of reviving a surface the founder retired.
+
+### Verified -- automated
+
+- **G4(a), schema and backfill: 10/10 SQL assertions green** against a throwaway `postgres:15-alpine`
+  built from the REAL `migration_ms_run_anchoring.sql` + `migration_ms_daily_challenge.sql` (so the
+  `unity_score_id` UUID retype is in play), seeded with five score rows covering every path. Verified
+  correctness, not just absence of errors: the verdict-link backfill fills the three anchored rows;
+  the daily-attempt backfill fills the row no verdict row could reach; **the legacy row is left NULL**
+  (the contract); the PB table gets the same treatment; the board dedupes per wallet and ranks
+  9500-before-9000 with the codename joined; the mode filter separates normal from daily; coverage
+  reports 4 of 5; re-running the backfill changes nothing (idempotent); the partial index exists.
+- **G4(a), bound parameters: 11/11 asyncpg checks green.** Run separately and on purpose -- literal
+  SQL cannot catch the S156/S285 failure where a parameter with no typed use resolves to TEXT at
+  prepare and asyncpg then refuses ints. Every query was executed through `asyncpg.connect` with the
+  same argument shapes the route passes, including `mode=None` (the branch where `$2` appears only
+  inside its own cast), an empty level, the self-rank lookup, and both write shapes with and without
+  an anchor.
+- **79 backend tests pass** (whole suite, includes the 45 MS ones; schedule parity intact).
+- **C6(a): 11/11 headless checks green** across three Playwright profiles -- desktop, phone
+  (iPhone UA + touch + no fine pointer), and phone-then-override. The assertion that matters is the
+  network one: on a phone `/medashooter-frame.html` is **never requested**, not merely hidden. Also
+  asserted: gate absent on desktop, play CTA withheld on the phone and restored after the override,
+  the Rankings link present, zero console errors on every profile.
+- **FE build clean** (56.7 s, 20 prerendered routes). Lint on the changed page: 14 errors, identical
+  to the pre-existing baseline recorded in sprint 2 -- all in components this sprint did not touch.
+- **C# brace/paren balance checked** on both edited files. That is the ceiling here: Unity is the only
+  thing that can compile them.
+
+### Checks that need a real device / a human
+
+1. **Run the G4(a) migration on dev** (`backend/migration_ms_score_level_mode.sql`, no BEGIN block),
+   then `GET /api/game/medashooter/scoreboard/by-level?level=1` and read the `coverage` block.
+   `rows_with_level: 0` right after the migration is expected, not a failure -- it means no anchored
+   run has submitted since the daily-challenge migration. Play one anchored run and it becomes 1.
+2. **Then the same on prod**, whenever the MS hold lifts. The migration is additive and the backfill
+   is idempotent, so it is safe to run before the code promote; the columns simply stay NULL until
+   the new submit path is live.
+3. **Build v18** (Unity 2021.3.45f2, never reuse a suffix) -- it now carries Sprint 2 AND F5.
+   Sprint 2's playtest checklist still applies. New for F5, on the dev build:
+   - Play the Daily normally: it should behave exactly as before (anchoring succeeds).
+   - Play the Daily **twice in one UTC day**. The second attempt must bounce back to inventory with
+     "Today's Daily Challenge has already been played. It resets at 00:00 UTC." in amber under the
+     level buttons -- today it silently plays a run that counts for nothing.
+   - Click any level button afterwards: the notice must be replaced by that level's blurb.
+   - Play a **normal** run with the backend unreachable (throttle or block `/run/start` in devtools):
+     it must still play through to the end, unanchored. If a normal run ever bounces to inventory,
+     that is the bug -- fail-open for normal runs is the whole contract.
+4. **The phone gate on a real phone** (the emulated profile is not the matrix): open `/meda-shooter`
+   on iOS Safari and on Android Chrome. Expect the KEYBOARD REQUIRED panel where SIGN IN & PLAY
+   normally sits, and no long download. Then on a **touchscreen laptop**, where the panel must NOT
+   appear. Screenshot of the emulated phone view is in the sprint report.
+5. **Still open from sprint 1, unchanged:** the F4 verdict numbers are unread, and Sprints 4-5 (duels)
+   stay gated on them.
+
+### Tooling gotchas
+
+- The MedaShooter route is `/meda-shooter`, not `/medashooter`. A wrong path does not 404 here -- the
+  SPA renders the shell with an empty body, so the smoke test failed with a confusing "content
+  missing" rather than a clear 404.
+- The play area is behind a **SIGN IN & PLAY** click, so a headless run without a wallet can never
+  reach the iframe. The honest headless assertion is therefore "the frame URL was never requested",
+  which is also the assertion that actually matters.
+- Third time for the same one: a Python file with regex or mixed quoting does not survive a Bash
+  heredoc here -- `re.PatternError: unterminated character set` on a pattern that is fine on disk.
+  Write it to the scratchpad with the Write tool and run it.
+- `postgres:15-alpine` reports `pg_isready` OK before it accepts connections during first-time
+  initialisation; polling `psql -c "select 1"` instead is the reliable readiness check.
+- `docker run` without `-p` cannot be reached by a host-side asyncpg client, and there is no way to
+  add a port mapping to a running container -- decide up front whether the test needs a host
+  connection or only `docker exec psql`.
+
+### Not in this sprint
+
+Sprints 4-5 (F2 duels, Risk H) remain UNTICKED and gated on the F4 numbers. The Later pool is
+unchanged: G3, G4(b), G9, C3, C6(b), F6, H1. **C6(b)** -- real touch controls -- is now the obvious
+follow-up to this sprint: the gate tells mobile visitors the truth, but the truth is still "not for
+you". **G4(b)**, the per-level multiplier, is newly unblocked in the sense that the columns it needs
+now exist; it stays unpicked because it reshuffles the cumulative board.
+
+---
+
 ## Do not (cumulative)
 
 - Do not settle a wager on a shadow verdict. As of S306 the verdict has never rejected a submission;
@@ -326,3 +492,10 @@ impossible, and it is now the largest remaining gap in level identity.
   prefab for the component guid the consuming code requires.
 - Do not treat a wave `Index` / `WaveDifficulty` as runtime data -- both are editor bookkeeping, and
   the only consumer of the stored values is `UnendingWavesProfile.CalculateIndices`, an editor button.
+- Do not write the client's `level` / `mode` claim to a score row. `level_id` NULL means "not known";
+  only a server-anchored run row fills it. G4(b) and any future per-level multiplier read the columns,
+  never `checks.client_level`.
+- Do not make a NORMAL run fail closed when `/run/start` errors. Only daily (and later duel) runs
+  abort; a determinism feature must never be able to stop someone playing a solo run.
+- Do not assume `medashooter_scores_all` column types from the repo -- it has no DDL here. Cast both
+  sides of any join on `unity_score_id`.
