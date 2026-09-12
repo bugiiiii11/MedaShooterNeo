@@ -18,19 +18,26 @@ MonoBehaviour:
   MainPlaneTint: {r: 1, g: 0.82, b: 0.72, a: 1}
   ForegroundTint: {r: 1, g: 0.78, b: 0.68, a: 1}
   BackgroundTint: {r: 1, g: 0.8, b: 0.75, a: 1}
-  OverrideDecals: 0
+  OverrideDecals: 1
   MainPlaneAdditions:
-    AmountRange: {x: 0, y: 0}
-    Sprites: []
-    Prefab: {fileID: 0}
-    VerticalPosition: 0
-    SpawnProbability: 0
+    AmountRange: {x: 2, y: 6}
+    Sprites:
+    - {fileID: 21300000, guid: 9d3272e15230cb747874deb91d517d98, type: 3}
+    - {fileID: 21300000, guid: 2eab34dfae4c4704b810eb0beef2243a, type: 3}
+    - {fileID: 21300000, guid: 56b89e57d9baa3c4c892cbd8263eb69e, type: 3}
+    Prefab: {fileID: 4330550949646197128, guid: 1ba12b0ab7e457f41bca75f7593e7eb1, type: 3}
+    VerticalPosition: 2
+    SpawnProbability: 1
   ForegroundAdditions:
-    AmountRange: {x: 0, y: 0}
-    Sprites: []
-    Prefab: {fileID: 0}
-    VerticalPosition: 0
-    SpawnProbability: 0
+    AmountRange: {x: 2, y: 4}
+    Sprites:
+    - {fileID: 21300000, guid: d249cdeee0dc89f4fbc1fbe36f39f571, type: 3}
+    - {fileID: 21300000, guid: a2775f22457e1a1459431d5b89f0cbf8, type: 3}
+    - {fileID: 21300000, guid: ea19311050c87ac4cb26a2fed42a2bc4, type: 3}
+    - {fileID: 21300000, guid: 48bee3193400a564b859475602317284, type: 3}
+    Prefab: {fileID: 6125244393865490136, guid: 08ca955cf0d258546b772e7ebea844b0, type: 3}
+    VerticalPosition: 1
+    SpawnProbability: 0.85
   AmbientParticlePrefab: {fileID: 1000010444040614, guid: 32b1e4eabf82eb649af19cde876a42e0, type: 3}
   AmbientInstanceCount: 3
   AmbientEmissionRate: 6
