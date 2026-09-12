@@ -168,10 +168,43 @@ remain **unticked** and are additionally gated on F4's numbers coming back clean
 
 ---
 
+## Build v18 (S308, 2026-09-12) -- the build that makes sprints 2 and 3 testable
+
+Dev had served **v17** since S307, so every C# item in sprints 2 and 3 existed only as source. This
+is the build that runs them. Unity 2021.3.45f2, `-msEnv dev -msVersion v18`, 778 s, **0 compile
+errors** -- the first result worth recording, since several scripts had never been type-checked.
+
+Shipped as frontend `120f90d` (the four artifacts + `vercel.json` + `medashooter-frame.html`, one
+commit so the tree is never half-built on the remote) and MedaShooterNeo `c018f13` (the menu label,
+now `v1.3.4 [DEV] b18` -- it had drifted to v1.3.3 while dev served v17, which made it useless for
+telling a playtester which build they were on).
+
+Verified live on dev, not assumed: all four artifacts serve with the right MIME types and byte sizes
+matching the local build (loader 19003, framework 87971, data 38.3 MB, wasm 8.3 MB), and the retired
+v17 loader falls through to the SPA.
+
+**Two traps worth keeping:**
+
+- **`vercel.json` needs the version bumped in BOTH halves of each route.** The `src` half is a regex
+  that escapes its dots (`medashooter\.loader\.v18\.js$`), so a plain `s/\.v17\./\.v18\./`
+  updates only `dest` and leaves each route matching a filename that no longer exists. Caught here
+  before commit; the symptom would have been the game silently not loading on dev.
+- **A 200 does not prove an artifact is served.** The SPA `index.html` fallback is also a 200 --
+  every one of the four "succeeded" at 12,279 bytes of `text/html` while the deploy was still
+  building. Poll on `content_type`, never on the status code.
+
+Unity batchmode also fails with `No valid Unity Editor license found` when the Hub sign-in token has
+expired (it had, since 28 July). The guard fails before the output folder is cleared, so a failed
+build leaves the previous one intact. There is no GUI fallback for this build: `BuildWebGLDeploy`
+carries no `[MenuItem]`, and the two menu items that do exist skip the URL guard, the version suffix
+and the output path.
+
 ## Sprint 2 (S306, 2026-09-12) -- level identity: rosters, art pass, selector, result screen
 
 Picked in S305, unblocked by the G0 signature the same day: G1(a), G1(b), G2(a), G5, C1(a), C2.
-**No Unity build was made -- every item below is `code done, unverified` until v18 exists.**
+**Build v18 now exists (S308) and is live on dev** -- every item below compiled with 0 errors
+and is playable. They are `built, not yet playtested`: the human checklist at the end of this
+file is what still separates them from verified.
 
 ### What changed
 
