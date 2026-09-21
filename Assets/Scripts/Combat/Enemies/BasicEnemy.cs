@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using ElRaccoone.Tweens;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -176,7 +177,12 @@ public class BasicEnemy : TimeCompute, ILocalizable
         if (TryGetComponent<DamageReceiver>(out var damageReceiver))
             damageReceiver.StopHitFlash();
 
-        GetComponent<F3DCharacterAvatar>().TweenAlpha(0.3f, 0, 1, 0.5f);
+        FadeOutCorpse();
+
+        // The body has to leave with the fade. Nothing else does it on the silent kill paths,
+        // and on the damage path DamageReceiver.OnDied schedules the same one second -- two
+        // Destroy calls on one object are idempotent, the second is dropped.
+        Destroy(gameObject, DeathFadeDelay + DeathFadeDuration + DeathFadeLinger);
 
         // perk behaviours
         if(GameManager.instance.GameConstants.IsTntActive)
@@ -195,6 +201,43 @@ public class BasicEnemy : TimeCompute, ILocalizable
         //    if(obj)
         //        obj.gameObject.SetActive(false);
         //}
+    }
+
+    private const float DeathFadeDelay = 0.5f;
+    private const float DeathFadeDuration = 0.3f;
+
+    /// <summary>The corpse holds a beat after the fade, then the GameObject goes.</summary>
+    private const float DeathFadeLinger = 0.2f;
+
+    /// <summary>
+    /// Fades every sprite the enemy is actually showing.
+    ///
+    /// This used to be F3DCharacterAvatar.TweenAlpha, which fades a FIXED nine renderers: the
+    /// avatar's head, body and four legs, plus the CURRENT weapon's LeftHand, RightHand and
+    /// WeaponRenderer. Any sprite outside those serialized fields stayed fully opaque for the
+    /// whole second before the GameObject was destroyed. On BasicEnemy_RoundShoot -- the
+    /// shotgunner Scorch spawns -- that sprite is the shotgun's `handle`, so a grip hung in the
+    /// air after the body had gone and then popped out of existence. It was the only prefab
+    /// leaking one, but a serialized-field list cannot be audited at runtime and the next
+    /// weapon with a fourth piece would leak the same way, so read the renderers off the
+    /// hierarchy instead.
+    ///
+    /// Inactive renderers are deliberately skipped: they are invisible anyway (the holstered
+    /// weapon is a SetActive-swapped GameObject -- WeaponController.ActivateWeapon), the Shadow
+    /// and the disarm icon have just been switched off above, and a tween on a disabled
+    /// GameObject would never tick.
+    /// </summary>
+    private void FadeOutCorpse()
+    {
+        foreach (var spriteRenderer in GetComponentsInChildren<SpriteRenderer>())
+        {
+            // No SetFrom: the driver reads the live alpha when the delay expires, so a sprite
+            // that is already partly transparent fades from where it is instead of popping
+            // back to opaque first.
+            spriteRenderer
+                .TweenSpriteRendererAlpha(0, DeathFadeDuration)
+                .SetDelay(DeathFadeDelay);
+        }
     }
 
     protected virtual void Update()

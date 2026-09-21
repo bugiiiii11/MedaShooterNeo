@@ -43,13 +43,11 @@ public class UIGameOverScreen : MonoBehaviour
         CollectedPerks.SetActive(false);
 
         // C2: the result screen used to show a bare number. Tell the player
-        // WHICH run just ended -- and, after a daily, that Retry is not another
-        // daily attempt. Wrapped because a summary line must never be what
-        // stops a game-over screen from appearing.
+        // WHICH run just ended. Wrapped because a summary line must never be
+        // what stops a game-over screen from appearing.
         try
         {
             BuildRunSummary();
-            RelabelRetryAfterDaily();
         }
         catch (Exception e)
         {
@@ -203,36 +201,6 @@ public class UIGameOverScreen : MonoBehaviour
             : $"L{level} {name} - WAVE {waves}";
 
         return Determinism.MsLevelSelect.IsDaily ? line + " - DAILY" : line;
-    }
-
-    /// <summary>
-    /// After a daily run, Retry silently plays a NORMAL run of the sticky
-    /// level -- the daily attempt was burned at /run/start, so replaying it as
-    /// a daily would only mint a 409 (MsLevelSelect pref contract). That is
-    /// correct behaviour and was invisible; say it on the button.
-    ///
-    /// The button is found by its serialized call to OnClickRetryButton rather
-    /// than by name, so a renamed GameObject cannot silently break this.
-    /// </summary>
-    private void RelabelRetryAfterDaily()
-    {
-        if (!Determinism.MsLevelSelect.IsDaily)
-            return;
-
-        foreach (var button in GetComponentsInChildren<UnityEngine.UI.Button>(true))
-        {
-            for (var i = 0; i < button.onClick.GetPersistentEventCount(); i++)
-            {
-                if (button.onClick.GetPersistentMethodName(i) != nameof(OnClickRetryButton))
-                    continue;
-
-                var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (label != null)
-                    label.text = "PLAY AGAIN (NORMAL RUN)";
-
-                return;
-            }
-        }
     }
 
     public void OnClickRetryButton()

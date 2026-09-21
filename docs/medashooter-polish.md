@@ -5,9 +5,10 @@ section per sprint, appended in order. The audit holds the findings and the cita
 what was actually done, what was verified how, and what still needs a human.
 
 **Constraint for every sprint:** scores are RSA-signed and validated server-side; the game is Unity
-WebGL, so a C# or `.asset` change is a NEW BUILD the founder makes locally (Unity 2021.3.45f2) and
-prod is pinned at build v14 (dev runs v17, next suffix **v18**, never reuse one). A level's wave COUNT
-is mirrored in four places. Nothing in this run reaches prod players until the S269 MS hold is lifted.
+WebGL, so a C# or `.asset` change is a NEW BUILD made locally (Unity 2021.3.45f2). A level's wave
+COUNT is mirrored in four places. **The v14 prod hold was LIFTED in S317** -- prod and dev both serve
+the same build (v21 as of S334), one build serves both environments, and the frame rewrites whichever
+backend host the build baked. Never reuse a version suffix.
 
 ---
 
@@ -165,6 +166,103 @@ No build in this sprint, so nothing to playtest and no new suffix.
 Sprint 2 (G1(a)+(b), G2(a), G5, C1(a), C2 -- one build, v18) is gated on the G0 signature. Sprint 3
 (C6(a), G4(a), F5 daily) has no dependency on Sprint 2. Sprints 4 and 5 (F2, the duel build, Risk H)
 remain **unticked** and are additionally gated on F4's numbers coming back clean.
+
+---
+
+## Build v21 (S334, 2026-09-21) -- the corpse that stayed and the button that wrapped
+
+The founder's two findings off the v20 playtest, both shipped in one build. Release row R2 of the
+S331 plan.
+
+### 1. The dead body on Scorch
+
+`BasicEnemy.Kill` faded the corpse through `F3DCharacterAvatar.TweenAlpha`, which fades a **fixed
+nine** renderers: the avatar's `Head`, `Body`, `LegL`, `LegR`, `LegTopL`, `LegTopR` plus the CURRENT
+weapon's `LeftHand`, `RightHand` and `WeaponRenderer`. Nine serialized fields, so any sprite a prefab
+owns beyond them stays fully opaque until the GameObject is destroyed one second after the kill.
+
+A prefab audit (parse every `Prefabs/Enemies/**.prefab`, subtract the avatar fields, the active
+weapon's three and `Shadow`, honour `m_IsActive` up the whole parent chain) found exactly **one**
+leak in the whole roster:
+
+| Prefab | Un-faded sprite | Spawned by |
+|--------|-----------------|------------|
+| `BasicEnemy_RoundShoot` | `handle` (the shotgun grip, a 4th renderer under `ShotGunLaser`) | Level 2 Cold Front, Level 3 Scorch |
+
+Every other enemy -- `BasicEnemy`, `_TripleShoot`, both snipers, both speedrunners, the minibosses,
+`EnemyWithAllWeapons`, the Flail boss and its add -- fades clean. `Shadow` and `DisarmIcon` are
+`SetActive(false)` earlier in `Kill`, and the holstered weapon is a SetActive-swapped GameObject
+(`WeaponController.ActivateWeapon`), so none of those was ever the corpse.
+
+So the visible bug was a shotgun grip hanging in the air after the body had gone, then popping out of
+existence -- on the two levels that spawn the shotgunner, which is why it read as a Scorch problem.
+
+**Fix:** `FadeOutCorpse()` reads the renderers off the hierarchy
+(`GetComponentsInChildren<SpriteRenderer>()`, active only) and tweens each to alpha 0 with the same
+0.5 s delay + 0.3 s duration the nine used to get. No `SetFrom`: the ElRaccoone driver calls
+`OnGetFrom()` when the delay expires, so a sprite that is already partly transparent fades from where
+it is instead of snapping back to opaque first (`TweenAlpha` forced all nine to alpha 1 up front).
+`Kill` now also schedules its own `Destroy(gameObject, 0.5 + 0.3 + 0.2)`, so the death fade and the
+cleanup live in one place instead of depending on `DamageReceiver.OnDied` -- which already schedules
+the same one second, and two `Destroy` calls on one object are idempotent.
+
+Why hierarchy over a longer field list: a serialized-field list cannot be audited at runtime, and the
+next weapon with a fourth piece would leak the same way. Drops and powerups are unaffected --
+`DropSpawner.Spawn` and `PowerupSpawner.Spawn` both `Instantiate` unparented, so nothing the kill
+spawns is inside the enemy's hierarchy.
+
+### 2. PLAY AGAIN on every run
+
+The retry button's scene label was `Try Again`, and `UIGameOverScreen.RelabelRetryAfterDaily` rewrote
+it to `PLAY AGAIN (NORMAL RUN)` after a daily -- 23 characters at font size 70 with autosizing off in
+a 471x152 button, so it wrapped. Founder's call: the label is **PLAY AGAIN**, nothing else, on every
+run. The relabel method and its call site are deleted; the scene carries the final text.
+
+The relabel was telling the truth (after a daily, Retry really does play a NORMAL run -- the attempt
+was burned at `/run/start`), so that fact now has nowhere on screen. The result summary line still
+names the run that ended, `DAILY` included.
+
+**The scene that ships is `develop_overhaul.unity`, not `develop.unity`.** `EditorBuildSettings`
+enables four scenes -- `loading`, `menu`, `inventory`, `develop_overhaul` -- and `develop.unity` is
+not one of them; a label edit there would have built to nothing. The button is `TryAgainButton` under
+`Holder > DiedScreen > PlayerControls > UI`, its label is the only `m_text` on that GameObject, no
+localization component touches it and no C# writes it. Casing is cosmetic either way: both it and the
+sibling MARKETPLACE button render in Bebas Neue, whose lowercase glyphs are caps (the sibling's
+stored text is literally `marketplace`).
+
+### Verified -- automated
+
+- Unity 2021.3.45f2 batch build succeeded in 747 s, **0 `error CS`**, dev backend host verified by
+  `BuildScript.VerifyBackendUrls`. Outputs: data 36.50 MB, wasm 7.95 MB, framework 0.08 MB, loader
+  0.02 MB.
+- **Both C# changes are provably in the build.** Ungzip `medashooter.data.vNN.gzip` and count the
+  IL2CPP method-name strings: v20 has `RelabelRetryAfterDaily` x1 and `FadeOutCorpse` x0; v21 has
+  `RelabelRetryAfterDaily` x0 and `FadeOutCorpse` x1.
+- The data file bakes exactly one Railway host and it is the dev one -- the frame's `BAKED_HOSTS`
+  rewrite covers it (S317 trap, handoff row B1).
+- Unity re-imported `develop_overhaul.unity` this build (new artifact id) and packed it as Level 3.
+
+**A scene string cannot be verified by grepping the data file.** `webGLCompressionFormat: 1` plus
+per-scene compression (the log: "Level 3 ... 23.5 MB compressed / 83.7 MB uncompressed") means no
+scene text is searchable in any encoding -- `Try Again` returns zero hits in the v20 build that
+shipped it, and the version label returns zero in both. The one `PLAY AGAIN` hit in v20 was the C#
+literal `"PLAY AGAIN (NORMAL RUN)"`, not the button. Verify the label with eyes on dev, not with
+grep.
+
+### Checks that need a human on dev
+
+1. **Scorch (L3), kill a shotgunner** -- the whole enemy including the gun grip fades together and
+   nothing is left hanging. Cold Front (L2) spawns the same prefab.
+2. **Die, look at the button** -- it reads PLAY AGAIN on one line, on a normal run AND after a daily.
+3. **PLAY AGAIN still restarts** -- it reloads the active scene; the relabel removal did not touch the
+   click handler, but the button is wired in the scene by serialized call and that is worth one press.
+4. **Version label** reads `v1.3.6 [DEV] b21` on the menu.
+
+### Not in this build
+
+- The brown line along the bottom of the screen (painted into `Foreground 1.png`, pre-existing, on
+  prod today -- handoff row `0m`).
+- The 3x daily season multiplier (release row R3) -- backend only, no build needed.
 
 ---
 
@@ -669,3 +767,7 @@ now exist; it stays unpicked because it reshuffles the cumulative board.
   abort; a determinism feature must never be able to stop someone playing a solo run.
 - Do not assume `medashooter_scores_all` column types from the repo -- it has no DDL here. Cast both
   sides of any join on `unity_score_id`.
+- Do not edit a UI string in `develop.unity`. The gameplay scene in `EditorBuildSettings` is
+  `develop_overhaul.unity`; `develop.unity` is not enabled and builds to nothing.
+- Do not treat `F3DCharacterAvatar.TweenAlpha` as a whole-character fade. It covers nine serialized
+  renderers (avatar six + the current weapon's three); anything else a prefab owns stays opaque.
