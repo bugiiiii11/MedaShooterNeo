@@ -88,10 +88,15 @@ public class JavascriptHook : MonoBehaviour
     /// scoring: level and mode still ride the run row and the anchor exactly as
     /// before, and the server re-derives the daily level from the date.
     ///
-    /// LAUNCH only fires from the inventory scene -- that is the one place the
-    /// old DAILY button existed and the only scene from which a gameplay load
-    /// is meaningful. Anywhere else the daily flag is simply ARMED, so the next
-    /// run the player starts is their daily attempt.
+    /// LAUNCH used to fire only from the inventory scene (S310) -- anywhere
+    /// else it was silently dropped while the daily flag stayed ARMED, so a
+    /// player who pressed LAUNCH DAILY on the "Tap on screen to continue"
+    /// splash saw nothing happen, and their NEXT campaign START would have
+    /// been their daily attempt (S335, founder report). Since S335 a launch is
+    /// PENDING until the gameplay scene loads: menu -> inventory -> gameplay,
+    /// each hop driven by sceneLoaded, so LAUNCH works from wherever the build
+    /// is sitting. The loading scene (index 0) is the one place it waits --
+    /// the wallet handshake moves it to the menu on its own.
     /// </summary>
     public void SetRunMode(string payload)
     {
@@ -122,7 +127,69 @@ public class JavascriptHook : MonoBehaviour
 
         Debug.Log($"[JavascriptHook] Run mode from page: level={level} daily={daily} launch={launch}");
 
-        if (launch && daily && MsModeSelectBootstrap.IsInventoryScene)
-            SceneManager.LoadScene(MsModeSelectBootstrap.GameplaySceneIndex);
+        if (launch && daily)
+            RequestDailyLaunch();
+    }
+
+    // Build indices per ProjectSettings/EditorBuildSettings.asset:
+    // 0 loading, 1 menu, 2 inventory, 3 develop_overhaul (gameplay).
+    private const int LoadingSceneIndex = 0;
+    private const int MenuSceneIndex = 1;
+    private const int InventorySceneIndex = 2;
+
+    private static bool pendingDailyLaunch;
+    private static bool sceneHookInstalled;
+
+    /// <summary>Starts (or resumes) the walk to the gameplay scene. A second
+    /// request while one is pending is a no-op; a request during gameplay is
+    /// ignored -- the run in progress is already the attempt.</summary>
+    private static void RequestDailyLaunch()
+    {
+        var index = SceneManager.GetActiveScene().buildIndex;
+        if (index == MsModeSelectBootstrap.GameplaySceneIndex)
+        {
+            Debug.Log("[JavascriptHook] daily launch ignored: gameplay scene already active");
+            return;
+        }
+
+        if (!sceneHookInstalled)
+        {
+            sceneHookInstalled = true;
+            SceneManager.sceneLoaded += OnSceneLoadedForPendingLaunch;
+        }
+
+        pendingDailyLaunch = true;
+        AdvancePendingLaunch(index);
+    }
+
+    private static void OnSceneLoadedForPendingLaunch(Scene scene, LoadSceneMode mode)
+    {
+        if (pendingDailyLaunch)
+            AdvancePendingLaunch(scene.buildIndex);
+    }
+
+    private static void AdvancePendingLaunch(int index)
+    {
+        switch (index)
+        {
+            case MenuSceneIndex:
+                // Same hop the splash tap makes (SceneLoader.LoadLevel(2)).
+                Debug.Log("[JavascriptHook] daily launch pending: menu -> inventory");
+                SceneManager.LoadScene(InventorySceneIndex);
+                break;
+            case InventorySceneIndex:
+                // The old DAILY button's exact action; the flag was armed in SetRunMode.
+                pendingDailyLaunch = false;
+                Debug.Log("[JavascriptHook] daily launch: inventory -> gameplay");
+                SceneManager.LoadScene(MsModeSelectBootstrap.GameplaySceneIndex);
+                break;
+            case LoadingSceneIndex:
+                Debug.Log("[JavascriptHook] daily launch pending: waiting for the wallet handshake to leave the loading scene");
+                break;
+            default:
+                // Gameplay (or anything unknown): the walk is over.
+                pendingDailyLaunch = false;
+                break;
+        }
     }
 }
