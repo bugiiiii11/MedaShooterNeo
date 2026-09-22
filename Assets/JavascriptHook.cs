@@ -178,10 +178,14 @@ public class JavascriptHook : MonoBehaviour
                 SceneManager.LoadScene(InventorySceneIndex);
                 break;
             case InventorySceneIndex:
-                // The old DAILY button's exact action; the flag was armed in SetRunMode.
-                pendingDailyLaunch = false;
-                Debug.Log("[JavascriptHook] daily launch: inventory -> gameplay");
-                SceneManager.LoadScene(MsModeSelectBootstrap.GameplaySceneIndex);
+                // The old DAILY button's exact action -- but NOT this frame.
+                // A human pressing DAILY had been sitting here long enough for
+                // the NFT fetch to land; this walk arrives the instant the
+                // scene loads, before InventoryBackend.Start has even run, so
+                // hopping straight to gameplay ran the daily on base stats
+                // with no hero, no weapon and no land shield (S343). Wait for
+                // the inventory instead.
+                WaitForInventoryThenLaunch();
                 break;
             case LoadingSceneIndex:
                 Debug.Log("[JavascriptHook] daily launch pending: waiting for the wallet handshake to leave the loading scene");
@@ -191,5 +195,73 @@ public class JavascriptHook : MonoBehaviour
                 pendingDailyLaunch = false;
                 break;
         }
+    }
+
+    /// <summary>How long the launch will wait for the inventory fetches before
+    /// going anyway. Generous: the four calls land in well under a second on a
+    /// warm backend, and the shield's own delayed checks already span 5 s.</summary>
+    private const float InventoryWaitTimeoutSeconds = 10f;
+
+    private static LaunchWaitRunner launchWaitRunner;
+
+    /// <summary>Holds the launch in the inventory scene until the NFT fetches
+    /// have landed, then makes the hop. Fail-open by design: a dead backend
+    /// costs the player a weaker daily, never a run they cannot start.</summary>
+    private static void WaitForInventoryThenLaunch()
+    {
+        if (launchWaitRunner != null)
+            return; // already waiting -- a second sceneLoaded must not restack it
+
+        launchWaitRunner = new GameObject("ms_daily_launch_waiter").AddComponent<LaunchWaitRunner>();
+        // Survives the gameplay load so the coroutine can finish its last line;
+        // it destroys itself immediately after.
+        Object.DontDestroyOnLoad(launchWaitRunner.gameObject);
+        launchWaitRunner.StartCoroutine(WaitForInventory());
+    }
+
+    private static IEnumerator WaitForInventory()
+    {
+        var waited = 0f;
+        while (waited < InventoryWaitTimeoutSeconds && !InventoryBackend.InventorySettled)
+        {
+            // The player can still leave -- back to the menu, or a reload. The
+            // walk is not over, so leave pendingDailyLaunch armed and let
+            // sceneLoaded pick it up wherever they land.
+            if (SceneManager.GetActiveScene().buildIndex != InventorySceneIndex)
+            {
+                Debug.Log("[JavascriptHook] daily launch: left the inventory scene while waiting, launch stays pending");
+                EndInventoryWait();
+                yield break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (InventoryBackend.InventorySettled)
+            Debug.Log($"[JavascriptHook] daily launch: inventory ready after {waited:0.00}s -> gameplay");
+        else
+            Debug.LogWarning($"[JavascriptHook] daily launch: inventory still not ready after {InventoryWaitTimeoutSeconds:0}s -> launching anyway");
+
+        pendingDailyLaunch = false;
+        SceneManager.LoadScene(MsModeSelectBootstrap.GameplaySceneIndex);
+        EndInventoryWait();
+    }
+
+    private static void EndInventoryWait()
+    {
+        if (launchWaitRunner == null)
+            return;
+
+        Object.Destroy(launchWaitRunner.gameObject);
+        launchWaitRunner = null;
+    }
+
+    /// <summary>Empty MonoBehaviour that hosts the launch wait. It outlives the
+    /// inventory scene on purpose -- a runner that died with the scene would
+    /// strand the player on the inventory screen with the daily still armed,
+    /// which is the exact S335 failure this walk exists to prevent.</summary>
+    private class LaunchWaitRunner : MonoBehaviour
+    {
     }
 }

@@ -14,6 +14,45 @@ public class InventoryBackend : MonoBehaviour
     // NFT Land Ticket contract address on Polygon
     private const string LAND_TICKET_CONTRACT = "0xAAE02c81133d865D543Df02b1e458de2279C4a5b";
 
+    // ---- Daily auto-launch readiness (S343) --------------------------------
+    //
+    // The page's LAUNCH DAILY walks menu -> inventory -> gameplay with no human
+    // in the loop, so something has to say when a fetched inventory has landed.
+    // Until S343 that walk hopped on sceneLoaded alone and gameplay started
+    // with EquippedHero/EquippedWeapon still null -- a base-stats run with no
+    // land shield and no combat boost. On the daily board, whose whole promise
+    // is the same battle for everyone, that put naked players next to fully
+    // equipped ones depending only on how warm their inventory happened to be
+    // (founder report 2026-09-23, build v22).
+    //
+    // One slot per fetch GetInventory kicks off. Each is marked in a finally,
+    // so a null payload, an early return or a thrown handler still SETTLES it:
+    // "settled" means we know the answer, not that the answer was NFTs. A
+    // fetch that never calls back at all is deliberately NOT covered here --
+    // that is the waiter's timeout, because failing open belongs in one place.
+    private static bool heroesSettled;
+    private static bool weaponsSettled;
+    private static bool landSettled;
+    private static bool boostSettled;
+
+    /// <summary>True once every inventory fetch has produced an answer. Read by
+    /// JavascriptHook before it launches a page-initiated daily run.</summary>
+    public static bool InventorySettled
+    {
+        get { return heroesSettled && weaponsSettled && landSettled && boostSettled; }
+    }
+
+    /// <summary>Runs <paramref name="handler"/> and settles its slot whatever
+    /// happens inside it.</summary>
+    private static Action<T> Settling<T>(Action<T> handler, Action markSettled)
+    {
+        return (data) =>
+        {
+            try { handler(data); }
+            finally { markSettled(); }
+        };
+    }
+
     public static Dictionary<string, string> WeaponNames = new Dictionary<string, string>
     {
         { "11", "Gladiator's Greatsword" },
@@ -101,6 +140,14 @@ public class InventoryBackend : MonoBehaviour
     {
         Debug.Log("Fetch inventory for " + address);
 
+        // Four answers pending again (S343). Reset BEFORE the fetches so a
+        // second GetInventory -- a wallet switch -- cannot read the previous
+        // wallet's "settled" and launch a daily on a stale loadout.
+        heroesSettled = false;
+        weaponsSettled = false;
+        landSettled = false;
+        boostSettled = false;
+
         PlayerProfileInfo.instance.NftWeapons = InventoryConfig.Default;
         PlayerProfileInfo.instance.NftWeapons.Type = InventoryConfig.ConfigType.Weapons;
         PlayerProfileInfo.instance.NftWeapons.Name = "Weapons";
@@ -128,8 +175,9 @@ public class InventoryBackend : MonoBehaviour
         UICardPreview.instance.UnequipWeapon();
         UICardPreview.instance.UnequipBoosts();*/
 
-        GetData<NftInventory>(RestfulEndpoint.UserNfts, address, OnReceivedNfts);
-        GetData<StakingInfo>(RestfulEndpoint.Staking, address, (data) =>
+        GetData<NftInventory>(RestfulEndpoint.UserNfts, address,
+            Settling<NftInventory>(OnReceivedNfts, () => heroesSettled = true));
+        GetData<StakingInfo>(RestfulEndpoint.Staking, address, Settling<StakingInfo>((data) =>
         {
             Debug.Log($"🎫 Staking data received: {(data != null ? "valid" : "null")}");
 
@@ -171,8 +219,9 @@ public class InventoryBackend : MonoBehaviour
                 PlayerProfileInfo.instance.NftLandCount = 0;
                 UpdateShieldSprite(false);
             }
-        });
-        GetData<NftWeaponInventory[]>(RestfulEndpoint.UserWeapons, address, OnReceivedWeapons);
+        }, () => landSettled = true));
+        GetData<NftWeaponInventory[]>(RestfulEndpoint.UserWeapons, address,
+            Settling<NftWeaponInventory[]>(OnReceivedWeapons, () => weaponsSettled = true));
         // GetData<List<BoostPackage>>(RestfulEndpoint.BoostPackages, address, OnReceivedBoostPackages);
 
         // Fetch combat boost status
@@ -187,6 +236,9 @@ public class InventoryBackend : MonoBehaviour
         if (string.IsNullOrEmpty(walletAddress))
         {
             Debug.LogWarning("⚠️ Cannot fetch combat boost: wallet address is empty");
+            // No wallet IS the answer -- settle it, or a daily launch would sit
+            // out the full timeout waiting for a call that was never made.
+            boostSettled = true;
             return;
         }
 
@@ -200,7 +252,8 @@ public class InventoryBackend : MonoBehaviour
         Debug.Log($"💊 Full URL: {fullUrl}");
         Debug.Log($"💊 ========================================");
 
-        RestfulManager.GetFromUrl(fullUrl, OnReceivedCombatBoost);
+        RestfulManager.GetFromUrl(fullUrl,
+            Settling<Response>(OnReceivedCombatBoost, () => boostSettled = true));
     }
 
     /// <summary>
