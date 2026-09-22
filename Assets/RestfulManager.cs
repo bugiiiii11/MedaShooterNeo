@@ -200,6 +200,20 @@ namespace Cryptomeda.Minigames.BackendComs
             instance.StartCoroutine(instance.GetCo(endpointUrl, onResult));
         }
 
+        /// <summary>The configured URL for an endpoint, with any trailing slash
+        /// removed. For callers that must append a QUERY STRING rather than a
+        /// path segment: GetByUrlParam forces a trailing slash before it
+        /// appends, which turns /api/boosts/active into /api/boosts/active/ and
+        /// costs a 307 on a route FastAPI declares without one. Use this and
+        /// GetFromUrl instead of writing the host out as a literal -- a literal
+        /// does not go through ForceUpdateEndpointsToRailway, so it silently
+        /// stops tracking every other endpoint (S343).</summary>
+        public static string GetEndpointUrl(RestfulEndpoint endpoint)
+        {
+            var url = instance.Endpoints.Find(x => x.Endpoint == endpoint).Url;
+            return string.IsNullOrEmpty(url) ? url : url.TrimEnd('/');
+        }
+
         public static void GetByUrlParam(RestfulEndpoint endpoint, string param, Action<Response> onResult)
         {
             var mainUrl = instance.Endpoints.Find(x => x.Endpoint == endpoint).Url;

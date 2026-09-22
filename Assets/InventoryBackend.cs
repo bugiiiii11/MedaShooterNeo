@@ -242,9 +242,15 @@ public class InventoryBackend : MonoBehaviour
             return;
         }
 
-        // Construct full URL directly to avoid any URL manipulation issues
-        string baseUrl = "https://swarm-resistance-backend-dev-production.up.railway.app";
-        string fullUrl = $"{baseUrl}/api/boosts/active?address={walletAddress}";
+        // Built from the endpoint table, not from a literal host (S343). This
+        // used to write the backend URL out in full "to avoid URL manipulation
+        // issues" -- the real issue was only GetByUrlParam's trailing slash,
+        // which GetEndpointUrl handles. A literal is worse than it looks: it
+        // skips ForceUpdateEndpointsToRailway, so every other endpoint can be
+        // repointed while this one quietly keeps calling the old host. It has
+        // survived so far only because the page's frame rewrites any baked
+        // host it recognises -- a third host, and this call alone would miss.
+        string fullUrl = $"{RestfulManager.GetEndpointUrl(RestfulEndpoint.BoostPackages)}?address={walletAddress}";
 
         Debug.Log($"💊 ========================================");
         Debug.Log($"💊 FETCHING COMBAT BOOST");

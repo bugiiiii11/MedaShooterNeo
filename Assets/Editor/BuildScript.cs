@@ -133,11 +133,16 @@ public static class BuildScript
     private const string DevBackendHost = "swarm-resistance-backend-dev-production.up.railway.app";
     private const string ProdBackendHost = "swarm-resistance-backend-production.up.railway.app";
 
-    private static readonly string[] BackendUrlSources =
-    {
-        "Assets/RestfulManager.cs",
-        "Assets/InventoryBackend.cs"
-    };
+    /// The file that is ALLOWED to name the backend, and must name the right
+    /// one. Since S343 there is exactly one: InventoryBackend.cs used to carry
+    /// a second copy for the combat-boost call and now builds that URL from the
+    /// endpoint table like everything else. Every other runtime script is swept
+    /// for the wrong host below, so a reintroduced literal fails the build
+    /// rather than shipping a build that talks to two backends at once.
+    private const string BackendUrlSource = "Assets/RestfulManager.cs";
+
+    /// Excluded from the sweep: this file necessarily holds BOTH host names.
+    private const string BackendUrlGuardSelf = "BuildScript.cs";
 
     public static void BuildWebGLDeploy()
     {
@@ -229,33 +234,51 @@ public static class BuildScript
         // the working directory is the project root.
         var projectRoot = Directory.GetParent(Application.dataPath).FullName;
 
-        foreach (var relativePath in BackendUrlSources)
+        var sourcePath = Path.Combine(projectRoot, BackendUrlSource);
+
+        if (!File.Exists(sourcePath))
         {
-            var fullPath = Path.Combine(projectRoot, relativePath);
+            Fail($"Backend URL guard: expected source file is missing: {BackendUrlSource}");
+            return false;
+        }
 
-            if (!File.Exists(fullPath))
+        var source = File.ReadAllText(sourcePath);
+
+        // Neither host is a substring of the other ("-dev-" sits inside the
+        // longer one), so a hit on the wrong one is decisive.
+        if (source.Contains(forbidden))
+        {
+            Fail($"Backend URL guard: {BackendUrlSource} still points at the {(env == "prod" ? "DEV" : "PROD")} backend ({forbidden}) but the requested target is {env}. Refusing to build.");
+            return false;
+        }
+
+        if (!source.Contains(expected))
+        {
+            Fail($"Backend URL guard: {BackendUrlSource} does not reference the expected {env} backend ({expected}). Refusing to build.");
+            return false;
+        }
+
+        // Sweep every OTHER runtime script for the wrong host. One file naming
+        // the backend is the design; a second copy is how a build ends up
+        // talking to two environments at once, which is invisible at runtime
+        // because the page's frame rewrites the hosts it recognises.
+        var assetsRoot = Path.Combine(projectRoot, "Assets");
+        foreach (var path in Directory.GetFiles(assetsRoot, "*.cs", SearchOption.AllDirectories))
+        {
+            if (Path.GetFileName(path) == BackendUrlGuardSelf)
+                continue;
+            if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(sourcePath), StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (File.ReadAllText(path).Contains(forbidden))
             {
-                Fail($"Backend URL guard: expected source file is missing: {relativePath}");
-                return false;
-            }
-
-            var source = File.ReadAllText(fullPath);
-
-            // Neither host is a substring of the other, so a hit on the wrong one is decisive.
-            if (source.Contains(forbidden))
-            {
-                Fail($"Backend URL guard: {relativePath} still points at the {(env == "prod" ? "DEV" : "PROD")} backend ({forbidden}) but the requested target is {env}. Refusing to build.");
-                return false;
-            }
-
-            if (!source.Contains(expected))
-            {
-                Fail($"Backend URL guard: {relativePath} does not reference the expected {env} backend ({expected}). Refusing to build.");
+                var shown = path.Substring(projectRoot.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                Fail($"Backend URL guard: {shown} hardcodes the {(env == "prod" ? "DEV" : "PROD")} backend ({forbidden}). Build URLs from RestfulManager's endpoint table instead. Refusing to build.");
                 return false;
             }
         }
 
-        Debug.Log($"[BuildScript] Backend URL guard passed for env={env} ({expected}).");
+        Debug.Log($"[BuildScript] Backend URL guard passed for env={env} ({expected}); no stray hosts in Assets.");
         return true;
     }
 
