@@ -80,7 +80,7 @@ public class RealtimeDurationChecker : MonoBehaviour
             // The existing additiveDuration does the same job for pauses.
             var unityDuration = endTime - startTime + additiveDuration + JuiceRuntime.StolenSeconds;
 
-            OnGameOverTimestampReceived.Invoke( unityDuration, (float) realEndTime.Subtract(realStartTime).Duration().TotalSeconds, code);
+            OnGameOverTimestampReceived?.Invoke( unityDuration, (float) realEndTime.Subtract(realStartTime).Duration().TotalSeconds, code);
         });
     }
 

@@ -265,6 +265,8 @@ public class UIInventory : Singleton<UIInventory>
         allIcons = Resources.LoadAll<Sprite>("NFTIcons/characterIcons").ToList();
         var weapIcons = Resources.LoadAll<Sprite>("NFTIcons/weaponIcons").ToList();
         allIcons.AddRange(weapIcons);
+        // T3 weapon icons (v24): single sprites, the atlas above is full
+        allIcons.AddRange(Resources.LoadAll<Sprite>("NFTIcons/weaponIconsT3"));
     }
 
     public static Sprite LoadIcon(string spriteName)

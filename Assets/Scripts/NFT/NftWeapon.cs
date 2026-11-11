@@ -37,7 +37,8 @@ public class NftWeapon : INft
         Name = name;
         Visualization = UIInventory.LoadIcon(Name.ToLower());
 
-        switch (name.ToLower())
+        // every tier of a weapon plays the same in a run, so the text follows the T1 name
+        switch (WeaponButtonActivator.GetDetieredWeaponName(name))
         {
             // swords
             case "ryoshi katana":

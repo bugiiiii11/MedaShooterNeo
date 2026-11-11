@@ -57,6 +57,15 @@ public class WeaponButtonActivator : MonoBehaviour
             "tundrastalker's sniper rifle" => "sandcrawler's sniper rifle",
             "soldier's repeater" => "adept's repeater",
             "victim's meda-gun" => "underdog meda-gun",
+            // T3 (build v24)
+            "uchigatana" => "ryoshi katana",
+            "protector's blade" => "blessed blade",
+            "knightsfall claymore" => "tactician's claymore",
+            "vicious greatsword" => "gladiator's greatsword",
+            "venom" => "viper",
+            "swarmhunter's sniper rifle" => "sandcrawler's sniper rifle",
+            "commander's repeater" => "adept's repeater",
+            "bloodsoaked meda-gun" => "underdog meda-gun",
             _ => weaponName,
         };
     }
@@ -77,7 +86,39 @@ public class WeaponButtonActivator : MonoBehaviour
             "tundrastalker's sniper rifle" => ("sandcrawler's sniper rifle","T2"),
             "soldier's repeater" => ("adept's repeater","T2"),
             "victim's meda-gun" => ("underdog meda-gun","T2"),
+            // T3 (build v24)
+            "uchigatana" => ("ryoshi katana","T3"),
+            "protector's blade" => ("blessed blade","T3"),
+            "knightsfall claymore" => ("tactician's claymore","T3"),
+            "vicious greatsword" => ("gladiator's greatsword","T3"),
+            "venom" => ("viper","T3"),
+            "swarmhunter's sniper rifle" => ("sandcrawler's sniper rifle","T3"),
+            "commander's repeater" => ("adept's repeater","T3"),
+            "bloodsoaked meda-gun" => ("underdog meda-gun","T3"),
             _ => (weaponName,"T1"),
+        };
+    }
+
+    /// <summary>
+    /// True when the name (any tier) resolves to one of the eight weapons the game can equip.
+    /// A name the build does not know has no icon and no in-run weapon, so the inventory skips it.
+    /// </summary>
+    public static bool IsKnownWeapon(string weaponName)
+    {
+        if (string.IsNullOrEmpty(weaponName))
+            return false;
+
+        return GetDetieredWeaponName(weaponName) switch
+        {
+            "ryoshi katana" => true,
+            "blessed blade" => true,
+            "tactician's claymore" => true,
+            "gladiator's greatsword" => true,
+            "viper" => true,
+            "sandcrawler's sniper rifle" => true,
+            "adept's repeater" => true,
+            "underdog meda-gun" => true,
+            _ => false,
         };
     }
 
@@ -115,7 +156,18 @@ public class WeaponButtonActivator : MonoBehaviour
 
     internal void SetIcon(string weaponName)
     {
-        var weapIcon = Resources.LoadAll<Sprite>("NFTIcons/weaponIcons").First(x => string.Equals(x.name, weaponName, StringComparison.OrdinalIgnoreCase));
-        WeaponIcon.sprite = weapIcon;
+        // T1/T2 sit in the weaponIcons atlas, T3 are single sprites in weaponIconsT3 (v24).
+        // A missing icon must never throw: this runs inside AbilitySwitcher.Start, and an
+        // exception there leaves the F slot without a weapon for the whole run.
+        var weapIcon = Resources.LoadAll<Sprite>("NFTIcons/weaponIcons").FirstOrDefault(x => string.Equals(x.name, weaponName, StringComparison.OrdinalIgnoreCase));
+        if (weapIcon == null)
+            weapIcon = Resources.LoadAll<Sprite>("NFTIcons/weaponIconsT3").FirstOrDefault(x => string.Equals(x.name, weaponName, StringComparison.OrdinalIgnoreCase));
+        if (weapIcon == null)
+            weapIcon = Resources.LoadAll<Sprite>("NFTIcons/weaponIcons").FirstOrDefault(x => string.Equals(x.name, GetDetieredWeaponName(weaponName ?? ""), StringComparison.OrdinalIgnoreCase));
+
+        if (weapIcon != null && WeaponIcon != null)
+            WeaponIcon.sprite = weapIcon;
+        else
+            Debug.LogWarning($"[WeaponButtonActivator] no icon for weapon '{weaponName}'");
     }
 }

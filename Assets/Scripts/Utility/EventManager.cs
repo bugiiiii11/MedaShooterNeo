@@ -89,12 +89,30 @@ namespace Events
 
             if (listenerList != null && listenerList.Count > 0) {
 
+                // S212-01: one throwing listener used to leave _isDispatching > 0 for the
+                // rest of the scene -- Add/RemoveListener then deferred forever, destroyed
+                // enemies stayed subscribed and every later pause threw (perk screen without
+                // keyboard, game over without a score). A listener's exception is logged and
+                // the other listeners still run; the counter always comes back down.
                 _isDispatching++;
-                foreach (var listener in listenerList)
+                try
                 {
-                    listener.Invoke(eventData);
+                    foreach (var listener in listenerList)
+                    {
+                        try
+                        {
+                            listener.Invoke(eventData);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                    }
                 }
-                _isDispatching--;
+                finally
+                {
+                    _isDispatching--;
+                }
                 
                 return true;
             }

@@ -24,6 +24,13 @@ public class UIGameOverScreen : MonoBehaviour
 
     private void OnPlayedDied(PlayerDiedEvent ev)
     {
+        // S212-01: subscribe FIRST. The score is sent from this callback, so nothing below
+        // (pause, music, summary, enemy cleanup) may stop the subscription from happening.
+        // send data to backend but wait for ending duration packet
+        timeManager.OnGameOverTimestampReceived -= OnTimestampReceived;
+        timeManager.OnGameOverTimestampReceived += OnTimestampReceived;
+        isGameOver = true;
+
         var canvGroup = GetComponent<CanvasGroup>();
         canvGroup.TweenCanvasGroupAlpha(1, 2).SetFrom(0).SetOnComplete(
             () =>
@@ -55,11 +62,6 @@ public class UIGameOverScreen : MonoBehaviour
         }
 
         GameManager.instance.EnemySpawner.KillAllEnemies();
-
-        // send data to backend but wait for ending duration packet
-        timeManager.OnGameOverTimestampReceived += OnTimestampReceived;
-
-        isGameOver = true;
     }
 
     private void OnTimestampReceived(float unityTimestamp, float serverTimestamp, long code)

@@ -220,8 +220,10 @@ public class InventoryBackend : MonoBehaviour
                 UpdateShieldSprite(false);
             }
         }, () => landSettled = true));
+        // raw=true: this build knows the T3 names itself. Without it the backend sends a T3
+        // under its T2 name with pre-scaled stats (the alias that keeps builds <= v23 working).
         GetData<NftWeaponInventory[]>(RestfulEndpoint.UserWeapons, address,
-            Settling<NftWeaponInventory[]>(OnReceivedWeapons, () => weaponsSettled = true));
+            Settling<NftWeaponInventory[]>(OnReceivedWeapons, () => weaponsSettled = true), "&raw=true");
         // GetData<List<BoostPackage>>(RestfulEndpoint.BoostPackages, address, OnReceivedBoostPackages);
 
         // Fetch combat boost status
@@ -454,8 +456,21 @@ public class InventoryBackend : MonoBehaviour
                 0,
                 weapon.WeaponName);
 
+            if (!WeaponButtonActivator.IsKnownWeapon(nftWeapon.Name))
+            {
+                // no icon and no in-run weapon for a name this build does not know
+                Debug.Log($"⚔️ DEBUG: Skipping unknown weapon: {nftWeapon.Name}");
+                continue;
+            }
+
             var (_, tier) = WeaponButtonActivator.GetDetieredWeaponNameWithTier(nftWeapon.Name);
-            if (tier == "T2")
+            if (tier == "T3")
+            {
+                // boost T3 weapon by 50% (founder S438: T1 x1.0, T2 x1.3, T3 x1.5)
+                nftWeapon.Boost(0.5f);
+                Debug.Log($"⚔️ DEBUG: Boosted T3 weapon: {nftWeapon.Name}");
+            }
+            else if (tier == "T2")
             {
                 // boost T2 weapon by 30%
                 nftWeapon.Boost(0.3f);
@@ -768,7 +783,7 @@ public class InventoryBackend : MonoBehaviour
         RestfulManager.GetFromUrl(url, (response) => OnReceivedData(response, callback));
     }
 
-    public void GetData<TObject>(RestfulEndpoint endpoint, string address, Action<TObject> callback)
+    public void GetData<TObject>(RestfulEndpoint endpoint, string address, Action<TObject> callback, string extraQuery = "")
     {
         if (string.IsNullOrEmpty(address))
         {
@@ -777,7 +792,7 @@ public class InventoryBackend : MonoBehaviour
             return;
         }
 
-        RestfulManager.GetByUrlParam(endpoint, $"?address={address}", (response) =>
+        RestfulManager.GetByUrlParam(endpoint, $"?address={address}{extraQuery}", (response) =>
         {
             if (response.Code >= 400)
             {

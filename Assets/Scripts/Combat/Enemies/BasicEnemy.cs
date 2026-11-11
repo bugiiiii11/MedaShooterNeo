@@ -94,6 +94,10 @@ public class BasicEnemy : TimeCompute, ILocalizable
 
     private void OnGamePaused(GamePauseEvent gpe)
     {
+        // S212-01: a destroyed enemy can still be subscribed for one dispatch
+        if (this == null || _animator == null)
+            return;
+
         if(gpe.IsPaused)
         {
             _animator.SetFloat("Speed", 0f);
